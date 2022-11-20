@@ -261,7 +261,7 @@ if (use_linux_config && ffmpeg_branding == "ChromeOS") {
 if ((is_mac && ffmpeg_branding == "Chrome") || (is_win && ffmpeg_branding == "Chrome") || (use_linux_config && ffmpeg_branding == "Chrome") || (use_linux_config && ffmpeg_branding == "ChromeOS")) {
 
   ffmpeg_c_sources += [
-    "libavcodec/bswapdsp.c",
+    "libavcodec/autorename_libavcodec_bswapdsp.c",
     "libavcodec/dovi_rpu.c",
     "libavcodec/dynamic_hdr10_plus.c",
     "libavcodec/dynamic_hdr_vivid.c",
@@ -565,7 +565,8 @@ if ((is_mac && current_cpu == "arm64" && ffmpeg_branding == "Chrome") || (is_win
 
   ffmpeg_gas_sources += [
     "libavcodec/aarch64/autorename_libavcodec_aarch64_hevcdsp_idct_neon.S",
-    "libavcodec/aarch64/autorename_libavcodec_aarch64_hevcdsp_sao_neon.S"
+    "libavcodec/aarch64/autorename_libavcodec_aarch64_hevcdsp_sao_neon.S",
+    "libavcodec/aarch64/hevcdsp_qpel_neon.S"
   ]
 
   ffmpeg_c_sources += [
