@@ -45,5 +45,5 @@ bool ObsoleteSystem::IsEndOfTheLine() {
 
 // static
 const char* ObsoleteSystem::GetLinkURL() {
-    return chrome::kWindowsXPVistaDeprecationURL;
+  return chrome::kWindowsXPVistaDeprecationURL;
 }
