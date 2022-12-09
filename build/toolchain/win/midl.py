@@ -406,7 +406,7 @@ def main(arch, gendir, outdir, dynamic_guids, tlb, h, dlldata, iid, proxy,
   if sys.platform != 'win32':
     return 0
   return 0
-  
+
   idl_template = None
   if dynamic_guids:
     idl_template = idl
