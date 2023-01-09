@@ -25,4 +25,4 @@
      "Hides the Side Panel Button.",
      kOsDesktop, SINGLE_VALUE_TYPE("hide-sidepanel-button")},
 
-#endif  // CHROME_BROWSER_THORIUM_FLAG_ENTRIES_H_
+#endif  // CHROME_BROWSER_YFQH_FLAG_ENTRIES_H_
