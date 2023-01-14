@@ -207,6 +207,7 @@ class Browser : public TabStripModelObserver,
     kSessionRestore,
     kStartupCreator,
     kLastAndUrlsStartupPref,
+    kDeskTemplate,
   };
 
   // The default value for a browser's `restore_id` param.
