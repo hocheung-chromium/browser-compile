@@ -407,11 +407,7 @@ BASE_FEATURE(kCdmProcessSiteIsolation,
 // playback going to a specific output device in the audio service.
 BASE_FEATURE(kChromeWideEchoCancellation,
              "ChromeWideEchoCancellation",
-#if BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_WIN)
              base::FEATURE_ENABLED_BY_DEFAULT);
-#else
-             base::FEATURE_DISABLED_BY_DEFAULT);
-#endif
 
 // If non-zero, audio processing is done on a dedicated processing thread which
 // receives audio from the audio capture thread via a fifo of a specified size.
@@ -419,11 +415,7 @@ BASE_FEATURE(kChromeWideEchoCancellation,
 // processing is done on the audio capture thread itself.
 const base::FeatureParam<int> kChromeWideEchoCancellationProcessingFifoSize{
   &kChromeWideEchoCancellation, "processing_fifo_size",
-#if BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_WIN)
-      110  // Default value for the enabled feature.
-#else
-      0
-#endif
+    110  // Default value for the enabled feature.
 };
 
 // When audio processing is done in the audio process, at the renderer side IPC
@@ -815,7 +807,7 @@ BASE_FEATURE(kWakeLockOptimisationHiddenMuted,
 // while capturing a low-resolution tab.
 BASE_FEATURE(kWebContentsCaptureHiDpi,
              "WebContentsCaptureHiDPI",
-             base::FEATURE_DISABLED_BY_DEFAULT);
+             base::FEATURE_ENABLED_BY_DEFAULT);
 
 // Enables handling of hardware media keys for controlling media.
 BASE_FEATURE(kHardwareMediaKeyHandling,
@@ -962,14 +954,10 @@ BASE_FEATURE(kLimitConcurrentDecoderInstances,
              base::FEATURE_ENABLED_BY_DEFAULT);
 
 #if defined(ARCH_CPU_ARM_FAMILY)
-// Some architectures have separate image processor hardware that
-// can be used by Chromium's ImageProcessor to color convert/crop/etc.
-// video buffers.  Sometimes it is more efficient/performant/correct
-// to use a libYUV or GL based implementation instead of the hardware to
-// do this processing.
-BASE_FEATURE(kPreferLibYuvImageProcessor,
-             "PreferLibYUVImageProcessor",
-             base::FEATURE_DISABLED_BY_DEFAULT);
+// Experimental support for GL based image processing. On some architectures,
+// the hardware accelerated video decoder outputs frames in a format not
+// understood by the display controller. We usually use LibYUV to convert these
+// frames. This flag enables an experimental GL-based conversion method.
 BASE_FEATURE(kPreferGLImageProcessor,
              "PreferGLImageProcessor",
              base::FEATURE_DISABLED_BY_DEFAULT);
@@ -1077,7 +1065,7 @@ constexpr base::FeatureParam<MediaFoundationClearRenderingStrategy>::Option
 const base::FeatureParam<MediaFoundationClearRenderingStrategy>
     kMediaFoundationClearRenderingStrategyParam{
         &kMediaFoundationClearRendering, "strategy",
-        MediaFoundationClearRenderingStrategy::kDynamic,
+        MediaFoundationClearRenderingStrategy::kDirectComposition,
         &kMediaFoundationClearRenderingStrategyOptions};
 #endif  // BUILDFLAG(IS_WIN)
 
