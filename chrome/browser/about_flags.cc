@@ -2020,6 +2020,8 @@ const FeatureEntry::FeatureVariation kFilteringPredictionFeatureVariations[] = {
 #if BUILDFLAG(IS_ANDROID)
 const FeatureEntry::FeatureParam kStartSurfaceReturnTime_Immediate[] = {
     {"start_surface_return_time_seconds", "0"}};
+const FeatureEntry::FeatureParam kStartSurfaceReturnTime_10Seconds[] = {
+    {"start_surface_return_time_seconds", "10"}};
 const FeatureEntry::FeatureParam kStartSurfaceReturnTime_1Minute[] = {
     {"start_surface_return_time_seconds", "60"}};
 const FeatureEntry::FeatureParam kStartSurfaceReturnTime_5Minute[] = {
@@ -2029,6 +2031,8 @@ const FeatureEntry::FeatureParam kStartSurfaceReturnTime_60Minute[] = {
 const FeatureEntry::FeatureVariation kStartSurfaceReturnTimeVariations[] = {
     {"Immediate", kStartSurfaceReturnTime_Immediate,
      std::size(kStartSurfaceReturnTime_Immediate), nullptr},
+    {"10 seconds", kStartSurfaceReturnTime_10Seconds,
+     std::size(kStartSurfaceReturnTime_10Seconds), nullptr},
     {"1 minute", kStartSurfaceReturnTime_1Minute,
      std::size(kStartSurfaceReturnTime_1Minute), nullptr},
     {"5 minute", kStartSurfaceReturnTime_5Minute,
@@ -3587,6 +3591,9 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kRobustAudioDeviceSelectLogicName,
      flag_descriptions::kRobustAudioDeviceSelectLogicDescription, kOsCrOS,
      FEATURE_VALUE_TYPE(ash::features::kRobustAudioDeviceSelectLogic)},
+    {"speak-on-mute-detection", flag_descriptions::kSpeakOnMuteName,
+     flag_descriptions::kSpeakOnMuteDescription, kOsCrOS,
+     FEATURE_VALUE_TYPE(ash::features::kSpeakOnMuteEnabled)},
     {"bluetooth-use-floss", flag_descriptions::kBluetoothUseFlossName,
      flag_descriptions::kBluetoothUseFlossDescription, kOsCrOS,
      FEATURE_VALUE_TYPE(floss::features::kFlossEnabled)},
@@ -7953,10 +7960,6 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kSanitizerApiDescription, kOsAll,
      FEATURE_VALUE_TYPE(blink::features::kSanitizerAPI)},
 
-    {"sanitizer-api-v0", flag_descriptions::kSanitizerApiv0Name,
-     flag_descriptions::kSanitizerApiv0Description, kOsAll,
-     FEATURE_VALUE_TYPE(blink::features::kSanitizerAPIv0)},
-
 #if BUILDFLAG(IS_CHROMEOS_ASH)
     {"productivity-reorder-apps", flag_descriptions::kLauncherAppSortName,
      flag_descriptions::kLauncherAppSortDescription, kOsCrOS,
@@ -8706,6 +8709,13 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kSyncChromeOSExplicitPassphraseSharingDescription,
      kOsCrOS | kOsLacros,
      FEATURE_VALUE_TYPE(syncer::kSyncChromeOSExplicitPassphraseSharing)},
+
+    {"chromeos-synced-session-sharing",
+     flag_descriptions::kChromeOSSyncedSessionSharingName,
+     flag_descriptions::kChromeOSSyncedSessionSharingDescription,
+     kOsCrOS | kOsLacros,
+     FEATURE_VALUE_TYPE(syncer::kChromeOSSyncedSessionSharing)},
+
 #endif
 
 #if BUILDFLAG(IS_CHROMEOS_ASH)
