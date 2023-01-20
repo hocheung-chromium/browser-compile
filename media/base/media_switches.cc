@@ -407,7 +407,12 @@ BASE_FEATURE(kCdmProcessSiteIsolation,
 // playback going to a specific output device in the audio service.
 BASE_FEATURE(kChromeWideEchoCancellation,
              "ChromeWideEchoCancellation",
-             base::FEATURE_ENABLED_BY_DEFAULT);
+#if BUILDFLAG(IS_CHROMEOS_DEVICE)
+    base::FEATURE_DISABLED_BY_DEFAULT
+#else
+    base::FEATURE_ENABLED_BY_DEFAULT
+#endif
+             );
 
 // If non-zero, audio processing is done on a dedicated processing thread which
 // receives audio from the audio capture thread via a fifo of a specified size.
@@ -500,6 +505,16 @@ BASE_FEATURE(kD3D11VideoDecoderUseSharedHandle,
              "D3D11VideoDecoderUseSharedHandle",
              base::FEATURE_DISABLED_BY_DEFAULT);
 
+// Runs the media service in the GPU process on a dedicated thread.
+BASE_FEATURE(kDedicatedMediaServiceThread,
+             "DedicatedMediaServiceThread",
+#if BUILDFLAG(IS_WIN)
+             base::FEATURE_DISABLED_BY_DEFAULT
+#else
+             base::FEATURE_ENABLED_BY_DEFAULT
+#endif
+);
+
 // Falls back to other decoders after audio/video decode error happens. The
 // implementation may choose different strategies on when to fallback. See
 // DecoderStream for details. When disabled, playback will fail immediately
@@ -525,6 +540,11 @@ BASE_FEATURE(kGlobalMediaControlsAutoDismiss,
              base::FEATURE_ENABLED_BY_DEFAULT);
 
 #if BUILDFLAG(IS_CHROMEOS)
+// Updated global media controls UI for CrOS.
+BASE_FEATURE(kGlobalMediaControlsCrOSUpdatedUI,
+             "GlobalMediaControlsCrOSUpdatedUI",
+             base::FEATURE_DISABLED_BY_DEFAULT);
+
 // Show Cast sessions in Global Media Controls.
 BASE_FEATURE(kGlobalMediaControlsForCast,
              "GlobalMediaControlsForCast",
@@ -925,6 +945,12 @@ BASE_FEATURE(kUseRealColorSpaceForAndroidVideo,
              "UseRealColorSpaceForAndroidVideo",
              base::FEATURE_ENABLED_BY_DEFAULT);
 
+#if BUILDFLAG(ENABLE_HLS_DEMUXER)
+BASE_FEATURE(kBuiltInHlsPlayer,
+             "BuiltInHlsPlayer",
+             base::FEATURE_DISABLED_BY_DEFAULT);
+#endif  // BUILDFLAG(ENABLE_HLS_DEMUXER)
+
 #endif  // BUILDFLAG(IS_ANDROID)
 
 #if BUILDFLAG(USE_CHROMEOS_MEDIA_ACCELERATION)
@@ -1067,6 +1093,13 @@ const base::FeatureParam<MediaFoundationClearRenderingStrategy>
         &kMediaFoundationClearRendering, "strategy",
         MediaFoundationClearRenderingStrategy::kDirectComposition,
         &kMediaFoundationClearRenderingStrategyOptions};
+
+BASE_FEATURE(kMediaFoundationBatchRead,
+             "MediaFoundationBatchRead",
+             base::FEATURE_DISABLED_BY_DEFAULT);
+
+const base::FeatureParam<int> kBatchReadCount{&kMediaFoundationBatchRead,
+                                              "batch_read_count", 1};
 #endif  // BUILDFLAG(IS_WIN)
 
 #if BUILDFLAG(ENABLE_PLATFORM_ENCRYPTED_DOLBY_VISION)
