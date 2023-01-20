@@ -4317,12 +4317,6 @@ const FeatureEntry kFeatureEntries[] = {
     {"record-web-app-debug-info", flag_descriptions::kRecordWebAppDebugInfoName,
      flag_descriptions::kRecordWebAppDebugInfoDescription, kOsDesktop,
      FEATURE_VALUE_TYPE(features::kRecordWebAppDebugInfo)},
-#if !BUILDFLAG(IS_ANDROID)
-    {"web-app-manifest-immediate-updating",
-     flag_descriptions::kWebAppManifestImmediateUpdatingName,
-     flag_descriptions::kWebAppManifestImmediateUpdatingDescription, kOsDesktop,
-     FEATURE_VALUE_TYPE(features::kWebAppManifestImmediateUpdating)},
-#endif  // !BUILDFLAG(IS_ANDROID)
     {"use-sync-sandbox", flag_descriptions::kSyncSandboxName,
      flag_descriptions::kSyncSandboxDescription, kOsAll,
      SINGLE_VALUE_TYPE_AND_VALUE(
@@ -6234,28 +6228,28 @@ const FeatureEntry kFeatureEntries[] = {
 #if BUILDFLAG(IS_CHROMEOS)
     {"allow-dsp-based-aec", flag_descriptions::kCrOSDspBasedAecAllowedName,
      flag_descriptions::kCrOSDspBasedAecAllowedDescription, kOsCrOS | kOsLacros,
-     FEATURE_VALUE_TYPE(features::kCrOSDspBasedAecAllowed)},
+     FEATURE_VALUE_TYPE(media::kCrOSDspBasedAecAllowed)},
     {"allow-dsp-based-ns", flag_descriptions::kCrOSDspBasedNsAllowedName,
      flag_descriptions::kCrOSDspBasedNsAllowedDescription, kOsCrOS | kOsLacros,
-     FEATURE_VALUE_TYPE(features::kCrOSDspBasedNsAllowed)},
+     FEATURE_VALUE_TYPE(media::kCrOSDspBasedNsAllowed)},
     {"allow-dsp-based-agc", flag_descriptions::kCrOSDspBasedAgcAllowedName,
      flag_descriptions::kCrOSDspBasedAgcAllowedDescription, kOsCrOS | kOsLacros,
-     FEATURE_VALUE_TYPE(features::kCrOSDspBasedAgcAllowed)},
+     FEATURE_VALUE_TYPE(media::kCrOSDspBasedAgcAllowed)},
     {"enforce-system-aec", flag_descriptions::kCrOSEnforceSystemAecName,
      flag_descriptions::kCrOSEnforceSystemAecDescription, kOsCrOS | kOsLacros,
-     FEATURE_VALUE_TYPE(features::kCrOSEnforceSystemAec)},
+     FEATURE_VALUE_TYPE(media::kCrOSEnforceSystemAec)},
     {"enforce-system-aec-agc", flag_descriptions::kCrOSEnforceSystemAecAgcName,
      flag_descriptions::kCrOSEnforceSystemAecAgcDescription,
      kOsCrOS | kOsLacros,
-     FEATURE_VALUE_TYPE(features::kCrOSEnforceSystemAecAgc)},
+     FEATURE_VALUE_TYPE(media::kCrOSEnforceSystemAecAgc)},
     {"enforce-system-aec-ns-agc",
      flag_descriptions::kCrOSEnforceSystemAecNsAgcName,
      flag_descriptions::kCrOSEnforceSystemAecNsAgcDescription,
      kOsCrOS | kOsLacros,
-     FEATURE_VALUE_TYPE(features::kCrOSEnforceSystemAecNsAgc)},
+     FEATURE_VALUE_TYPE(media::kCrOSEnforceSystemAecNsAgc)},
     {"enforce-system-aec-ns", flag_descriptions::kCrOSEnforceSystemAecNsName,
      flag_descriptions::kCrOSEnforceSystemAecNsDescription, kOsCrOS | kOsLacros,
-     FEATURE_VALUE_TYPE(features::kCrOSEnforceSystemAecNs)},
+     FEATURE_VALUE_TYPE(media::kCrOSEnforceSystemAecNs)},
 #endif
 
 #if BUILDFLAG(IS_CHROMEOS_ASH)
@@ -7179,6 +7173,11 @@ const FeatureEntry kFeatureEntries[] = {
     {"page-info-store-info", flag_descriptions::kPageInfoStoreInfoName,
      flag_descriptions::kPageInfoStoreInfoDescription, kOsAndroid,
      FEATURE_VALUE_TYPE(page_info::kPageInfoStoreInfo)},
+    {"page-info-about-this-site-improved-bottomsheet",
+     flag_descriptions::kPageInfoAboutThisSiteImprovedBottomSheetName,
+     flag_descriptions::kPageInfoAboutThisSiteImprovedBottomSheetDescription,
+     kOsAndroid,
+     FEATURE_VALUE_TYPE(page_info::kPageInfoAboutThisSiteImprovedBottomSheet)},
 #endif  // BUILDFLAG(IS_ANDROID)
 
 #if !BUILDFLAG(IS_ANDROID)
