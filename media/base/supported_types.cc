@@ -16,6 +16,7 @@
 #include "media/base/media_switches.h"
 #include "media/media_buildflags.h"
 #include "ui/display/display_switches.h"
+#include "ui/gfx/hdr_metadata.h"
 
 #if BUILDFLAG(ENABLE_LIBVPX)
 // TODO(dalecurtis): This technically should not be allowed in media/base. See
@@ -64,6 +65,7 @@ bool IsSupportedHdrMetadata(const gfx::HdrMetadataType& hdr_metadata_type) {
       return true;
 
     case gfx::HdrMetadataType::kSmpteSt2086:
+      return base::FeatureList::IsEnabled(kSupportSmpteSt2086HdrMetadata);
     case gfx::HdrMetadataType::kSmpteSt2094_10:
     case gfx::HdrMetadataType::kSmpteSt2094_40:
       return false;
@@ -303,6 +305,7 @@ bool IsDefaultSupportedVideoType(const VideoType& type) {
     case VideoCodec::kH264:
     case VideoCodec::kVP8:
     case VideoCodec::kTheora:
+        case VideoCodec::kMPEG2:
       return true;
     case VideoCodec::kAV1:
       return IsAV1Supported(type);
@@ -314,7 +317,6 @@ bool IsDefaultSupportedVideoType(const VideoType& type) {
       return IsMPEG4Supported();
     case VideoCodec::kUnknown:
     case VideoCodec::kVC1:
-    case VideoCodec::kMPEG2:
     case VideoCodec::kDolbyVision:
       return false;
   }
@@ -341,13 +343,13 @@ bool IsDefaultSupportedAudioType(const AudioType& type) {
     case AudioCodec::kPCM_S24BE:
     case AudioCodec::kPCM_ALAW:
     case AudioCodec::kVorbis:
+        case AudioCodec::kEAC3:
+        case AudioCodec::kAC3:
       return true;
     case AudioCodec::kAMR_NB:
     case AudioCodec::kAMR_WB:
     case AudioCodec::kGSM_MS:
-    case AudioCodec::kEAC3:
     case AudioCodec::kALAC:
-    case AudioCodec::kAC3:
     case AudioCodec::kMpegHAudio:
     case AudioCodec::kUnknown:
       return false;
