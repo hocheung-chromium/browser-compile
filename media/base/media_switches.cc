@@ -311,7 +311,7 @@ BASE_FEATURE(kPauseBackgroundMutedAudio,
 // Enables user control over muting tab audio from the tab strip.
 BASE_FEATURE(kEnableTabMuting,
              "EnableTabMuting",
-             base::FEATURE_ENABLED_BY_DEFAULT);
+             base::FEATURE_DISABLED_BY_DEFAULT);
 
 #if BUILDFLAG(ENABLE_PLATFORM_HEVC)
 // Enables HEVC hardware accelerated decoding.
@@ -429,11 +429,7 @@ BASE_FEATURE(kChromeWideEchoCancellation,
 // processing is done on the audio capture thread itself.
 const base::FeatureParam<int> kChromeWideEchoCancellationProcessingFifoSize{
   &kChromeWideEchoCancellation, "processing_fifo_size",
-#if BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_WIN)
-      110  // Default value for the enabled feature.
-#else
-      0
-#endif
+    110  // Default value for the enabled feature.
 };
 
 // When audio processing is done in the audio process, at the renderer side IPC
@@ -535,12 +531,6 @@ BASE_FEATURE(kMultiPlaneVideoCaptureSharedImages,
 // initializing and managing streaming sessions, or the legacy implementation.
 BASE_FEATURE(kOpenscreenCastStreamingSession,
              "OpenscreenCastStreamingSession",
-             base::FEATURE_DISABLED_BY_DEFAULT);
-
-// Controls whether the Mirroring Service will fetch, analyze, and store
-// information on the quality of the session using RTCP logs.
-BASE_FEATURE(kEnableRtcpReporting,
-             "EnableRtcpReporting",
              base::FEATURE_DISABLED_BY_DEFAULT);
 
 // Approach original pre-REC MSE object URL autorevoking behavior, though await
@@ -694,11 +684,11 @@ BASE_FEATURE(kVaapiVideoDecodeLinux,
 
 BASE_FEATURE(kVaapiVideoDecodeLinuxGL,
              "VaapiVideoDecodeLinuxGL",
-             base::FEATURE_ENABLED_BY_DEFAULT);
+             base::FEATURE_DISABLED_BY_DEFAULT);
 
 BASE_FEATURE(kVaapiVideoEncodeLinux,
              "VaapiVideoEncoder",
-             base::FEATURE_ENABLED_BY_DEFAULT);
+             base::FEATURE_DISABLED_BY_DEFAULT);
 
 // Ignore the non-intel driver blacklist for VaapiVideoDecoder implementations.
 // Intended for manual usage only in order to gague the status of newer driver
@@ -772,7 +762,7 @@ BASE_FEATURE(kVp9kSVCHWDecoding,
 #if BUILDFLAG(IS_CHROMEOS)
              base::FEATURE_ENABLED_BY_DEFAULT
 #else
-             base::FEATURE_ENABLED_BY_DEFAULT
+             base::FEATURE_DISABLED_BY_DEFAULT
 #endif
 );
 
@@ -929,12 +919,12 @@ BASE_FEATURE(kLowDelayVideoRenderingOnLiveStream,
 // platform
 BASE_FEATURE(kAutoplayIgnoreWebAudio,
              "AutoplayIgnoreWebAudio",
-             base::FEATURE_ENABLED_BY_DEFAULT);
+             base::FEATURE_DISABLED_BY_DEFAULT);
 
 // Whether we should show a setting to disable autoplay policy.
 BASE_FEATURE(kAutoplayDisableSettings,
              "AutoplayDisableSettings",
-             base::FEATURE_ENABLED_BY_DEFAULT);
+             base::FEATURE_DISABLED_BY_DEFAULT);
 
 #if BUILDFLAG(IS_ANDROID)
 // Should we allow video playback to use an overlay if it's not needed for
@@ -1033,7 +1023,7 @@ BASE_FEATURE(kChromeOSHWVBREncoding,
 // TODO(b/159825227): remove when the direct video decoder is fully launched.
 BASE_FEATURE(kUseChromeOSDirectVideoDecoder,
              "UseChromeOSDirectVideoDecoder",
-             base::FEATURE_DISABLED_BY_DEFAULT);
+             base::FEATURE_ENABLED_BY_DEFAULT);
 
 // Limit the number of concurrent hardware decoder instances on ChromeOS.
 BASE_FEATURE(kLimitConcurrentDecoderInstances,
@@ -1076,7 +1066,7 @@ BASE_FEATURE(kIncludeIRCamerasInDeviceEnumeration,
 
 // Enables software rate controller encoding acceleration for Windows.
 const base::Feature MEDIA_EXPORT kMediaFoundationUseSoftwareRateCtrl{
-    "MediaFoundationUseSoftwareRateCtrl", base::FEATURE_ENABLED_BY_DEFAULT};
+    "MediaFoundationUseSoftwareRateCtrl", base::FEATURE_DISABLED_BY_DEFAULT};
 
 // Enables MediaFoundation based video capture
 BASE_FEATURE(kMediaFoundationVideoCapture,
@@ -1088,7 +1078,7 @@ BASE_FEATURE(kMediaFoundationVideoCapture,
 // please use IsMediaFoundationD3D11VideoCaptureEnabled() instead.
 BASE_FEATURE(kMediaFoundationD3D11VideoCapture,
              "MediaFoundationD3D11VideoCapture",
-             base::FEATURE_ENABLED_BY_DEFAULT);
+             base::FEATURE_DISABLED_BY_DEFAULT);
 
 // Enables VP8 decode acceleration for Windows.
 const base::Feature MEDIA_EXPORT kMediaFoundationVP8Decoding{
@@ -1118,7 +1108,7 @@ const base::Feature MEDIA_EXPORT kUseFakeAudioCaptureTimestamps{
 // Enable VP9 kSVC decoding with HW decoder for webrtc use case on Windows.
 BASE_FEATURE(kD3D11Vp9kSVCHWDecoding,
              "D3D11Vp9kSVCHWDecoding",
-             base::FEATURE_ENABLED_BY_DEFAULT);
+             base::FEATURE_DISABLED_BY_DEFAULT);
 
 // The Media Foundation Rendering Strategy determines which presentation mode
 // Media Foundation Renderer should use for presenting clear content. This
@@ -1169,7 +1159,7 @@ const base::FeatureParam<int> kBatchReadCount{&kMediaFoundationBatchRead,
 // ENABLE_PLATFORM_ENCRYPTED_DOLBY_VISION is disabled.
 BASE_FEATURE(kPlatformEncryptedDolbyVision,
              "PlatformEncryptedDolbyVision",
-             base::FEATURE_ENABLED_BY_DEFAULT);
+             base::FEATURE_DISABLED_BY_DEFAULT);
 
 // When ENABLE_PLATFORM_ENCRYPTED_DOLBY_VISION is enabled at build time and
 // `kPlatformEncryptedDolbyVision` is enabled at run time, encrypted Dolby
@@ -1212,9 +1202,6 @@ std::string GetEffectiveAutoplayPolicy(const base::CommandLine& command_line) {
   if (base::FeatureList::IsEnabled(media::kUnifiedAutoplay))
     return switches::autoplay::kDocumentUserActivationRequiredPolicy;
 
-  if (base::CommandLine::ForCurrentProcess()->HasSwitch("no-autoplay"))
-    return switches::autoplay::kUserGestureRequiredPolicy;
-
 // The default value is platform dependent.
 #if BUILDFLAG(IS_ANDROID)
   return switches::autoplay::kUserGestureRequiredPolicy;
@@ -1233,12 +1220,6 @@ BASE_FEATURE(kRecordMediaEngagementScores,
 BASE_FEATURE(kRecordWebAudioEngagement,
              "RecordWebAudioEngagement",
              base::FEATURE_ENABLED_BY_DEFAULT);
-
-// Enables reporting "smpteSt2086" HDR Metadata as supported in the
-// MediaCapabilities API.
-BASE_FEATURE(kSupportSmpteSt2086HdrMetadata,
-             "SupportSmpteSt2086HdrMetadata",
-             base::FEATURE_DISABLED_BY_DEFAULT);
 
 // The following Media Engagement flags are not enabled on mobile platforms:
 // - MediaEngagementBypassAutoplayPolicies: enables the Media Engagement Index
@@ -1350,7 +1331,7 @@ BASE_FEATURE(kBresenhamCadence,
 // TODO(https://crbug.com/1383333): hardware AV1 encoding should be added.
 BASE_FEATURE(kCastStreamingAv1,
              "CastStreamingAv1",
-             base::FEATURE_ENABLED_BY_DEFAULT);
+             base::FEATURE_DISABLED_BY_DEFAULT);
 
 // Controls whether mirroring negotiations will include the VP9 codec for video
 // encoding.
@@ -1359,13 +1340,13 @@ BASE_FEATURE(kCastStreamingAv1,
 // TODO(https://crbug.com/1311770): hardware VP9 encoding should be added.
 BASE_FEATURE(kCastStreamingVp9,
              "CastStreamingVp9",
-             base::FEATURE_ENABLED_BY_DEFAULT);
+             base::FEATURE_DISABLED_BY_DEFAULT);
 
 #if BUILDFLAG(IS_FUCHSIA)
 // Enables use of Fuchsia's Mediacodec service for encoding.
 BASE_FEATURE(kFuchsiaMediacodecVideoEncoder,
              "FuchsiaMediacodecVideoEncoder",
-             base::FEATURE_ENABLED_BY_DEFAULT);
+             base::FEATURE_DISABLED_BY_DEFAULT);
 #endif  // BUILDFLAG(IS_FUCHSIA)
 
 bool IsChromeWideEchoCancellationEnabled() {
