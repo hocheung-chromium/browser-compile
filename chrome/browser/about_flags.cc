@@ -3346,9 +3346,6 @@ const FeatureEntry kFeatureEntries[] = {
      FEATURE_WITH_PARAMS_VALUE_TYPE(chrome::android::kRelatedSearchesUi,
                                     kRelatedSearchesUiVariations,
                                     "RelatedSearchesUi")},
-    {"related-searches-in-bar", flag_descriptions::kRelatedSearchesInBarName,
-     flag_descriptions::kRelatedSearchesInBarDescription, kOsAndroid,
-     FEATURE_VALUE_TYPE(chrome::android::kRelatedSearchesInBar)},
 #endif  // BUILDFLAG(IS_ANDROID)
     {"show-autofill-type-predictions",
      flag_descriptions::kShowAutofillTypePredictionsName,
@@ -3358,12 +3355,6 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kAutofillMoreProminentPopupName,
      flag_descriptions::kAutofillMoreProminentPopupDescription, kOsDesktop,
      FEATURE_VALUE_TYPE(autofill::features::kAutofillMoreProminentPopup)},
-    {"autofill-use-consistent-popup-settings-icons",
-     flag_descriptions::kAutofillUseConsistentPopupSettingsIconsName,
-     flag_descriptions::kAutofillUseConsistentPopupSettingsIconsDescription,
-     kOsDesktop,
-     FEATURE_VALUE_TYPE(
-         autofill::features::kAutofillUseConsistentPopupSettingsIcons)},
     {"smooth-scrolling", flag_descriptions::kSmoothScrollingName,
      flag_descriptions::kSmoothScrollingDescription,
      // Mac has a separate implementation with its own setting to disable.
@@ -4066,10 +4057,6 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kChromeSharingHubLaunchAdjacentName,
      flag_descriptions::kChromeSharingHubLaunchAdjacentDescription, kOsAndroid,
      FEATURE_VALUE_TYPE(chrome::android::kChromeSharingHubLaunchAdjacent)},
-    {"persist-share-hub-on-app-switch",
-     flag_descriptions::kPersistShareHubOnAppSwitchName,
-     flag_descriptions::kPersistShareHubOnAppSwitchDescription, kOsAndroid,
-     FEATURE_VALUE_TYPE(share::kPersistShareHubOnAppSwitch)},
     {"webnotes-publish", flag_descriptions::kWebNotesPublishName,
      flag_descriptions::kWebNotesPublishDescription, kOsAndroid,
      FEATURE_VALUE_TYPE(content_creation::kWebNotesPublish)},
@@ -7267,10 +7254,6 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kShimlessRMADisableDarkModeName,
      flag_descriptions::kShimlessRMADisableDarkModeDescription, kOsCrOS,
      FEATURE_VALUE_TYPE(ash::features::kShimlessRMADisableDarkMode)},
-    {"nearby-sharing-one-page-onboarding",
-     flag_descriptions::kNearbySharingOnePageOnboardingName,
-     flag_descriptions::kNearbySharingOnePageOnboardingDescription, kOsCrOS,
-     FEATURE_VALUE_TYPE(features::kNearbySharingOnePageOnboarding)},
     {"nearby-sharing-self-share-auto-accept",
      flag_descriptions::kNearbySharingSelfShareAutoAcceptName,
      flag_descriptions::kNearbySharingSelfShareAutoAcceptDescription, kOsCrOS,
@@ -7935,12 +7918,6 @@ const FeatureEntry kFeatureEntries[] = {
     {"sanitizer-api", flag_descriptions::kSanitizerApiName,
      flag_descriptions::kSanitizerApiDescription, kOsAll,
      FEATURE_VALUE_TYPE(blink::features::kSanitizerAPI)},
-
-#if BUILDFLAG(IS_CHROMEOS_ASH)
-    {"productivity-reorder-apps", flag_descriptions::kLauncherAppSortName,
-     flag_descriptions::kLauncherAppSortDescription, kOsCrOS,
-     FEATURE_VALUE_TYPE(ash::features::kLauncherAppSort)},
-#endif
 
 #if BUILDFLAG(IS_CHROMEOS_ASH)
     {"enable-input-event-logging",
@@ -9355,6 +9332,12 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kAndroidImprovedBookmarksDescription, kOsAndroid,
      FEATURE_VALUE_TYPE(chrome::android::kBookmarksRefresh)},
 #endif  // BUILDFLAG(IS_ANDROID)
+
+#if BUILDFLAG(IS_CHROMEOS_ASH)
+    {"arc-idle-manager", flag_descriptions::kArcIdleManagerName,
+     flag_descriptions::kArcIdleManagerDescription, kOsCrOS,
+     FEATURE_VALUE_TYPE(arc::kEnableArcIdleManager)},
+#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
 
     // NOTE: Adding a new flag requires adding a corresponding entry to enum
     // "LoginCustomFlags" in tools/metrics/histograms/enums.xml. See "Flag
