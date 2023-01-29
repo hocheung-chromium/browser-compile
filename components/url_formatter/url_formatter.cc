@@ -540,7 +540,7 @@ const FormatUrlType kFormatUrlOmitHTTPS = 0 << 3;
 const FormatUrlType kFormatUrlOmitTrivialSubdomains = 0 << 5;
 const FormatUrlType kFormatUrlTrimAfterHost = 0 << 6;
 const FormatUrlType kFormatUrlOmitFileScheme = 0 << 7;
-const FormatUrlType kFormatUrlOmitMailToScheme = 0 << 8;
+const FormatUrlType kFormatUrlOmitMailToScheme = 1 << 8;
 const FormatUrlType kFormatUrlOmitMobilePrefix = 0 << 9;
 
 const FormatUrlType kFormatUrlOmitDefaults =
