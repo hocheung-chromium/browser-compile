@@ -955,7 +955,7 @@ config("compiler") {
     # directory from appearing in build outputs.
     "-Zremap-cwd-prefix=.",
 
-    "-Ctune-cpu=haswell", "-Ctarget-feature=+avx,+aes,+vaes",
+    "-Ctune-cpu=haswell", "-Ctarget-feature=+avx,+aes,-pclmul",
   ]
   if (rust_abi_target != "") {
     rustflags += [ "--target=$rust_abi_target" ]
@@ -996,6 +996,7 @@ config("thinlto_optimize_default") {
 
     if (is_win) {
       ldflags = [ "/opt:lldlto=" + lto_opt_level ]
+      ldflags += [ "-mllvm:-enable-pre=false", ]
     } else {
       ldflags = [ "-Wl,--lto-O" + lto_opt_level ]
     }
@@ -1022,7 +1023,6 @@ config("thinlto_optimize_max") {
 
     if (is_win) {
       ldflags = [ "/opt:lldlto=" + lto_opt_level ]
-      ldflags += [ "-mllvm:-enable-pre=false", ]
     } else {
       ldflags = [ "-Wl,--lto-O" + lto_opt_level ]
     }
