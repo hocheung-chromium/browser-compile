@@ -428,7 +428,7 @@ BASE_FEATURE(kChromeWideEchoCancellation,
 // Zero fifo size means the usage of such processing thread is disabled and
 // processing is done on the audio capture thread itself.
 const base::FeatureParam<int> kChromeWideEchoCancellationProcessingFifoSize{
-  &kChromeWideEchoCancellation, "processing_fifo_size",
+    &kChromeWideEchoCancellation, "processing_fifo_size",
     110  // Default value for the enabled feature.
 };
 
@@ -1114,6 +1114,11 @@ const base::Feature MEDIA_EXPORT kUseFakeAudioCaptureTimestamps{
 // Enable VP9 kSVC decoding with HW decoder for webrtc use case on Windows.
 BASE_FEATURE(kD3D11Vp9kSVCHWDecoding,
              "D3D11Vp9kSVCHWDecoding",
+             base::FEATURE_DISABLED_BY_DEFAULT);
+
+// Controls whether the DXVA video decoder is enabled on Windows.
+BASE_FEATURE(kDXVAVideoDecoding,
+             "DXVAVideoDecoding",
              base::FEATURE_DISABLED_BY_DEFAULT);
 
 // The Media Foundation Rendering Strategy determines which presentation mode
