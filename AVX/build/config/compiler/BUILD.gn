@@ -562,7 +562,7 @@ config("compiler") {
 
     # TODO(crbug.com/1235145): Investigate why/if this should be needed.
     if (is_win) {
-      cflags += [ "/clang:-ffp-contract=fast" ]
+      cflags += [ "/clang:-ffp-contract=off" ]
     } else {
       cflags += [ "-ffp-contract=off" ]
     }
@@ -955,7 +955,7 @@ config("compiler") {
     # directory from appearing in build outputs.
     "-Zremap-cwd-prefix=.",
 
-    "-Ctarget-feature=+avx,+aes,+vaes,-pclmul",
+    "-Ctune-cpu=haswell", "-Ctarget-feature=+avx,+aes,-pclmul",
   ]
   if (rust_abi_target != "") {
     rustflags += [ "--target=$rust_abi_target" ]
@@ -996,6 +996,7 @@ config("thinlto_optimize_default") {
 
     if (is_win) {
       ldflags = [ "/opt:lldlto=" + lto_opt_level ]
+      ldflags += [ "-mllvm:-enable-pre=false", ]
     } else {
       ldflags = [ "-Wl,--lto-O" + lto_opt_level ]
     }
@@ -1022,7 +1023,6 @@ config("thinlto_optimize_max") {
 
     if (is_win) {
       ldflags = [ "/opt:lldlto=" + lto_opt_level ]
-      ldflags += [ "-mllvm:-enable-pre=false", ]
     } else {
       ldflags = [ "-Wl,--lto-O" + lto_opt_level ]
     }
