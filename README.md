@@ -10,7 +10,7 @@
 
 # 2、ffmpeg更新、剥离widevine、opus引入优化（仅AVX2版本）
 
-# 3、omnibox格式化不再格式化邮件地址
+# 3、omnibox格式化重新格式化邮件地址
 
 # 4、新增一个flags：自定义新标签页（NTP）
 
