@@ -265,6 +265,7 @@
 #include "components/site_isolation/preloaded_isolated_origins.h"
 #include "components/site_isolation/site_isolation_policy.h"
 #include "components/subresource_filter/content/browser/content_subresource_filter_throttle_manager.h"
+#include "components/supervised_user/core/common/buildflags.h"
 #include "components/translate/core/common/translate_switches.h"
 #include "components/variations/variations_associated_data.h"
 #include "components/variations/variations_switches.h"
@@ -2702,20 +2703,9 @@ void ChromeContentBrowserClient::AppendExtraCommandLineSwitches(
         command_line->AppendSwitch(switches::kDisablePrintPreview);
 
       // This passes the preference set by an enterprise policy on to a blink
-      // switch so that we know whether to force WebSQL/WebSQL in non-secure
-      // context to be enabled.
+      // switch so that we know whether to force WebSQL to be enabled.
       if (prefs->GetBoolean(storage::kWebSQLAccess)) {
         command_line->AppendSwitch(blink::switches::kWebSQLAccess);
-      }
-      if (prefs->GetBoolean(storage::kWebSQLNonSecureContextEnabled)) {
-        command_line->AppendSwitch(
-            blink::switches::kWebSQLNonSecureContextEnabled);
-      }
-
-      // Enable legacy quota API if enabled by enterprise policy.
-      if (prefs->GetBoolean(storage::kPrefixedStorageInfoEnabled)) {
-        command_line->AppendSwitch(
-            blink::switches::kPrefixedStorageInfoEnabled);
       }
 
 #if !BUILDFLAG(IS_ANDROID)
