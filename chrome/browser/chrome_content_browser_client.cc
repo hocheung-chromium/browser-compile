@@ -282,6 +282,7 @@
 #include "content/public/browser/child_process_security_policy.h"
 #include "content/public/browser/client_certificate_delegate.h"
 #include "content/public/browser/file_url_loader.h"
+#include "content/public/browser/isolated_web_apps_policy.h"
 #include "content/public/browser/navigation_handle.h"
 #include "content/public/browser/navigation_throttle.h"
 #include "content/public/browser/overlay_window.h"
@@ -2462,7 +2463,9 @@ bool ChromeContentBrowserClient::ShouldUrlUseApplicationIsolationLevel(
     const GURL& url,
     bool origin_matches_flag) {
 #if BUILDFLAG(ENABLE_EXTENSIONS)
-  if (!base::FeatureList::IsEnabled(features::kIsolatedWebApps)) {
+
+  if (!content::IsolatedWebAppsPolicy::AreIsolatedWebAppsEnabled(
+          browser_context)) {
     return false;
   }
 
@@ -2824,6 +2827,11 @@ void ChromeContentBrowserClient::AppendExtraCommandLineSwitches(
         command_line->AppendSwitch(commerce::switches::kEnableChromeCart);
       }
 #endif
+
+      if (content::IsolatedWebAppsPolicy::AreIsolatedWebAppsEnabled(
+              process->GetBrowserContext())) {
+        command_line->AppendSwitch(switches::kEnableIsolatedWebAppsInRenderer);
+      }
     }
 
     MaybeAppendBlinkSettingsSwitchForFieldTrial(browser_command_line,
@@ -5494,7 +5502,8 @@ void ChromeContentBrowserClient::RegisterNonNetworkNavigationURLLoaderFactories(
                          profile, content::ChildProcessHost::kInvalidUniqueID));
 #endif  // BUILDFLAG(IS_CHROMEOS_ASH)
 #if !BUILDFLAG(IS_ANDROID)
-  if (base::FeatureList::IsEnabled(features::kIsolatedWebApps) &&
+  if (content::IsolatedWebAppsPolicy::AreIsolatedWebAppsEnabled(
+          browser_context) &&
       !browser_context->ShutdownStarted()) {
     // TODO(crbug.com/1365848): Only register the factory if we are already in
     // an isolated storage partition.
@@ -5533,7 +5542,8 @@ void ChromeContentBrowserClient::
   DCHECK(factories);
 
 #if !BUILDFLAG(IS_ANDROID)
-  if (base::FeatureList::IsEnabled(features::kIsolatedWebApps) &&
+  if (content::IsolatedWebAppsPolicy::AreIsolatedWebAppsEnabled(
+          browser_context) &&
       !browser_context->ShutdownStarted()) {
     factories->emplace(
         chrome::kIsolatedAppScheme,
@@ -5769,14 +5779,16 @@ void ChromeContentBrowserClient::
 #endif  // BUILDFLAG(IS_CHROMEOS_ASH)
 
 #if !BUILDFLAG(IS_ANDROID)
-  if (base::FeatureList::IsEnabled(features::kIsolatedWebApps)) {
+  {
     content::BrowserContext* browser_context =
         content::RenderProcessHost::FromID(render_process_id)
             ->GetBrowserContext();
     DCHECK(browser_context);
-    if (!browser_context->ShutdownStarted()) {
-      // TODO(crbug.com/1365848): Only register the factory if we are already in
-      // an isolated storage partition.
+    if (content::IsolatedWebAppsPolicy::AreIsolatedWebAppsEnabled(
+            browser_context) &&
+        !browser_context->ShutdownStarted()) {
+      // TODO(crbug.com/1365848): Only register the factory if we are already
+      // in an isolated storage partition.
 
       if (frame_host != nullptr) {
         factories->emplace(
@@ -7335,6 +7347,8 @@ bool ChromeContentBrowserClient::OpenExternally(
     const GURL& url,
     WindowOpenDisposition disposition) {
 #if BUILDFLAG(IS_CHROMEOS_ASH)
+  const bool from_webui = opener->GetWebUI() != nullptr;
+
   // If Lacros is the primary browser, we intercept requests from Ash WebUIs and
   // redirect them to Lacros via crosapi. This is to make window.open and <a
   // href target="_blank"> links in WebUIs (e.g. ChromeOS Settings app) open in
@@ -7345,9 +7359,8 @@ bool ChromeContentBrowserClient::OpenExternally(
   // with separately) as well as some existing links that currently must remain
   // in Ash.
   bool should_open_in_lacros =
-      crosapi::lacros_startup_state::IsLacrosEnabled() &&
+      from_webui && crosapi::lacros_startup_state::IsLacrosEnabled() &&
       crosapi::lacros_startup_state::IsLacrosPrimaryEnabled() &&
-      opener->GetWebUI() != nullptr &&
       disposition != WindowOpenDisposition::NEW_POPUP &&
       !url.SchemeIs(content::kChromeDevToolsScheme) &&
       !url.SchemeIs(content::kChromeUIScheme) &&
@@ -7363,13 +7376,25 @@ bool ChromeContentBrowserClient::OpenExternally(
     return true;
   }
 
+  Profile* profile = Profile::FromBrowserContext(opener->GetBrowserContext());
+
+  // Handle capturing system apps directly, as otherwise an additional empty
+  // browser window could be created.
+  const absl::optional<ash::SystemWebAppType> capturing_system_app_type =
+      ash::GetCapturingSystemAppForURL(profile, url);
+  if (capturing_system_app_type) {
+    ash::SystemAppLaunchParams swa_params;
+    swa_params.url = url;
+    ash::LaunchSystemWebAppAsync(profile, capturing_system_app_type.value(),
+                                 swa_params);
+    return true;
+  }
+
   // If Lacros is the only browser, we intercept any WebUI URLs that would be
   // opened in a regular browser window. We open these with the OsUrlHandler SWA
   // instead, which will load them in an app window.
-  Profile* profile = Profile::FromBrowserContext(opener->GetBrowserContext());
   bool should_open_in_ash_app =
-      !crosapi::browser_util::IsAshWebBrowserEnabled() &&
-      opener->GetWebUI() != nullptr &&
+      from_webui && !crosapi::browser_util::IsAshWebBrowserEnabled() &&
       ChromeWebUIControllerFactory::GetInstance()->CanHandleUrl(url) &&
       !ash::GetCapturingSystemAppForURL(profile, url);
   if (should_open_in_ash_app) {
@@ -7384,6 +7409,7 @@ bool ChromeContentBrowserClient::OpenExternally(
     return true;
   }
 #endif
+
   return false;
 }
 
@@ -7429,6 +7455,21 @@ bool ChromeContentBrowserClient::IsFileSystemURLNavigationAllowed(
   }
 #endif  // BUILDFLAG(ENABLE_EXTENSIONS)
   return false;
+}
+
+bool ChromeContentBrowserClient::AreIsolatedWebAppsEnabled(
+    content::BrowserContext* browser_context) {
+#if BUILDFLAG(IS_CHROMEOS)
+  // Check if the enterprise policy that regulates Isolated Web Apps force
+  // installing is present. If it is there then the IWAs should be enabled.
+  Profile* profile = Profile::FromBrowserContext(browser_context);
+  const base::Value::List& isolated_web_apps =
+      profile->GetPrefs()->GetList(prefs::kIsolatedWebAppInstallForceList);
+  if (!isolated_web_apps.empty()) {
+    return true;
+  }
+#endif
+  return base::FeatureList::IsEnabled(features::kIsolatedWebApps);
 }
 
 #if BUILDFLAG(IS_MAC)
