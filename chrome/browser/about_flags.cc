@@ -4644,6 +4644,10 @@ const FeatureEntry kFeatureEntries[] = {
                                     "ForceDarkVariations")},
 #endif  // BUILDFLAG(IS_CHROMEOS_ASH)
 #if BUILDFLAG(IS_ANDROID)
+    {"enable-accessibility-form-controls-mode",
+     flag_descriptions::kAccessibilityFormControlsModeName,
+     flag_descriptions::kAccessibilityFormControlsModeDescription, kOsAndroid,
+     FEATURE_VALUE_TYPE(features::kAccessibilityFormControlsMode)},
     {"enable-accessibility-page-zoom",
      flag_descriptions::kAccessibilityPageZoomName,
      flag_descriptions::kAccessibilityPageZoomDescription, kOsAndroid,
@@ -5000,6 +5004,9 @@ const FeatureEntry kFeatureEntries[] = {
     {"files-conflict-dialog", flag_descriptions::kFilesConflictDialogName,
      flag_descriptions::kFilesConflictDialogDescription, kOsCrOS,
      FEATURE_VALUE_TYPE(ash::features::kFilesConflictDialog)},
+    {"files-drive-shortcuts", flag_descriptions::kFilesDriveShortcutsName,
+     flag_descriptions::kFilesDriveShortcutsDescription, kOsCrOS,
+     FEATURE_VALUE_TYPE(ash::features::kFilesDriveShortcuts)},
     {"files-inline-sync-status", flag_descriptions::kFilesInlineSyncStatusName,
      flag_descriptions::kFilesInlineSyncStatusDescription, kOsCrOS,
      FEATURE_VALUE_TYPE(ash::features::kFilesInlineSyncStatus)},
@@ -5909,7 +5916,7 @@ const FeatureEntry kFeatureEntries[] = {
         "zero-copy-tab-capture",
         flag_descriptions::kEnableZeroCopyTabCaptureName,
         flag_descriptions::kEnableZeroCopyTabCaptureDescription,
-        kOsMac | kOsWin,
+        kOsMac | kOsWin | kOsCrOS,
         FEATURE_VALUE_TYPE(blink::features::kZeroCopyTabCapture),
     },
 
@@ -6657,11 +6664,6 @@ const FeatureEntry kFeatureEntries[] = {
      kOsCrOS,
      FEATURE_VALUE_TYPE(
          features::kAccessibilityAcceleratorNotificationsTimeout)},
-
-    {"enable-chromevox-q1-fast-track-features",
-     flag_descriptions::kChromeVoxQ1FastTrackFeaturesName,
-     flag_descriptions::kChromeVoxQ1FastTrackFeaturesDescription, kOsCrOS,
-     FEATURE_VALUE_TYPE(features::kChromeVoxQ1FastTrackFeatures)},
 
     {"enable-accessibility-service",
      flag_descriptions::kAccessibilityServiceName,
@@ -7856,9 +7858,9 @@ const FeatureEntry kFeatureEntries[] = {
                                     kFedCmFeatureVariations,
                                     "FedCmFeatureVariations")},
 
-    {"fedcm-auto-sign-in", flag_descriptions::kFedCmAutoSigninName,
-     flag_descriptions::kFedCmAutoSigninDescription, kOsAll,
-     FEATURE_VALUE_TYPE(features::kFedCmAutoSignin)},
+    {"fedcm-auto-re-authn", flag_descriptions::kFedCmAutoReauthnName,
+     flag_descriptions::kFedCmAutoReauthnDescription, kOsAll,
+     FEATURE_VALUE_TYPE(features::kFedCmAutoReauthn)},
 
     {"fedcm-iframe-support", flag_descriptions::kFedCmIframeSupportName,
      flag_descriptions::kFedCmIframeSupportDescription, kOsAll,
@@ -8099,11 +8101,6 @@ const FeatureEntry kFeatureEntries[] = {
     {"chrome-whats-new-ui", flag_descriptions::kChromeWhatsNewUIName,
      flag_descriptions::kChromeWhatsNewUIDescription, kOsDesktop,
      FEATURE_VALUE_TYPE(features::kChromeWhatsNewUI)},
-
-    {"sync-trusted-vault-passphrase-promo",
-     flag_descriptions::kSyncTrustedVaultPassphrasePromoName,
-     flag_descriptions::kSyncTrustedVaultPassphrasePromoDescription, kOsAll,
-     FEATURE_VALUE_TYPE(::syncer::kSyncTrustedVaultPassphrasePromo)},
 
     {"sync-standalone-invalidations", flag_descriptions::kSyncInvalidationsName,
      flag_descriptions::kSyncInvalidationsDescription, kOsAll,
