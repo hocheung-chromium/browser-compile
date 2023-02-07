@@ -452,12 +452,12 @@ def _CopyDebugger(target_dir, target_cpu):
     target_path = os.path.join(target_dir, debug_file)
     _CopyRuntimeImpl(target_path, full_path)
 
+  # The x64 version of msdia140.dll is always used because symupload and
+  # dump_syms are always built as x64 binaries.
+  dia_path = os.path.join(NormalizePath(os.environ['GYP_MSVS_OVERRIDE_PATH']),
+                          'DIA SDK', 'bin', 'amd64', 'msdia140.dll')
+  _CopyRuntimeImpl(os.path.join(target_dir, 'msdia140.dll'), dia_path)
 
-# The x64 version of msdia140.dll is always used because symupload and
-# dump_syms are always built as x64 binaries.
-dia_path = os.path.join(NormalizePath(os.environ['GYP_MSVS_OVERRIDE_PATH']),
-                        'DIA SDK', 'bin', 'amd64', 'msdia140.dll')
-_CopyRuntimeImpl(os.path.join(target_dir, 'msdia140.dll'), dia_path)
 
 def _GetDesiredVsToolchainHashes():
   """Load a list of SHA1s corresponding to the toolchains that we want installed
