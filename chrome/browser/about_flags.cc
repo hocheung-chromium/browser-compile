@@ -4181,9 +4181,6 @@ const FeatureEntry kFeatureEntries[] = {
     {"isolate-origins", flag_descriptions::kIsolateOriginsName,
      flag_descriptions::kIsolateOriginsDescription, kOsAll,
      ORIGIN_LIST_VALUE_TYPE(switches::kIsolateOrigins, "")},
-    {"isolated-app-origins", flag_descriptions::kIsolatedAppOriginsName,
-     flag_descriptions::kIsolatedAppOriginsDescription, kOsAll,
-     ORIGIN_LIST_VALUE_TYPE(switches::kIsolatedAppOrigins, "")},
     {about_flags::kSiteIsolationTrialOptOutInternalName,
      flag_descriptions::kSiteIsolationOptOutName,
      flag_descriptions::kSiteIsolationOptOutDescription, kOsAll,
@@ -6416,9 +6413,9 @@ const FeatureEntry kFeatureEntries[] = {
 #endif
 
 #if BUILDFLAG(IS_CHROMEOS_ASH)
-    {"float-window", flag_descriptions::kFloatWindow,
-     flag_descriptions::kFloatWindowDescription, kOsCrOS,
-     FEATURE_VALUE_TYPE(chromeos::wm::features::kFloatWindow)},
+    {"window-layout-menu", flag_descriptions::kWindowLayoutMenu,
+     flag_descriptions::kWindowLayoutMenuDescription, kOsCrOS,
+     FEATURE_VALUE_TYPE(chromeos::wm::features::kWindowLayoutMenu)},
     {"cros-labs-overview-desk-navigation",
      flag_descriptions::kOverviewDeskNavigationName,
      flag_descriptions::kOverviewDeskNavigationDescription, kOsCrOS,
@@ -8058,12 +8055,6 @@ const FeatureEntry kFeatureEntries[] = {
          kPasswordStrengthIndicatorVariations,
          "PasswordStrengthIndicator")},
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
-    {"partial-split", flag_descriptions::kPartialSplit,
-     flag_descriptions::kPartialSplitDescription, kOsCrOS,
-     FEATURE_VALUE_TYPE(chromeos::wm::features::kPartialSplit)},
-#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
-
 #if BUILDFLAG(IS_ANDROID)
     {"privacy-guide-android", flag_descriptions::kPrivacyGuideAndroidName,
      flag_descriptions::kPrivacyGuideAndroidDescription, kOsAndroid,
@@ -9327,6 +9318,13 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kWebViewTagMPArchBehaviorDescription, kOsDesktop,
      FEATURE_VALUE_TYPE(extensions_features::kWebviewTagMPArchBehavior)},
 #endif  // BUILDFLAG(ENABLE_EXTENSIONS)
+
+    {"autofill-enable-page-load-metadata-integration",
+     flag_descriptions::kAutofillEnablePageLoadMetadataIntegrationName,
+     flag_descriptions::kAutofillEnablePageLoadMetadataIntegrationDescription,
+     kOsAll,
+     FEATURE_VALUE_TYPE(
+         autofill::features::kAutofillEnablePageLoadMetadataIntegration)},
 
     // NOTE: Adding a new flag requires adding a corresponding entry to enum
     // "LoginCustomFlags" in tools/metrics/histograms/enums.xml. See "Flag
