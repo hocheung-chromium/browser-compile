@@ -6798,7 +6798,7 @@ const FeatureEntry kFeatureEntries[] = {
 #if BUILDFLAG(IS_CHROMEOS_ASH) || BUILDFLAG(IS_ANDROID)
     {"enable-local-web-approvals", flag_descriptions::kLocalWebApprovalsName,
      flag_descriptions::kLocalWebApprovalsDescription, kOsCrOS | kOsAndroid,
-     FEATURE_WITH_PARAMS_VALUE_TYPE(supervised_users::kLocalWebApprovals,
+     FEATURE_WITH_PARAMS_VALUE_TYPE(supervised_user::kLocalWebApprovals,
                                     kLocalWebApprovalsVariations,
                                     "LocalWebApprovals")},
 #endif  // BUILDFLAG(IS_CHROMEOS_ASH) || BUILDFLAG(IS_ANDROID)
@@ -6808,7 +6808,7 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kWebFilterInterstitialRefreshName,
      flag_descriptions::kWebFilterInterstitialRefreshDescription,
      kOsCrOS | kOsAndroid,
-     FEATURE_VALUE_TYPE(supervised_users::kWebFilterInterstitialRefresh)},
+     FEATURE_VALUE_TYPE(supervised_user::kWebFilterInterstitialRefresh)},
 #endif  // BUILDFLAG(ENABLE_SUPERVISED_USERS)
 
     {"notification-scheduler", flag_descriptions::kNotificationSchedulerName,
@@ -9301,6 +9301,12 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kSystemLiveCaptionDescription, kOsCrOS,
      FEATURE_VALUE_TYPE(ash::features::kSystemLiveCaption)},
 #endif  // BUILDFLAG(IS_CHROMEOS_ASH)
+
+#if BUILDFLAG(IS_ANDROID)
+    {"stylus-rich-gestures", flag_descriptions::kStylusRichGesturesName,
+     flag_descriptions::kStylusRichGesturesDescription, kOsAndroid,
+     FEATURE_VALUE_TYPE(blink::features::kStylusRichGestures)},
+#endif  // BUILDFLAG(IS_ANDROID)
 
     // NOTE: Adding a new flag requires adding a corresponding entry to enum
     // "LoginCustomFlags" in tools/metrics/histograms/enums.xml. See "Flag
