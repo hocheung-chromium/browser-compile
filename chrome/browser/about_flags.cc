@@ -642,36 +642,6 @@ const FeatureEntry::FeatureVariation
 
 #endif  // BUILDFLAG(IS_ANDROID)
 
-const FeatureEntry::FeatureParam
-    kAutofillSaveCardUiExperimentEnableCurrentWithUserAvatarAndEmail[] = {
-        {"autofill_save_card_ui_experiment_selector_in_number", "3"},
-};
-
-const FeatureEntry::FeatureParam
-    kAutofillSaveCardUiExperimentEnableEncryptedAndSecure[] = {
-        {"autofill_save_card_ui_experiment_selector_in_number", "2"},
-};
-
-const FeatureEntry::FeatureParam
-    kAutofillSaveCardUiExperimentEnableFasterAndProtected[] = {
-        {"autofill_save_card_ui_experiment_selector_in_number", "1"},
-};
-
-const FeatureEntry::FeatureVariation kAutofillSaveCardUiExperimentOptions[] = {
-    {flag_descriptions::kAutofillSaveCardUiExperimentFasterAndProtected,
-     kAutofillSaveCardUiExperimentEnableFasterAndProtected,
-     std::size(kAutofillSaveCardUiExperimentEnableFasterAndProtected), nullptr},
-    {flag_descriptions::kAutofillSaveCardUiExperimentEncryptedAndSecure,
-     kAutofillSaveCardUiExperimentEnableEncryptedAndSecure,
-     std::size(kAutofillSaveCardUiExperimentEnableEncryptedAndSecure), nullptr},
-    {flag_descriptions::
-         kAutofillSaveCardUiExperimentCurrentWithUserAvatarAndEmail,
-     kAutofillSaveCardUiExperimentEnableCurrentWithUserAvatarAndEmail,
-     std::size(
-         kAutofillSaveCardUiExperimentEnableCurrentWithUserAvatarAndEmail),
-     nullptr},
-};
-
 #if !BUILDFLAG(IS_CHROMEOS_ASH)
 const FeatureEntry::FeatureParam kForceDark_SimpleHsl[] = {
     {"inversion_method", "hsl_based"},
@@ -4498,6 +4468,11 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kInfobarScrollOptimizationName,
      flag_descriptions::kInfobarScrollOptimizationDescription, kOsAndroid,
      FEATURE_VALUE_TYPE(chrome::android::kInfobarScrollOptimization)},
+    {"share-sheet-migration-android",
+     flag_descriptions::kShareSheetMigrationAndroidName,
+     flag_descriptions::kShareSheetMigrationAndroidDescription, kOsAndroid,
+     FEATURE_VALUE_TYPE(chrome::android::kShareSheetMigrationAndroid)},
+
 #endif  // BUILDFLAG(IS_ANDROID)
     {"disallow-doc-written-script-loads",
      flag_descriptions::kDisallowDocWrittenScriptsUiName,
@@ -8749,14 +8724,6 @@ const FeatureEntry kFeatureEntries[] = {
          permissions::features::kRecordPermissionExpirationTimestamps)},
 #endif  // !BUILDFLAG(IS_ANDROID)
 
-    {"autofill-enable-upstream-save-card-offer-ui-experiment",
-     flag_descriptions::kAutofillSaveCardUiExperimentName,
-     flag_descriptions::kAutofillSaveCardUiExperimentDescription, kOsDesktop,
-     FEATURE_WITH_PARAMS_VALUE_TYPE(
-         autofill::features::kAutofillSaveCardUiExperiment,
-         kAutofillSaveCardUiExperimentOptions,
-         "AutofillSaveCardUiExperiment")},
-
 #if BUILDFLAG(IS_ANDROID)
     {"network-service-in-process",
      flag_descriptions::kNetworkServiceInProcessName,
@@ -9310,6 +9277,12 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kWebViewTagMPArchBehaviorDescription, kOsDesktop,
      FEATURE_VALUE_TYPE(extensions_features::kWebviewTagMPArchBehavior)},
 #endif  // BUILDFLAG(ENABLE_EXTENSIONS)
+
+#if BUILDFLAG(IS_ANDROID)
+    {"thumbnail-cache-refactor", flag_descriptions::kThumbnailCacheRefactorName,
+     flag_descriptions::kThumbnailCacheRefactorDescription, kOsAndroid,
+     FEATURE_VALUE_TYPE(chrome::android::kThumbnailCacheRefactor)},
+#endif  // BUILDFLAG(IS_ANDROID)
 
     {"autofill-enable-page-load-metadata-integration",
      flag_descriptions::kAutofillEnablePageLoadMetadataIntegrationName,
