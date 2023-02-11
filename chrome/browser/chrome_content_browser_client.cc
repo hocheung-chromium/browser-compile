@@ -4622,6 +4622,7 @@ std::wstring ChromeContentBrowserClient::GetAppContainerSidForSandboxType(
     case sandbox::mojom::Sandbox::kIconReader:
     case sandbox::mojom::Sandbox::kMediaFoundationCdm:
     case sandbox::mojom::Sandbox::kWindowsSystemProxyResolver:
+    case sandbox::mojom::Sandbox::kFileUtil:
       // Should never reach here.
       CHECK(0);
       return std::wstring();
@@ -4710,6 +4711,7 @@ bool ChromeContentBrowserClient::PreSpawnChild(
     case sandbox::mojom::Sandbox::kIconReader:
     case sandbox::mojom::Sandbox::kMediaFoundationCdm:
     case sandbox::mojom::Sandbox::kWindowsSystemProxyResolver:
+    case sandbox::mojom::Sandbox::kFileUtil:
       break;
   }
 
@@ -6895,9 +6897,7 @@ bool ChromeContentBrowserClient::ArePersistentMediaDeviceIDsAllowed(
           Profile::FromBrowserContext(browser_context));
   return cookie_settings->IsFullCookieAccessAllowed(
       url, site_for_cookies, top_frame_origin,
-      cookie_settings->AddOverrideIfStorageIsRelevantToStorageAccessAPI(
-          net::CookieSettingOverride::kStorageAccessGrantEligible, {}),
-      content_settings::CookieSettings::QueryReason::kSiteStorage);
+      cookie_settings->SettingOverridesForStorage());
 }
 
 #if !BUILDFLAG(IS_ANDROID)

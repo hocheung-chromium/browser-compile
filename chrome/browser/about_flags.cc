@@ -3407,9 +3407,6 @@ const FeatureEntry kFeatureEntries[] = {
     {"top-chrome-touch-ui", flag_descriptions::kTopChromeTouchUiName,
      flag_descriptions::kTopChromeTouchUiDescription, kOsDesktop,
      MULTI_VALUE_TYPE(kTopChromeTouchUiChoices)},
-    {"variable-colrv1", flag_descriptions::kVariableCOLRV1Name,
-     flag_descriptions::kVariableCOLRV1Description, kOsAll,
-     FEATURE_VALUE_TYPE(blink::features::kVariableCOLRV1)},
 #if BUILDFLAG(ENABLE_WEBUI_TAB_STRIP)
     {flag_descriptions::kWebUITabStripFlagId,
      flag_descriptions::kWebUITabStripName,
@@ -6004,6 +6001,11 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kStartSurfaceRefactorDescription, kOsAndroid,
      FEATURE_VALUE_TYPE(chrome::android::kStartSurfaceRefactor)},
 
+    {"enable-start-surface-on-tablet",
+     flag_descriptions::kStartSurfaceOnTabletName,
+     flag_descriptions::kStartSurfaceOnTabletDescription, kOsAndroid,
+     FEATURE_VALUE_TYPE(chrome::android::kStartSurfaceOnTablet)},
+
     {"enable-show-scrollable-mvt-on-ntp",
      flag_descriptions::kShowScrollableMVTOnNTPAndroidName,
      flag_descriptions::kShowScrollableMVTOnNTPAndroidDescription, kOsAndroid,
@@ -7353,9 +7355,6 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kProductivityLauncherImageSearchName,
      flag_descriptions::kProductivityLauncherImageSearchDescription, kOsCrOS,
      FEATURE_VALUE_TYPE(ash::features::kProductivityLauncherImageSearch)},
-    {"launcher-chat", flag_descriptions::kLauncherChatName,
-     flag_descriptions::kLauncherChatDescription, kOsCrOS,
-     FEATURE_VALUE_TYPE(ash::features::kLauncherChat)},
     {"shelf-auto-hide-separation",
      flag_descriptions::kShelfAutoHideSeparationName,
      flag_descriptions::kShelfAutoHideSeparationDescription, kOsCrOS,
@@ -7978,6 +7977,10 @@ const FeatureEntry kFeatureEntries[] = {
          lens::features::kLensImageFormatOptimizations,
          kLensImageFormatVariations,
          "LensImageFormatOptimizations")},
+
+    {"enable-lens-image-translate", flag_descriptions::kLensImageTranslateName,
+     flag_descriptions::kLensImageTranslateDescription, kOsDesktop,
+     FEATURE_VALUE_TYPE(lens::features::kEnableImageTranslate)},
 
 #if BUILDFLAG(IS_CHROMEOS_ASH)
     {"enable-log-controller-for-diagnostics-app",
