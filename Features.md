@@ -22,6 +22,10 @@ https://github.com/RobRich999/Chromium_Clang/blob/master/win64-avx2.patch
 7、HEVC增强补丁
 https://github.com/RobRich999/Chromium_Clang/blob/master/ffmpeg.patch
 
+8、便携化补丁（通过chrome://flags控制）
+https://github.com/ungoogled-software/ungoogled-chromium-windows/blob/master/patches/ungoogled-chromium/windows/windows-disable-encryption.patch
+https://github.com/ungoogled-software/ungoogled-chromium-windows/blob/master/patches/ungoogled-chromium/windows/windows-disable-machine-id.patch
+
 8、为AVX2版本的opus引入额外的优化（本人修改）
 
 9、删去默认浏览器提示条（本人修改）
