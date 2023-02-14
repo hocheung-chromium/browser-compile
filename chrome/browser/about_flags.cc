@@ -3038,6 +3038,16 @@ const FeatureEntry::FeatureVariation kTabSelectionEditorV2Variations[] = {
 };
 #endif  // BUILDFLAG(IS_ANDROID)
 
+#if BUILDFLAG(IS_ANDROID)
+const FeatureEntry::FeatureParam
+    kTabGroupsContinuationAndroid_deferred_favicon[] = {
+        {"deferred_favicon", "false"}};
+
+const FeatureEntry::FeatureVariation kTabGroupsContinuationAndroidVariations[] =
+    {{"- defer favicons", kTabGroupsContinuationAndroid_deferred_favicon,
+      std::size(kTabGroupsContinuationAndroid_deferred_favicon), nullptr}};
+#endif  // BUILDFLAG(IS_ANDROID)
+
 const FeatureEntry::FeatureParam kPasswordNotesAuthValidity1m[] = {
     {"authentication_validity_duration", "1m"}};
 const FeatureEntry::FeatureParam kPasswordNotesAuthValidity5m[] = {
@@ -3437,6 +3447,10 @@ const FeatureEntry kFeatureEntries[] = {
     {"audio-hfp-mic-sr", flag_descriptions::kAudioHFPMicSRName,
      flag_descriptions::kAudioHFPMicSRDescription, kOsCrOS,
      PLATFORM_FEATURE_NAME_TYPE("CrOSLateBootAudioHFPMicSR")},
+    {"cras-split-alsa-usb-internal",
+     flag_descriptions::kCrasSplitAlsaUsbInternalName,
+     flag_descriptions::kCrasSplitAlsaUsbInternalDescription, kOsCrOS,
+     PLATFORM_FEATURE_NAME_TYPE("CrOSLateBootCrasSplitAlsaUSBInternal")},
     {
         "audio-settings-page",
         flag_descriptions::kAudioSettingsPageName,
@@ -5038,10 +5052,6 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kAudioPeripheralVolumeGranularityName,
      flag_descriptions::kAudioPeripheralVolumeGranularityDescription, kOsCrOS,
      FEATURE_VALUE_TYPE(ash::features::kAudioPeripheralVolumeGranularity)},
-    {"enable-cras-split-alsa-usb-internal",
-     flag_descriptions::kCrasSplitAlsaUsbInternalName,
-     flag_descriptions::kCrasSplitAlsaUsbInternalDescription, kOsDesktop,
-     FEATURE_VALUE_TYPE(ash::features::kCrasSplitAlsaUsbInternal)},
     {"eche-swa", flag_descriptions::kEcheSWAName,
      flag_descriptions::kEcheSWADescription, kOsCrOS,
      FEATURE_VALUE_TYPE(ash::features::kEcheSWA)},
@@ -6069,7 +6079,10 @@ const FeatureEntry kFeatureEntries[] = {
     {"enable-tab-groups-continuation",
      flag_descriptions::kTabGroupsContinuationAndroidName,
      flag_descriptions::kTabGroupsContinuationAndroidDescription, kOsAndroid,
-     FEATURE_VALUE_TYPE(chrome::android::kTabGroupsContinuationAndroid)},
+     FEATURE_WITH_PARAMS_VALUE_TYPE(
+         chrome::android::kTabGroupsContinuationAndroid,
+         kTabGroupsContinuationAndroidVariations,
+         "TabGroupsContinuation")},
 
     {"enable-tab-groups-ui-improvements",
      flag_descriptions::kTabGroupsUiImprovementsAndroidName,
