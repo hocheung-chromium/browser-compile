@@ -3457,6 +3457,13 @@ const FeatureEntry kFeatureEntries[] = {
     },
 #endif  // BUILDFLAG(ENABLE_WEBUI_TAB_STRIP) && BUILDFLAG(IS_CHROMEOS_ASH)
 #if BUILDFLAG(IS_CHROMEOS_ASH)
+    {"allow-eap-default-cas-without-subject-verification",
+     flag_descriptions::kAllowEapDefaultCasWithoutSubjectVerificationName,
+     flag_descriptions::
+         kAllowEapDefaultCasWithoutSubjectVerificationDescription,
+     kOsCrOS,
+     FEATURE_VALUE_TYPE(
+         ash::features::kAllowEapDefaultCasWithoutSubjectVerification)},
     {"apn-revamp", flag_descriptions::kApnRevampName,
      flag_descriptions::kApnRevampDescription, kOsCrOS,
      FEATURE_VALUE_TYPE(ash::features::kApnRevamp)},
@@ -4929,6 +4936,10 @@ const FeatureEntry kFeatureEntries[] = {
     {"arc-rt-vcpu-quad-core", flag_descriptions::kArcRtVcpuQuadCoreName,
      flag_descriptions::kArcRtVcpuQuadCoreDesc, kOsCrOS,
      FEATURE_VALUE_TYPE(arc::kRtVcpuQuadCore)},
+    {"arc-switch-to-keymint-on-t",
+     flag_descriptions::kArcSwitchToKeyMintOnTName,
+     flag_descriptions::kArcSwitchToKeyMintOnTDesc, kOsCrOS,
+     FEATURE_VALUE_TYPE(arc::kSwitchToKeyMintOnT)},
     {"arc-update-o4c-list-via-a2c2",
      flag_descriptions::kArcUpdateO4CListViaA2C2Name,
      flag_descriptions::kArcUpdateO4CListViaA2C2Desc, kOsCrOS,
@@ -6595,11 +6606,6 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kEnablePalmOnMaxTouchMajorDescription, kOsCrOS,
      FEATURE_VALUE_TYPE(ui::kEnablePalmOnMaxTouchMajor)},
 
-    {"enable-palm-tool-type-palm",
-     flag_descriptions::kEnablePalmOnToolTypePalmName,
-     flag_descriptions::kEnablePalmOnToolTypePalmDescription, kOsCrOS,
-     FEATURE_VALUE_TYPE(ui::kEnablePalmOnToolTypePalm)},
-
     {"enable-heuristic-stylus-palm-rejection",
      flag_descriptions::kEnableHeuristicStylusPalmRejectionName,
      flag_descriptions::kEnableHeuristicStylusPalmRejectionDescription, kOsCrOS,
@@ -6656,6 +6662,11 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kExperimentalRgbKeyboardPatternsName,
      flag_descriptions::kExperimentalRgbKeyboardPatternsDescription, kOsCrOS,
      FEATURE_VALUE_TYPE(ash::features::kExperimentalRgbKeyboardPatterns)},
+
+    {"enable-get-debugd-logs-in-parallel",
+     flag_descriptions::kEnableGetDebugdLogsInParallelName,
+     flag_descriptions::kEnableGetDebugdLogsInParallelDescription, kOsCrOS,
+     FEATURE_VALUE_TYPE(ash::features::kEnableGetDebugdLogsInParallel)},
 
     {"enable-hostname-setting", flag_descriptions::kEnableHostnameSettingName,
      flag_descriptions::kEnableHostnameSettingDescription, kOsCrOS,
@@ -6780,12 +6791,6 @@ const FeatureEntry kFeatureEntries[] = {
          kAutofillUseMobileLabelDisambiguationVariations,
          "AutofillUseMobileLabelDisambiguation")},
 #endif  // BUILDFLAG(IS_ANDROID)
-
-#if BUILDFLAG(IS_CHROMEOS_ASH)
-    {"auto-screen-brightness", flag_descriptions::kAutoScreenBrightnessName,
-     flag_descriptions::kAutoScreenBrightnessDescription, kOsCrOS,
-     FEATURE_VALUE_TYPE(ash::features::kAutoScreenBrightness)},
-#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
 
 #if BUILDFLAG(IS_ANDROID)
     {"metrics-settings-android", flag_descriptions::kMetricsSettingsAndroidName,
@@ -8611,10 +8616,6 @@ const FeatureEntry kFeatureEntries[] = {
     {"enable-projector", flag_descriptions::kProjectorName,
      flag_descriptions::kProjectorDescription, kOsCrOS,
      FEATURE_VALUE_TYPE(ash::features::kProjector)},
-
-    {"enable-projector-annotator", flag_descriptions::kProjectorAnnotatorName,
-     flag_descriptions::kProjectorAnnotatorDescription, kOsCrOS,
-     FEATURE_VALUE_TYPE(ash::features::kProjectorAnnotator)},
 
     {"enable-projector-exclude-transcript",
      flag_descriptions::kProjectorExcludeTranscriptName,
