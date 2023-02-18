@@ -4043,10 +4043,6 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kScreenshotsForAndroidV2Name,
      flag_descriptions::kScreenshotsForAndroidV2Description, kOsAndroid,
      FEATURE_VALUE_TYPE(share::kScreenshotsForAndroidV2)},
-    {"voice-button-in-top-toolbar",
-     flag_descriptions::kVoiceButtonInTopToolbarName,
-     flag_descriptions::kVoiceButtonInTopToolbarDescription, kOsAndroid,
-     FEATURE_VALUE_TYPE(chrome::android::kVoiceButtonInTopToolbar)},
     {"assistant-consent-simplified-text",
      flag_descriptions::kAssistantConsentSimplifiedTextName,
      flag_descriptions::kAssistantConsentSimplifiedTextDescription, kOsAndroid,
@@ -9379,6 +9375,11 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kPassthroughYuvRgbConversionName,
      flag_descriptions::kPassthroughYuvRgbConversionDescription, kOsAll,
      FEATURE_VALUE_TYPE(features::kPassthroughYuvRgbConversion)},
+
+    {"policy-merge-multi-source",
+     flag_descriptions::kPolicyMergeMultiSourceName,
+     flag_descriptions::kPolicyMergeMultiSourceDescription, kOsAll,
+     FEATURE_VALUE_TYPE(policy::features::kPolicyMergeMultiSource)},
 
     // NOTE: Adding a new flag requires adding a corresponding entry to enum
     // "LoginCustomFlags" in tools/metrics/histograms/enums.xml. See "Flag
