@@ -29,5 +29,3 @@ https://github.com/ungoogled-software/ungoogled-chromium-windows/blob/master/pat
 8、为AVX2版本的opus引入额外的优化（本人修改）
 
 9、删去默认浏览器提示条（本人修改）
-
-10、为本机编译和交叉编译修改了一些与MSVS+SDK工件有关的文件（本人修改）
