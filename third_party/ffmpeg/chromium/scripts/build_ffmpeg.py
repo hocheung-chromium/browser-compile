@@ -315,7 +315,7 @@ def SetupWindowsCrossCompileToolchain(target_arch):
       '--ar=llvm-ar',
 
       # Separate from optflags because configure strips it from msvc builds...
-      '--extra-cflags=-O2',
+      '--extra-cflags=-O3',
   ]
 
   if target_arch == 'ia32':
@@ -827,7 +827,7 @@ def ConfigureAndBuild(target_arch, target_os, host_os, host_arch, parallel_jobs,
               # NOTE: we don't need softfp for this hardware.
               '--extra-cflags=-mfloat-abi=hard',
               # For some reason configure drops this...
-              '--extra-cflags=-O2',
+              '--extra-cflags=-O3',
           ])
 
         if target_arch == 'arm-neon':

@@ -30,4 +30,9 @@
      "Disables use of a generated machine-specific ID to lock the user data directory to that machine.  This is used to enable portable user data directories.",
      kOsWin, SINGLE_VALUE_TYPE("disable-machine-id")},
 
+    {"double-click-close-tab",
+     "Double Click to Close Tab",
+     "Enables double clicking a tab to close it.",
+     kOsDesktop, SINGLE_VALUE_TYPE("double-click-close-tab")},
+
 #endif  // CHROME_BROWSER_YFQH_FLAG_ENTRIES_H_
