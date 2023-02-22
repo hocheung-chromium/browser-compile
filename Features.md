@@ -29,3 +29,5 @@ https://github.com/ungoogled-software/ungoogled-chromium-windows/blob/master/pat
 8、为AVX2版本的opus引入额外的优化（本人修改）
 
 9、删去默认浏览器提示条（本人修改）
+
+10、新增双击关闭标签页功能（本人修改）
