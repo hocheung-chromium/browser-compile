@@ -3369,7 +3369,8 @@ const FeatureEntry kFeatureEntries[] = {
     {"show-autofill-type-predictions",
      flag_descriptions::kShowAutofillTypePredictionsName,
      flag_descriptions::kShowAutofillTypePredictionsDescription, kOsAll,
-     FEATURE_VALUE_TYPE(autofill::features::kAutofillShowTypePredictions)},
+     FEATURE_VALUE_TYPE(
+         autofill::features::test::kAutofillShowTypePredictions)},
     {"autofill-more-prominent-popup",
      flag_descriptions::kAutofillMoreProminentPopupName,
      flag_descriptions::kAutofillMoreProminentPopupDescription, kOsDesktop,
@@ -4942,6 +4943,10 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kArcSwitchToKeyMintOnTName,
      flag_descriptions::kArcSwitchToKeyMintOnTDesc, kOsCrOS,
      FEATURE_VALUE_TYPE(arc::kSwitchToKeyMintOnT)},
+    {"arc-sync-install-priority",
+     flag_descriptions::kArcSyncInstallPriorityName,
+     flag_descriptions::kArcSyncInstallPriorityDescription, kOsCrOS,
+     FEATURE_VALUE_TYPE(arc::kSyncInstallPriority)},
     {"arc-update-o4c-list-via-a2c2",
      flag_descriptions::kArcUpdateO4CListViaA2C2Name,
      flag_descriptions::kArcUpdateO4CListViaA2C2Desc, kOsCrOS,
@@ -6898,6 +6903,10 @@ const FeatureEntry kFeatureEntries[] = {
      FEATURE_VALUE_TYPE(ash::features::kSettingsAppNotificationSettings)},
 #endif  // BUILDFLAG(IS_CHROMEOS_ASH)
 
+    {"use-sha1-server-handshakes", flag_descriptions::kSHA1ServerSignatureName,
+     flag_descriptions::kSHA1ServerSignatureDescription, kOsAll,
+     FEATURE_VALUE_TYPE(net::features::kSHA1ServerSignature)},
+
     {"encrypted-client-hello", flag_descriptions::kEncryptedClientHelloName,
      flag_descriptions::kEncryptedClientHelloDescription, kOsAll,
      FEATURE_VALUE_TYPE(net::features::kEncryptedClientHello)},
@@ -7568,12 +7577,6 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kEnableOopPrintDriversDescription, kOsDesktop,
      FEATURE_VALUE_TYPE(printing::features::kEnableOopPrintDrivers)},
 #endif
-
-    {"enable-browsing-data-lifetime-manager",
-     flag_descriptions::kEnableBrowsingDataLifetimeManagerName,
-     flag_descriptions::kEnableBrowsingDataLifetimeManagerDescription, kOsAll,
-     FEATURE_VALUE_TYPE(
-         browsing_data::features::kEnableBrowsingDataLifetimeManager)},
 
     {"privacy-sandbox-ads-apis",
      flag_descriptions::kPrivacySandboxAdsAPIsOverrideName,
@@ -9398,6 +9401,22 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kEnableNotificationImageDragDescription, kOsCrOS,
      FEATURE_VALUE_TYPE(ash::features::kNotificationImageDrag)},
 #endif
+
+#if !BUILDFLAG(IS_ANDROID)
+    {"autofill-enable-new-save-card-bubble-ui",
+     flag_descriptions::kAutofillEnableNewSaveCardBubbleUiName,
+     flag_descriptions::kAutofillEnableNewSaveCardBubbleUiDescription,
+     kOsDesktop,
+     FEATURE_VALUE_TYPE(
+         autofill::features::kAutofillEnableNewSaveCardBubbleUi)},
+#endif  // !BUILDFLAG(IS_ANDROID)
+
+    {"autofill-enable-new-card-art-and-network-images",
+     flag_descriptions::kAutofillEnableNewCardArtAndNetworkImagesName,
+     flag_descriptions::kAutofillEnableNewCardArtAndNetworkImagesDescription,
+     kOsAll,
+     FEATURE_VALUE_TYPE(
+         autofill::features::kAutofillEnableNewCardArtAndNetworkImages)},
 
     // NOTE: Adding a new flag requires adding a corresponding entry to enum
     // "LoginCustomFlags" in tools/metrics/histograms/enums.xml. See "Flag
