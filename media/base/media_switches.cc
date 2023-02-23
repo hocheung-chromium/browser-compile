@@ -116,6 +116,8 @@ const char kAudioCapturerWithEchoCancellation[] =
 #if defined(USE_CRAS)
 // Use CRAS, the ChromeOS audio server.
 const char kUseCras[] = "use-cras";
+// Enforce system audio echo cancellation.
+const char kSystemAecEnabled[] = "system-aec-enabled";
 #endif  // defined(USE_CRAS)
 
 // For automated testing of protected content, this switch allows specific
@@ -876,6 +878,12 @@ const base::FeatureParam<int> kHardwareSecureDecryptionFallbackMinDisablingDays{
     &kHardwareSecureDecryptionFallback, "min_disabling_days", 30};
 const base::FeatureParam<int> kHardwareSecureDecryptionFallbackMaxDisablingDays{
     &kHardwareSecureDecryptionFallback, "max_disabling_days", 180};
+
+// Whether selected HardwareContextReset events should be considered as failures
+// in the hardware secure decryption fallback logic.
+const base::FeatureParam<bool>
+    kHardwareSecureDecryptionFallbackOnHardwareContextReset{
+        &kHardwareSecureDecryptionFallback, "on_hardware_context_reset", true};
 
 BASE_FEATURE(kWakeLockOptimisationHiddenMuted,
              "kWakeLockOptimisationHiddenMuted",

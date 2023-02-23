@@ -56,6 +56,7 @@
 #include "chrome/browser/sharing_hub/sharing_hub_features.h"
 #include "chrome/browser/signin/signin_features.h"
 #include "chrome/browser/site_isolation/about_flags.h"
+#include "chrome/browser/thumbnail/cc/features.h"
 #include "chrome/browser/ui/browser_navigator_params.h"
 #include "chrome/browser/ui/ui_features.h"
 #include "chrome/browser/unexpire_flags.h"
@@ -4778,6 +4779,10 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kImeTrayHideVoiceButtonName,
      flag_descriptions::kImeTrayHideVoiceButtonDescription, kOsCrOS,
      FEATURE_VALUE_TYPE(ash::features::kImeTrayHideVoiceButton)},
+    {"enable-cros-ime-us-english-model-update",
+     flag_descriptions::kImeUsEnglishModelUpdateName,
+     flag_descriptions::kImeUsEnglishModelUpdateDescription, kOsCrOS,
+     FEATURE_VALUE_TYPE(ash::features::kImeUsEnglishModelUpdate)},
     {"enable-cros-multilingual-typing",
      flag_descriptions::kMultilingualTypingName,
      flag_descriptions::kMultilingualTypingDescription, kOsCrOS,
@@ -5106,6 +5111,12 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kEcheSWACheckAndroidNetworkInfoName,
      flag_descriptions::kEcheSWACheckAndroidNetworkInfoDescription, kOsCrOS,
      FEATURE_VALUE_TYPE(ash::features::kEcheSWACheckAndroidNetworkInfo)},
+    {"eche-swa-process-android-accessibility-tree",
+     flag_descriptions::kEcheSWAProcessAndroidAccessibilityTreeName,
+     flag_descriptions::kEcheSWAProcessAndroidAccessibilityTreeDescription,
+     kOsCrOS,
+     FEATURE_VALUE_TYPE(
+         ash::features::kEcheSWAProcessAndroidAccessibilityTree)},
     {"eche-swa-debug-mode", flag_descriptions::kEcheSWADebugModeName,
      flag_descriptions::kEcheSWADebugModeDescription, kOsCrOS,
      FEATURE_VALUE_TYPE(ash::features::kEcheSWADebugMode)},
@@ -9363,15 +9374,15 @@ const FeatureEntry kFeatureEntries[] = {
 #if BUILDFLAG(IS_ANDROID)
     {"thumbnail-cache-refactor", flag_descriptions::kThumbnailCacheRefactorName,
      flag_descriptions::kThumbnailCacheRefactorDescription, kOsAndroid,
-     FEATURE_VALUE_TYPE(chrome::android::kThumbnailCacheRefactor)},
+     FEATURE_VALUE_TYPE(thumbnail::kThumbnailCacheRefactor)},
 #endif  // BUILDFLAG(IS_ANDROID)
 
-    {"autofill-enable-page-load-metadata-integration",
-     flag_descriptions::kAutofillEnablePageLoadMetadataIntegrationName,
-     flag_descriptions::kAutofillEnablePageLoadMetadataIntegrationDescription,
+    {"autofill-enable-iban-client-side-url-filtering",
+     flag_descriptions::kAutofillEnableIbanClientSideUrlFilteringName,
+     flag_descriptions::kAutofillEnableIbanClientSideUrlFilteringDescription,
      kOsAll,
      FEATURE_VALUE_TYPE(
-         autofill::features::kAutofillEnablePageLoadMetadataIntegration)},
+         autofill::features::kAutofillEnableIbanClientSideUrlFiltering)},
 
 #if BUILDFLAG(IS_CHROMEOS_ASH)
     {"system-live-caption", flag_descriptions::kSystemLiveCaptionName,
@@ -9417,6 +9428,12 @@ const FeatureEntry kFeatureEntries[] = {
      kOsAll,
      FEATURE_VALUE_TYPE(
          autofill::features::kAutofillEnableNewCardArtAndNetworkImages)},
+    {"autofill-upstream-use-alternate-secure-data-type",
+     flag_descriptions::kAutofillUpstreamUseAlternateSecureDataTypeName,
+     flag_descriptions::kAutofillUpstreamUseAlternateSecureDataTypeDescription,
+     kOsAll,
+     FEATURE_VALUE_TYPE(
+         autofill::features::kAutofillUpstreamUseAlternateSecureDataType)},
 
     // NOTE: Adding a new flag requires adding a corresponding entry to enum
     // "LoginCustomFlags" in tools/metrics/histograms/enums.xml. See "Flag
