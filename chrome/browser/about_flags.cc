@@ -228,6 +228,7 @@
 #endif
 
 #if BUILDFLAG(IS_ANDROID)
+#include "cc/slim/features.h"  // nogncheck
 #include "chrome/browser/flags/android/chrome_feature_list.h"
 #include "chrome/browser/notifications/chime/android/features.h"
 #include "chrome/browser/push_messaging/push_messaging_features.h"
@@ -238,6 +239,7 @@
 #include "chrome/browser/media/router/discovery/access_code/access_code_cast_sink_service.h"
 #include "chrome/browser/media/router/media_router_feature.h"
 #include "chrome/browser/web_applications/preinstalled_app_install_features.h"
+#include "components/user_notes/user_notes_features.h"
 #endif  // BUILDFLAG(IS_ANDROID)
 
 #if BUILDFLAG(IS_CHROMEOS_ASH)
@@ -1955,12 +1957,6 @@ const FeatureEntry::FeatureVariation kRelatedSearchesVariations[] = {
     {"from URL", &kRelatedSearchesUrl, 1, nullptr},
     {"from content", &kRelatedSearchesContent, 1, nullptr},
 };
-const FeatureEntry::FeatureParam kRelatedSearchesUiVerbose = {"verbosity", "v"};
-const FeatureEntry::FeatureParam kRelatedSearchesUiExtreme = {"verbosity", "x"};
-const FeatureEntry::FeatureVariation kRelatedSearchesUiVariations[] = {
-    {"verbose", &kRelatedSearchesUiVerbose, 1, nullptr},
-    {"extreme", &kRelatedSearchesUiExtreme, 1, nullptr},
-};
 
 const FeatureEntry::FeatureParam kContextualSearchSuppressShortViewWith300Dp[] =
     {{"contextual_search_minimum_page_height_dp", "300"}};
@@ -3341,11 +3337,6 @@ const FeatureEntry kFeatureEntries[] = {
      FEATURE_WITH_PARAMS_VALUE_TYPE(chrome::android::kRelatedSearches,
                                     kRelatedSearchesVariations,
                                     "RelatedSearches")},
-    {"related-searches-ui", flag_descriptions::kRelatedSearchesUiName,
-     flag_descriptions::kRelatedSearchesUiDescription, kOsAndroid,
-     FEATURE_WITH_PARAMS_VALUE_TYPE(chrome::android::kRelatedSearchesUi,
-                                    kRelatedSearchesUiVariations,
-                                    "RelatedSearchesUi")},
 #endif  // BUILDFLAG(IS_ANDROID)
     {"show-autofill-type-predictions",
      flag_descriptions::kShowAutofillTypePredictionsName,
@@ -3504,6 +3495,10 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kCaptureModeDemoToolsName,
      flag_descriptions::kCaptureModeDemoToolsDescription, kOsCrOS,
      FEATURE_VALUE_TYPE(ash::features::kCaptureModeDemoTools)},
+    {"ash-capture-mode-gif-recording",
+     flag_descriptions::kCaptureModeGifRecordingName,
+     flag_descriptions::kCaptureModeGifRecordingDescription, kOsCrOS,
+     FEATURE_VALUE_TYPE(ash::features::kGifRecording)},
     {"ash-overview-button", flag_descriptions::kOverviewButtonName,
      flag_descriptions::kOverviewButtonDescription, kOsCrOS,
      FEATURE_VALUE_TYPE(ash::features::kOverviewButton)},
@@ -3578,12 +3573,6 @@ const FeatureEntry kFeatureEntries[] = {
     {"enable-cros-privacy-hub", flag_descriptions::kCrosPrivacyHubName,
      flag_descriptions::kCrosPrivacyHubDescription, kOsCrOS,
      FEATURE_VALUE_TYPE(ash::features::kCrosPrivacyHub)},
-    {"cryptauth-v2-dedup-device-last-activity-time",
-     flag_descriptions::kCryptAuthV2DedupDeviceLastActivityTimeName,
-     flag_descriptions::kCryptAuthV2DedupDeviceLastActivityTimeDescription,
-     kOsCrOS,
-     FEATURE_VALUE_TYPE(
-         ash::features::kCryptAuthV2DedupDeviceLastActivityTime)},
     {"jelly-colors", flag_descriptions::kJellyColorsName,
      flag_descriptions::kJellyColorsDescription, kOsCrOS,
      FEATURE_VALUE_TYPE(ash::features::kJelly)},
@@ -4601,9 +4590,6 @@ const FeatureEntry kFeatureEntries[] = {
     {"enable-tls13-early-data", flag_descriptions::kEnableTLS13EarlyDataName,
      flag_descriptions::kEnableTLS13EarlyDataDescription, kOsAll,
      FEATURE_VALUE_TYPE(net::features::kEnableTLS13EarlyData)},
-    {"post-quantum-cecpq2", flag_descriptions::kPostQuantumCECPQ2Name,
-     flag_descriptions::kPostQuantumCECPQ2Description, kOsAll,
-     FEATURE_VALUE_TYPE(net::features::kPostQuantumCECPQ2)},
 #if BUILDFLAG(IS_ANDROID)
     {"feed-bottom-sync-banner", flag_descriptions::kFeedBottomSyncBannerName,
      flag_descriptions::kFeedBottomSyncBannerDescription, kOsAndroid,
@@ -5249,6 +5235,11 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kOmniboxZeroSuggestInMemoryCachingDescription, kOsAll,
      FEATURE_VALUE_TYPE(omnibox::kZeroSuggestInMemoryCaching)},
 
+    {"omnibox-discard-temporary-input-on-tab-switch",
+     flag_descriptions::kOmniboxDiscardTemporaryInputOnTabSwitchName,
+     flag_descriptions::kOmniboxDiscardTemporaryInputOnTabSwitchDescription,
+     kOsAll, FEATURE_VALUE_TYPE(omnibox::kDiscardTemporaryInputOnTabSwitch)},
+
 #if BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS) || BUILDFLAG(IS_MAC) || \
     BUILDFLAG(IS_WIN) || BUILDFLAG(IS_FUCHSIA)
     {"omnibox-experimental-keyword-mode",
@@ -5767,6 +5758,10 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kNtpDummyModulesDescription, kOsDesktop,
      FEATURE_VALUE_TYPE(ntp_features::kNtpDummyModules)},
 #endif
+
+    {"ntp-journeys-module", flag_descriptions::kNtpHistoryClustersModuleName,
+     flag_descriptions::kNtpHistoryClustersModuleDescription, kOsDesktop,
+     FEATURE_VALUE_TYPE(ntp_features::kNtpHistoryClustersModule)},
 
     {"ntp-middle-slot-promo-dismissal",
      flag_descriptions::kNtpMiddleSlotPromoDismissalName,
@@ -6976,12 +6971,6 @@ const FeatureEntry kFeatureEntries[] = {
      kOsAll,
      FEATURE_VALUE_TYPE(features::kEnableBackForwardCacheForScreenReader)},
 
-#if !BUILDFLAG(IS_ANDROID)
-    {"closed-tab-cache", flag_descriptions::kClosedTabCacheName,
-     flag_descriptions::kClosedTabCacheDescription, kOsDesktop,
-     FEATURE_VALUE_TYPE(features::kClosedTabCache)},
-#endif  // !BUILDFLAG(IS_ANDROID)
-
     {"windows-scrolling-personality",
      flag_descriptions::kWindowsScrollingPersonalityName,
      flag_descriptions::kWindowsScrollingPersonalityDescription, kOsAll,
@@ -7134,10 +7123,6 @@ const FeatureEntry kFeatureEntries[] = {
     {"full-user-agent", flag_descriptions::kFullUserAgentName,
      flag_descriptions::kFullUserAgentDescription, kOsDesktop | kOsAndroid,
      FEATURE_VALUE_TYPE(blink::features::kFullUserAgent)},
-
-    {"reduce-user-agent", flag_descriptions::kReduceUserAgentName,
-     flag_descriptions::kReduceUserAgentDescription, kOsDesktop | kOsAndroid,
-     FEATURE_VALUE_TYPE(blink::features::kReduceUserAgent)},
 
 #if BUILDFLAG(IS_WIN)
     {"run-video-capture-service-in-browser",
@@ -8511,13 +8496,6 @@ const FeatureEntry kFeatureEntries[] = {
      FEATURE_VALUE_TYPE(blink::features::kOriginAgentClusterDefaultEnabled)},
 
 #if !BUILDFLAG(IS_ANDROID)
-    {"enable-user-cloud-signin-restriction-policy",
-     flag_descriptions::kEnableUserCloudSigninRestrictionPolicyName,
-     flag_descriptions::kEnableUserCloudSigninRestrictionPolicyDescription,
-     kOsDesktop,
-     FEATURE_VALUE_TYPE(
-         policy::features::kEnableUserCloudSigninRestrictionPolicyFetcher)},
-
     {"enable-code-based-rbd", flag_descriptions::kCodeBasedRBDName,
      flag_descriptions::kCodeBasedRBDDescription, kOsDesktop,
      FEATURE_WITH_PARAMS_VALUE_TYPE(commerce::kCodeBasedRBD,
@@ -8584,16 +8562,6 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kReduceAcceptLanguageDescription, kOsAll,
      FEATURE_VALUE_TYPE(network::features::kReduceAcceptLanguage)},
 
-    {"reduce-user-agent-minor-version",
-     flag_descriptions::kReduceUserAgentMinorVersionName,
-     flag_descriptions::kReduceUserAgentMinorVersionDescription, kOsAll,
-     FEATURE_VALUE_TYPE(blink::features::kReduceUserAgentMinorVersion)},
-
-    {"reduce-user-agent-platform-oscpu",
-     flag_descriptions::kReduceUserAgentPlatformOsCpuName,
-     flag_descriptions::kReduceUserAgentPlatformOsCpuDescription, kOsAll,
-     FEATURE_VALUE_TYPE(blink::features::kReduceUserAgentPlatformOsCpu)},
-
 #if BUILDFLAG(IS_ANDROID)
     {"reduce-user-agent-android-version-device-model",
      flag_descriptions::kReduceUserAgentAndroidVersionDeviceModelName,
@@ -8612,11 +8580,6 @@ const FeatureEntry kFeatureEntries[] = {
     {"enable-projector", flag_descriptions::kProjectorName,
      flag_descriptions::kProjectorDescription, kOsCrOS,
      FEATURE_VALUE_TYPE(ash::features::kProjector)},
-
-    {"enable-projector-exclude-transcript",
-     flag_descriptions::kProjectorExcludeTranscriptName,
-     flag_descriptions::kProjectorExcludeTranscriptDescription, kOsCrOS,
-     FEATURE_VALUE_TYPE(ash::features::kProjectorExcludeTranscript)},
 
     {"enable-projector-local-playback",
      flag_descriptions::kProjectorLocalPlaybackName,
@@ -8683,6 +8646,10 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kAmbientModeThrottleAnimationName,
      flag_descriptions::kAmbientModeThrottleAnimationDescription, kOsCrOS,
      FEATURE_VALUE_TYPE(ash::features::kAmbientModeThrottleAnimation)},
+    {"ambient-mode-managed-screensaver-enabled",
+     flag_descriptions::kAmbientModeManagedScreensaverName,
+     flag_descriptions::kAmbientModeManagedScreensaverDescription, kOsCrOS,
+     FEATURE_VALUE_TYPE(ash::features::kAmbientModeManagedScreensaver)},
     {"enable-touchpads-in-diagnostics-app",
      flag_descriptions::kEnableTouchpadsInDiagnosticsAppName,
      flag_descriptions::kEnableTouchpadsInDiagnosticsAppDescription, kOsCrOS,
@@ -8901,6 +8868,14 @@ const FeatureEntry kFeatureEntries[] = {
 #endif  // BUILDFLAG(IS_ANDROID)
 
 #if BUILDFLAG(IS_ANDROID)
+    {"request-desktop-site-defaults-logging",
+     flag_descriptions::kRequestDesktopSiteDefaultsLoggingName,
+     flag_descriptions::kRequestDesktopSiteDefaultsLoggingDescription,
+     kOsAndroid,
+     FEATURE_VALUE_TYPE(chrome::android::kRequestDesktopSiteDefaultsLogging)},
+#endif  // BUILDFLAG(IS_ANDROID)
+
+#if BUILDFLAG(IS_ANDROID)
     {"request-desktop-site-exceptions-downgrade",
      flag_descriptions::kRequestDesktopSiteExceptionsDowngradeName,
      flag_descriptions::kRequestDesktopSiteExceptionsDowngradeDescription,
@@ -9029,14 +9004,6 @@ const FeatureEntry kFeatureEntries[] = {
          features::kServiceWorkerSkipIgnorableFetchHandler,
          kServiceWorkerSkipIgnorableFetchHandlerVariations,
          "ServiceWorkerSkipIgnorableFetchHandler")},
-
-#if BUILDFLAG(IS_ANDROID)
-    {"binding-manager-use-not-perceptible-binding",
-     flag_descriptions::kBindingManagerUseNotPerceptibleBindingName,
-     flag_descriptions::kBindingManagerUseNotPerceptibleBindingDescription,
-     kOsAndroid,
-     FEATURE_VALUE_TYPE(::features::kBindingManagerUseNotPerceptibleBinding)},
-#endif
 
 #if !BUILDFLAG(IS_ANDROID)
     {"password-manager-redesign",
@@ -9168,7 +9135,7 @@ const FeatureEntry kFeatureEntries[] = {
     {"chrome-root-store-enabled",
      flag_descriptions::kChromeRootStoreEnabledName,
      flag_descriptions::kChromeRootStoreEnabledDescription,
-     kOsWin | kOsMac | kOsAndroid,
+     kOsWin | kOsMac | kOsAndroid | kOsLinux | kOsCrOS | kOsLacros,
      FEATURE_VALUE_TYPE(net::features::kChromeRootStoreUsed)},
 #endif  // BUILDFLAG(CHROME_ROOT_STORE_SUPPORTED)
 
@@ -9365,6 +9332,10 @@ const FeatureEntry kFeatureEntries[] = {
     {"thumbnail-cache-refactor", flag_descriptions::kThumbnailCacheRefactorName,
      flag_descriptions::kThumbnailCacheRefactorDescription, kOsAndroid,
      FEATURE_VALUE_TYPE(thumbnail::kThumbnailCacheRefactor)},
+    
+    {"slim-compositor", flag_descriptions::kSlimCompositorName,
+     flag_descriptions::kSlimCompositorDescription, kOsAndroid,
+     FEATURE_VALUE_TYPE(features::kSlimCompositor)},
 #endif  // BUILDFLAG(IS_ANDROID)
 
     {"autofill-enable-iban-client-side-url-filtering",
@@ -9428,6 +9399,12 @@ const FeatureEntry kFeatureEntries[] = {
     {"power-bookmark-backend", flag_descriptions::kPowerBookmarkBackendName,
      flag_descriptions::kPowerBookmarkBackendDescription, kOsAll,
      FEATURE_VALUE_TYPE(power_bookmarks::kPowerBookmarkBackend)},
+
+#if !BUILDFLAG(IS_ANDROID)
+    {"user-notes-side-panel", flag_descriptions::kUserNotesSidePanelName,
+     flag_descriptions::kUserNotesSidePanelDescription, kOsDesktop,
+     FEATURE_VALUE_TYPE(user_notes::kUserNotes)},
+#endif
 
     // NOTE: Adding a new flag requires adding a corresponding entry to enum
     // "LoginCustomFlags" in tools/metrics/histograms/enums.xml. See "Flag
