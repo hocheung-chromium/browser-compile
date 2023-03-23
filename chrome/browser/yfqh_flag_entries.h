@@ -34,5 +34,10 @@
      "Double Click to Close Tab",
      "Enables double clicking a tab to close it.",
      kOsDesktop, SINGLE_VALUE_TYPE("double-click-close-tab")},
+    
+    {"hide-sidepanel-button",
+     "Hide SidePanel Button",
+     "Hides the SidePanel Button.",
+     kOsDesktop, SINGLE_VALUE_TYPE("hide-sidepanel-button")},
 
 #endif  // CHROME_BROWSER_YFQH_FLAG_ENTRIES_H_

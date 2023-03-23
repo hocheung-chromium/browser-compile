@@ -1332,7 +1332,6 @@ bool TabStripModel::IsContextMenuCommandEnabled(
     }
 
     case CommandFollowSite:
-      // [[fallthrough]];
     case CommandUnfollowSite: {
       std::vector<int> indices = GetIndicesForCommand(context_index);
       // Since all tabs should belong to same profile, it is enough to do the

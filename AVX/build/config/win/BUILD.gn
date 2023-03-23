@@ -128,7 +128,7 @@ config("compiler") {
     # microarchitecture. MSVC only supports a subset of architectures, and the
     # next step after SSE2 will be AVX.
     if (current_cpu == "x86" || current_cpu == "x64") {
-      cflags += [ "-mavx", "-maes", "-mvaes", "-mpclmul", ]
+      cflags += [ "-mavx", "-maes", "-mvaes", ]
     }
 
     if (exec_script("//build/win/use_ansi_codes.py", [], "trim string") ==

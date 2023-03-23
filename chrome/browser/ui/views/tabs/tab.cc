@@ -11,9 +11,9 @@
 #include <memory>
 #include <utility>
 
-#include "base/command_line.h"
 #include "base/debug/alias.h"
 #include "base/functional/bind.h"
+#include "base/command_line.h"
 #include "base/i18n/rtl.h"
 #include "base/memory/raw_ptr.h"
 #include "base/metrics/user_metrics.h"
@@ -212,7 +212,6 @@ Tab::Tab(TabSlotController* controller)
   title_->SetHandlesTooltips(false);
   title_->SetAutoColorReadabilityEnabled(false);
   title_->SetText(CoreTabHelper::GetDefaultTitle());
-  title_->SetFontList(tab_style_->GetFontList());
   // |title_| paints on top of an opaque region (the tab background) of a
   // non-opaque layer (the tabstrip's layer), which cannot currently be detected
   // by the subpixel-rendering opacity check.
@@ -528,6 +527,25 @@ void Tab::OnMouseReleased(const ui::MouseEvent& event) {
   if (controller_->EndDrag(END_DRAG_COMPLETE))
     return;
 
+  // Close tab on double click, mirror of IsOnlyMiddleMouseButton
+  if (base::CommandLine::ForCurrentProcess()->HasSwitch("double-click-close-tab")) {
+    if (event.IsOnlyLeftMouseButton() && event.GetClickCount() == 2) {
+      if (HitTestPoint(event.location())) {
+        controller_->CloseTab(this, CLOSE_TAB_FROM_MOUSE);
+      }
+    }
+  } else if (closing_) {
+      // We're animating closed and a middle mouse button was pushed on us but
+      // we don't contain the mouse anymore. We assume the user is clicking
+      // quicker than the animation and we should close the tab that falls under
+      // the mouse.
+      gfx::Point location_in_parent = event.location();
+      ConvertPointToTarget(this, parent(), &location_in_parent);
+      Tab* closest_tab = controller_->GetTabAt(location_in_parent);
+      if (closest_tab)
+        controller_->CloseTab(closest_tab, CLOSE_TAB_FROM_MOUSE);
+  }
+
   // Close tab on middle click, but only if the button is released over the tab
   // (normal windows behavior is to discard presses of a UI element where the
   // releases happen off the element).
@@ -545,31 +563,12 @@ void Tab::OnMouseReleased(const ui::MouseEvent& event) {
       if (closest_tab)
         controller_->CloseTab(closest_tab, CLOSE_TAB_FROM_MOUSE);
     }
-    // Close tab on double click, mirror of IsOnlyMiddleMouseButton
-  } else if (base::CommandLine::ForCurrentProcess()->HasSwitch(
-                 "double-click-close-tab")) {
-    if (event.IsOnlyLeftMouseButton() && event.GetClickCount() == 2) {
-      if (HitTestPoint(event.location())) {
-        controller_->CloseTab(this, CLOSE_TAB_FROM_MOUSE);
-      } else if (closing_) {
-        // We're animating closed and the left mouse button was pushed on us but
-        // we don't contain the mouse anymore. We assume the user is clicking
-        // quicker than the animation and we should close the tab that falls
-        // under the mouse.
-        gfx::Point location_in_parent = event.location();
-        ConvertPointToTarget(this, parent(), &location_in_parent);
-        Tab* closest_tab = controller_->GetTabAt(location_in_parent);
-        if (closest_tab) {
-          controller_->CloseTab(closest_tab, CLOSE_TAB_FROM_MOUSE);
-        }
-      } else if (event.IsOnlyLeftMouseButton() && !event.IsShiftDown() &&
-                 !IsSelectionModifierDown(event)) {
-        // If the tab was already selected mouse pressed doesn't change the
-        // selection. Reset it now to handle the case where multiple tabs were
-        // selected.
-        controller_->SelectTab(this, event);
-      }
-    }
+  } else if (event.IsOnlyLeftMouseButton() && !event.IsShiftDown() &&
+             !IsSelectionModifierDown(event)) {
+    // If the tab was already selected mouse pressed doesn't change the
+    // selection. Reset it now to handle the case where multiple tabs were
+    // selected.
+    controller_->SelectTab(this, event);
   }
 }
 
@@ -817,7 +816,6 @@ void Tab::ActiveStateChanged() {
   UpdateTabIconNeedsAttentionBlocked();
   UpdateForegroundColors();
   alert_indicator_button_->OnParentTabButtonColorChanged();
-  title_->SetFontList(tab_style_->GetFontList());
   Layout();
 }
 

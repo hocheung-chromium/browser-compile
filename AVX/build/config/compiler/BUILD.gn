@@ -573,11 +573,6 @@ config("compiler") {
     }
   }
 
-  # Rust compiler setup (for either clang or rustc).
-  if (enable_rust) {
-    defines += [ "RUST_ENABLED" ]
-  }
-
   # C11/C++11 compiler flags setup.
   # ---------------------------
   if (is_linux || is_chromeos || is_android || (is_nacl && is_clang) ||
@@ -671,24 +666,13 @@ config("compiler") {
     cflags += [
       "-flto=thin",
       "-fsplit-lto-unit",
-    ]
-
-    cflags += [
-        "-mllvm", "-adce-remove-loops",
-        "-mllvm", "-enable-cse-in-irtranslator",
-        "-mllvm", "-enable-cse-in-legalizer",
-        "-mllvm", "-scalar-evolution-use-expensive-range-sharpening",
-        "-mllvm", "-loop-rotate-multi",
-        "-mllvm", "-enable-loopinterchange",
-        "-mllvm", "-enable-loop-distribute",
-        "-mllvm", "-enable-loop-flatten",
-        "-mllvm", "-interleave-small-loop-scalar-reduction",
-        "-mllvm", "-enable-interleaved-mem-accesses",
-        "-mllvm", "-enable-masked-interleaved-mem-accesses",
-        "-mllvm", "-enable-gvn-hoist",
-        "-mllvm", "-gvn-hoist-max-bbs=-1",
-        "-mllvm", "-gvn-hoist-max-depth=-1",
-        "-mllvm", "-gvn-hoist-max-chain-length=-1",
+      "-mllvm", "-enable-gvn-hoist",
+      "-mllvm", "-enable-loopinterchange",
+      "-mllvm", "-enable-loop-distribute",
+      "-mllvm", "-enable-loop-flatten",
+      "-mllvm", "-interleave-small-loop-scalar-reduction",
+      "-mllvm", "-loop-rotate-multi",
+      "-mllvm", "-scalar-evolution-use-expensive-range-sharpening",
     ]
 
     # Limit the size of the ThinLTO cache to the lesser of 10% of
@@ -708,58 +692,35 @@ config("compiler") {
         # "/lldltocache:" +
         #     rebase_path("$root_out_dir/thinlto-cache", root_build_dir),
         # "/lldltocachepolicy:$cache_policy",
-      ]
-
-      ldflags += [
-        "-mllvm:-adce-remove-loops",
-        "-mllvm:-enable-cse-in-irtranslator",
-        "-mllvm:-enable-cse-in-legalizer",
-        "-mllvm:-scalar-evolution-use-expensive-range-sharpening",
-        "-mllvm:-loop-rotate-multi",
+        "-mllvm:-enable-gvn-hoist",
         "-mllvm:-enable-loopinterchange",
         "-mllvm:-enable-loop-distribute",
         "-mllvm:-enable-loop-flatten",
         "-mllvm:-interleave-small-loop-scalar-reduction",
-        "-mllvm:-enable-interleaved-mem-accesses",
-        "-mllvm:-enable-masked-interleaved-mem-accesses",
-        "-mllvm:-enable-gvn-hoist",
-        "-mllvm:-gvn-hoist-max-bbs=-1",
-        "-mllvm:-gvn-hoist-max-depth=-1",
-        "-mllvm:-gvn-hoist-max-chain-length=-1",
-        # "-mllvm:-polly",
-        # "-mllvm:-polly-detect-profitability-min-per-loop-insts=40",
-        # "-mllvm:-polly-invariant-load-hoisting",
-        # "-mllvm:-polly-run-dce",
-        # "-mllvm:-polly-vectorizer=stripmine",
+        "-mllvm:-loop-rotate-multi",
+        "-mllvm:-scalar-evolution-use-expensive-range-sharpening",
+        "-mllvm:-polly",
+        "-mllvm:-polly-detect-profitability-min-per-loop-insts=40",
+        "-mllvm:-polly-invariant-load-hoisting",
+        "-mllvm:-polly-vectorizer=stripmine",
         # "-mllvm:-pass-remarks-analysis=polly",
       ]
-
     } else {
-      ldflags += [ "-flto=thin" ]
-
       ldflags += [
-        "-Wl,-mllvm,-adce-remove-loops",
-        "-Wl,-mllvm,-enable-cse-in-irtranslator",
-        "-Wl,-mllvm,-enable-cse-in-legalizer",
-        "-Wl,-mllvm,-scalar-evolution-use-expensive-range-sharpening",
-        "-Wl,-mllvm,-loop-rotate-multi",
+        "-flto=thin",
+        "-Wl,-mllvm,-enable-gvn-hoist",
         "-Wl,-mllvm,-enable-loopinterchange",
         "-Wl,-mllvm,-enable-loop-distribute",
         "-Wl,-mllvm,-enable-loop-flatten",
         "-Wl,-mllvm,-interleave-small-loop-scalar-reduction",
-        "-Wl,-mllvm,-enable-interleaved-mem-accesses",
-        "-Wl,-mllvm,-enable-masked-interleaved-mem-accesses",
-        "-Wl,-mllvm,-enable-gvn-hoist",
-        "-Wl,-mllvm,-gvn-hoist-max-bbs=-1",
-        "-Wl,-mllvm,-gvn-hoist-max-depth=-1",
-        "-Wl,-mllvm,-gvn-hoist-max-chain-length=-1",
-        # "-Wl,-mllvm,-polly",
-        # "-Wl,-mllvm,-polly-detect-profitability-min-per-loop-insts=40",
-        # "-Wl,-mllvm,-polly-invariant-load-hoisting",
-        # "-Wl,-mllvm,-polly-run-dce",
-        # "-Wl,-mllvm,-polly-vectorizer=stripmine",
+        "-Wl,-mllvm,-loop-rotate-multi",
+        "-Wl,-mllvm,-scalar-evolution-use-expensive-range-sharpening",
+        "-Wl,-mllvm,-polly",
+        "-Wl,-mllvm,-polly-detect-profitability-min-per-loop-insts=40",
+        "-Wl,-mllvm,-polly-invariant-load-hoisting",
+        "-Wl,-mllvm,-polly-vectorizer=stripmine",
         # "-Wl,-mllvm,-pass-remarks-analysis=polly",
-      ]
+     ]
 
       # Enabling ThinLTO on Chrome OS too, in an effort to reduce the memory
       # usage in crbug.com/1038040. Note this will increase build time in
@@ -771,14 +732,10 @@ config("compiler") {
       # of "all" which means number of hardware threads) is faster.
       ldflags += [ "-Wl,--thinlto-jobs=all" ]
       if (is_apple) {
-        _object_path_suffix = ""
-        if (is_ios) {
-          _object_path_suffix = ",persist"
-        }
         ldflags += [
           "-Wl,-cache_path_lto," +
               rebase_path("$root_out_dir/thinlto-cache", root_build_dir),
-          "-Wcrl,object_path_lto" + _object_path_suffix,
+          "-Wcrl,object_path_lto",
         ]
       } else {
         # ldflags +=
@@ -792,9 +749,8 @@ config("compiler") {
         # ARM was originally set lower than x86 to keep the size
         # bloat of ThinLTO to <10%, but that's potentially no longer true.
         # FIXME(inglorion): maybe tune these?
-        if (target_cpu == "arm" || target_cpu == "arm64") {
-          import_instr_limit = 20
-        }
+        # TODO(b/271459198): Revert limit on amd64 to 30 when fixed.
+        import_instr_limit = 20
       } else if (is_android) {
         # TODO(crbug.com/1308318): Investigate if we can get the > 6% perf win
         # of import_instr_limit 30 with a binary size hit smaller than ~2 MiB.
@@ -948,9 +904,10 @@ config("compiler") {
     # to compile dylibs on Android, such as for constructing unit test APKs.
     "-Cdefault-linker-libraries",
 
-    # Turn warnings into the "deny" lint level, which produce compiler errors.
-    # The equivalent of -Werror for clang/gcc.
-    "-Dwarnings",
+    # Require `unsafe` blocks even in `unsafe` fns. This is intended to become
+    # an error by default eventually; see
+    # https://github.com/rust-lang/rust/issues/71668
+    "-Dunsafe_op_in_unsafe_fn",
 
     # To make Rust .d files compatible with ninja
     "-Zdep-info-omit-d-target",
@@ -963,17 +920,13 @@ config("compiler") {
     # directory from appearing in build outputs.
     "-Zremap-cwd-prefix=.",
 
-    "-Ctune-cpu=haswell", "-Ctarget-feature=+avx,+aes,-pclmul",
+    "-Ctarget-feature=+avx,+aes,-pclmul",
   ]
   if (rust_abi_target != "") {
     rustflags += [ "--target=$rust_abi_target" ]
   }
-  if (!use_thin_lto || !use_chromium_rust_toolchain) {
-    # Don't include bitcode if it won't be used, or can't be used. When
-    # use_thin_lto is true, we will try to apply LTO to any objects that have
-    # the appropriate bitcode. But we have to use Chromium's toolchain in order
-    # to use LTO with rust code. Chromium's rustc will have an LLVM backend that
-    # matches the C++ clang compiler.
+  if (!use_thin_lto) {
+    # Don't include bitcode if it won't be used.
     rustflags += [ "-Cembed-bitcode=no" ]
   }
   if (is_official_build) {
@@ -1004,7 +957,6 @@ config("thinlto_optimize_default") {
 
     if (is_win) {
       ldflags = [ "/opt:lldlto=" + lto_opt_level ]
-      # ldflags += [ "-mllvm:-enable-pre=false", ]
     } else {
       ldflags = [ "-Wl,--lto-O" + lto_opt_level ]
     }
@@ -1375,7 +1327,7 @@ config("compiler_codegen") {
     configs += [ "//build/config/nacl:compiler_codegen" ]
   }
 
-  if (current_cpu == "arm64" && !is_win) {
+  if (current_cpu == "arm64" && !is_win && is_clang) {
     # Disable outlining everywhere on arm64 except Win. For more information see
     # crbug.com/931297 for Android and crbug.com/1410297 for iOS.
     # TODO(crbug.com/1411363): Enable this on Windows if possible.
@@ -1804,6 +1756,15 @@ config("chromium_code") {
       cflags += [ "-Wextra" ]
     }
 
+    if (treat_warnings_as_errors) {
+      # Turn rustc warnings into the "deny" lint level, which produce compiler
+      # errors. The equivalent of -Werror for clang/gcc.
+      #
+      # Note we apply the actual lint flags in config("compiler"). All warnings
+      # are suppressed in third-party crates.
+      rustflags = [ "-Dwarnings" ]
+    }
+
     # In Chromium code, we define __STDC_foo_MACROS in order to get the
     # C99 macros on Mac and Linux.
     defines = [
@@ -1843,8 +1804,8 @@ config("chromium_code") {
     ]
 
     # TODO(thakis): Enable this more often, https://crbug.com/346399
-    # use_libfuzzer: https://crbug.com/1063180
-    if ((!is_nacl || is_nacl_saigo) && !use_libfuzzer) {
+    # use_fuzzing_engine_with_lpm: https://crbug.com/1063180
+    if ((!is_nacl || is_nacl_saigo) && !use_fuzzing_engine_with_lpm) {
       cflags += [ "-Wunreachable-code-aggressive" ]
     }
 
@@ -2141,11 +2102,12 @@ if (is_win) {
       # can be removed at link time with --gc-sections.
       "-fdata-sections",
       "-ffunction-sections",
+      "-funique-section-names",
     ]
     if ((!is_nacl || is_nacl_saigo) && is_clang) {
       # We don't care about unique section names, this makes object files a bit
       # smaller.
-      common_optimize_on_cflags += [ "-fno-unique-section-names" ]
+      # common_optimize_on_cflags += [ "-fno-unique-section-names" ]
     }
 
     common_optimize_on_ldflags += [
@@ -2214,7 +2176,7 @@ config("optimize") {
         ]
       }
     } else {
-      cflags = [ "-O2" ] + common_optimize_on_cflags
+      cflags = [ "-Os" ] + common_optimize_on_cflags
     }
 
     # Like with `-Oz` on Clang, `-Copt-level=z` will also turn off loop
@@ -2385,10 +2347,12 @@ if (is_clang && is_a_target_toolchain) {
     if (is_android || is_castos) {
       _clang_sample_profile = "//chrome/android/profiles/afdo.prof"
     } else {
-      assert(chromeos_afdo_platform == "atom" ||
-                 chromeos_afdo_platform == "bigcore" ||
-                 chromeos_afdo_platform == "arm",
-             "Only atom, bigcore and arm are valid Chrome OS profiles.")
+      assert(
+          chromeos_afdo_platform == "atom" ||
+              chromeos_afdo_platform == "bigcore" ||
+              chromeos_afdo_platform == "arm" ||
+              chromeos_afdo_platform == "arm-exp",
+          "Only 'atom', 'bigcore', 'arm' and 'arm-exp' are valid ChromeOS profiles.")
       _clang_sample_profile =
           "//chromeos/profiles/${chromeos_afdo_platform}.afdo.prof"
     }
@@ -2742,9 +2706,12 @@ if (is_chromeos_ash && is_chromeos_device) {
 if (is_android || (is_chromeos_ash && is_chromeos_device)) {
   # Use orderfile for linking Chrome on Android and Chrome OS.
   # This config enables using an orderfile for linking in LLD.
-  # TODO: Consider using call graph sort instead, at least on Android.
   config("chrome_orderfile_config") {
-    if (chrome_orderfile_path != "" && !enable_call_graph_profile_sort) {
+    # Don't try to use an orderfile with call graph sorting, except on Android,
+    # where we care about memory used by code, so we still want to mandate
+    # ordering.
+    if (chrome_orderfile_path != "" &&
+        (is_android || !enable_call_graph_profile_sort)) {
       assert(use_lld)
       _rebased_orderfile = rebase_path(chrome_orderfile_path, root_build_dir)
       ldflags = [
