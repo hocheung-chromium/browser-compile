@@ -526,6 +526,12 @@ BASE_FEATURE(kUseMultiPlaneFormatForHardwareVideo,
              "UseMultiPlaneFormatForHardwareVideo",
              base::FEATURE_DISABLED_BY_DEFAULT);
 
+// Enables creating single shared image and mailbox for multi-planar formats for
+// software video decoders.
+BASE_FEATURE(kUseMultiPlaneFormatForSoftwareVideo,
+             "UseMultiPlaneFormatForSoftwareVideo",
+             base::FEATURE_DISABLED_BY_DEFAULT);
+
 // Enables binding software video NV12/P010 GMBs as separate shared images.
 BASE_FEATURE(kMultiPlaneSoftwareVideoSharedImages,
              "MultiPlaneSoftwareVideoSharedImages",
@@ -1211,6 +1217,14 @@ BASE_FEATURE(kAllowClearDolbyVisionInMseWhenPlatformEncryptedDvEnabled,
              "AllowClearDolbyVisionInMseWhenPlatformEncryptedDvEnabled",
              base::FEATURE_DISABLED_BY_DEFAULT);
 #endif
+
+#if BUILDFLAG(IS_CHROMEOS_ASH)
+// Expose the out-of-process video decoding feature from ash-chrome to
+// lacros-chrome through the crosapi.
+const base::Feature MEDIA_EXPORT kExposeOutOfProcessVideoDecodingToLacros{
+    "ExposeOutOfProcessVideoDecodingToLacros",
+    base::FEATURE_ENABLED_BY_DEFAULT};
+#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
 
 #if BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS)
 // Spawn utility processes to perform hardware decode acceleration instead of

@@ -164,6 +164,8 @@ auto& GetViewCommandMap() {
 constexpr int kToolbarDividerWidth = 2;
 constexpr int kToolbarDividerHeight = 16;
 constexpr int kToolbarDividerCornerRadius = 1;
+constexpr int kToolbarDividerSpacing = 9;
+
 }  // namespace
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -730,9 +732,10 @@ void ToolbarView::GetAccessibleNodeData(ui::AXNodeData* node_data) {
 }
 
 void ToolbarView::InitLayout() {
-  const int default_margin = GetLayoutConstant(TOOLBAR_ELEMENT_PADDING);
+  const int default_margin = GetLayoutConstant(TOOLBAR_ICON_DEFAULT_MARGIN);
   // TODO(dfried): rename this constant.
   const int location_bar_margin = GetLayoutConstant(TOOLBAR_STANDARD_SPACING);
+
   const views::FlexSpecification account_container_flex_rule =
       views::FlexSpecification(views::MinimumFlexSizeRule::kScaleToMinimum,
                                views::MaximumFlexSizeRule::kPreferred)
@@ -781,6 +784,8 @@ void ToolbarView::InitLayout() {
     SkColor color = GetColorProvider()->GetColor(ui::kColorSysOutline);
     toolbar_divider_->SetBackground(
         views::CreateRoundedRectBackground(color, kToolbarDividerCornerRadius));
+    toolbar_divider_->SetProperty(views::kMarginsKey,
+                                  gfx::Insets::VH(0, kToolbarDividerSpacing));
   }
 
   LayoutCommon();
@@ -804,6 +809,9 @@ void ToolbarView::LayoutCommon() {
   app_menu_button_->SetTrailingMargin(
       extend_buttons_to_edge ? interior_margin.right() : 0);
 
+  if (toolbar_divider_ && extensions_container_) {
+    toolbar_divider_->SetVisible(extensions_container_->GetVisible());
+  }
   // Cast button visibility is controlled externally.
 }
 

@@ -95,6 +95,13 @@ def GetWinSDKDir():
 
 
 def RunCommand(command, msvc_arch=None, env=None, fail_hard=True):
+  """Run command and return success (True) or failure; or if fail_hard is
+     True, exit on failure.  If msvc_arch is set, runs the command in a
+     shell with the msvc tools for that architecture."""
+
+  if msvc_arch and sys.platform == 'win32':
+    command = [os.path.join(GetWinSDKDir(), 'bin', 'SetEnv.cmd'),
+               "/" + msvc_arch, '&&'] + command
 
   # https://docs.python.org/2/library/subprocess.html:
   # "On Unix with shell=True [...] if args is a sequence, the first item
@@ -977,7 +984,7 @@ def main():
     train_cmd = [os.path.join(LLVM_INSTRUMENTED_DIR, 'bin', 'clang++'),
                 '-target', 'x86_64-unknown-unknown', '-O3', '-march=native',
                 '-mllvm', '-polly',
-                '-mllvm', '-polly-detect-profitability-min-per-loop-insts=40',
+                '-mllvm','-polly-detect-profitability-min-per-loop-insts=40',
                 '-mllvm', '-polly-invariant-load-hoisting',
                 '-mllvm', '-polly-vectorizer=stripmine', '-Rpass-analysis=polly',
                 '-g', '-std=c++14','-fno-exceptions', '-fno-rtti', '-w', '-c',

@@ -1782,14 +1782,14 @@ config("chromium_code") {
       defines += [ "_FORTIFY_SOURCE=2" ]
     }
 
-    if (is_mac) {
-      cflags_objc = [ "-Wobjc-missing-property-synthesis" ]
-      cflags_objcc = [ "-Wobjc-missing-property-synthesis" ]
+    if (is_apple) {
+      cflags_objc = [ "-Wimplicit-retain-self" ]
+      cflags_objcc = [ "-Wimplicit-retain-self" ]
     }
 
-    if (is_ios) {
-      cflags_objc = [ "-Wimplicit-retain-self" ]
-      cflags_objcc = cflags_objc
+    if (is_mac) {
+      cflags_objc += [ "-Wobjc-missing-property-synthesis" ]
+      cflags_objcc += [ "-Wobjc-missing-property-synthesis" ]
     }
   }
 
@@ -2167,7 +2167,7 @@ config("optimize") {
   } else if (optimize_for_size) {
     # Favor size over speed.
     if (is_clang) {
-      cflags = [ "-O2" ] + common_optimize_on_cflags
+      cflags = [ "-O2	" ] + common_optimize_on_cflags
 
       if (use_ml_inliner && is_a_target_toolchain) {
         cflags += [
@@ -2449,7 +2449,7 @@ config("symbols") {
       cflags += [ "-gcodeview-ghash" ]
       ldflags = [ "/DEBUG:GHASH" ]
     } else {
-      ldflags = [ "/DEBUG:NONE" ]
+      ldflags = [ "/DEBUG" ]
     }
 
     # All configs using /DEBUG should include this:
@@ -2646,7 +2646,7 @@ config("minimal_symbols") {
 # names in the final debug information.
 config("no_symbols") {
   if (is_win) {
-    ldflags = [ "/DEBUG" ]
+    ldflags = [ "/DEBUG:NONE" ]
 
     # All configs using /DEBUG should include this:
     configs = [ ":win_pdbaltpath" ]
