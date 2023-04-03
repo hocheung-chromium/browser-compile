@@ -5764,6 +5764,11 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kOmniboxCR23ExpandedStateShapeDescription, kOsDesktop,
      FEATURE_VALUE_TYPE(omnibox::kExpandedStateShape)},
 
+    {"omnibox-cr23-steady-state-icons",
+     flag_descriptions::kOmniboxCR23SteadyStateIconsName,
+     flag_descriptions::kOmniboxCR23SteadyStateIconsDescription, kOsAll,
+     FEATURE_VALUE_TYPE(omnibox::kOmniboxCR23SteadyStateIcons)},
+
     {"omnibox-gm3-steady-state-background-color",
      flag_descriptions::kOmniboxGM3SteadyStateBackgroundColorName,
      flag_descriptions::kOmniboxGM3SteadyStateBackgroundColorDescription,
@@ -7699,6 +7704,10 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kChipLocationBarIconOverrideName,
      flag_descriptions::kChipLocationBarIconOverrideDescription, kOsDesktop,
      FEATURE_VALUE_TYPE(permissions::features::kChipLocationBarIconOverride)},
+
+    {"one-time-permission", flag_descriptions::kOneTimePermissionName,
+     flag_descriptions::kOneTimePermissionDescription, kOsDesktop,
+     FEATURE_VALUE_TYPE(permissions::features::kOneTimePermission)},
 
     {"enable-translate-sub-frames",
      flag_descriptions::kEnableTranslateSubFramesName,
