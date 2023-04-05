@@ -666,13 +666,23 @@ config("compiler") {
     cflags += [
       "-flto=thin",
       "-fsplit-lto-unit",
+      "-mllvm", "-adce-remove-loops",
+      "-mllvm", "-aggressive-ext-opt",
+      "-mllvm", "-enable-cse-in-irtranslator",
+      "-mllvm", "-enable-cse-in-legalizer",
       "-mllvm", "-enable-gvn-hoist",
+      "-mllvm", "-gvn-hoist-max-bbs=-1",
+      "-mllvm", "-gvn-hoist-max-depth=-1",
+      "-mllvm", "-gvn-hoist-max-chain-length=-1",
+      "-mllvm", "-enable-interleaved-mem-accesses",
+      "-mllvm", "-enable-masked-interleaved-mem-accesses",
       "-mllvm", "-enable-loopinterchange",
       "-mllvm", "-enable-loop-distribute",
       "-mllvm", "-enable-loop-flatten",
       "-mllvm", "-interleave-small-loop-scalar-reduction",
       "-mllvm", "-loop-rotate-multi",
       "-mllvm", "-scalar-evolution-use-expensive-range-sharpening",
+      "-mllvm", "-extra-vectorizer-passes",
     ]
 
     # Limit the size of the ThinLTO cache to the lesser of 10% of
@@ -692,35 +702,63 @@ config("compiler") {
         # "/lldltocache:" +
         #     rebase_path("$root_out_dir/thinlto-cache", root_build_dir),
         # "/lldltocachepolicy:$cache_policy",
+        "-mllvm:-adce-remove-loops",
+        "-mllvm:-aggressive-ext-opt",
+        "-mllvm:-enable-cse-in-irtranslator",
+        "-mllvm:-enable-cse-in-legalizer",
         "-mllvm:-enable-gvn-hoist",
+        "-mllvm:-gvn-hoist-max-bbs=-1",
+        "-mllvm:-gvn-hoist-max-depth=-1",
+        "-mllvm:-gvn-hoist-max-chain-length=-1",
+        "-mllvm:-enable-interleaved-mem-accesses",
+        "-mllvm:-enable-masked-interleaved-mem-accesses",
         "-mllvm:-enable-loopinterchange",
         "-mllvm:-enable-loop-distribute",
         "-mllvm:-enable-loop-flatten",
         "-mllvm:-interleave-small-loop-scalar-reduction",
         "-mllvm:-loop-rotate-multi",
         "-mllvm:-scalar-evolution-use-expensive-range-sharpening",
+        "-mllvm:-extra-vectorizer-passes",
         "-mllvm:-polly",
+        "-mllvm:-polly-2nd-level-tiling",
         "-mllvm:-polly-detect-profitability-min-per-loop-insts=40",
         "-mllvm:-polly-invariant-load-hoisting",
+        "-mllvm:-polly-loopfusion-greedy",
+        "-mllvm:-polly-register-tiling",
+        "-mllvm:-polly-run-dce",
         "-mllvm:-polly-vectorizer=stripmine",
         # "-mllvm:-pass-remarks-analysis=polly",
       ]
     } else {
       ldflags += [
         "-flto=thin",
+        "-Wl,-mllvm,-adce-remove-loops",
+        "-Wl,-mllvm,-aggressive-ext-opt",
+        "-Wl,-mllvm,-enable-cse-in-irtranslator",
+        "-Wl,-mllvm,-enable-cse-in-legalizer",
         "-Wl,-mllvm,-enable-gvn-hoist",
+        "-Wl,-mllvm,-gvn-hoist-max-bbs=-1",
+        "-Wl,-mllvm,-gvn-hoist-max-depth=-1",
+        "-Wl,-mllvm,-gvn-hoist-max-chain-length=-1",
+        "-Wl,-mllvm,-enable-interleaved-mem-accesses",
+        "-Wl,-mllvm,-enable-masked-interleaved-mem-accesses",
         "-Wl,-mllvm,-enable-loopinterchange",
         "-Wl,-mllvm,-enable-loop-distribute",
         "-Wl,-mllvm,-enable-loop-flatten",
         "-Wl,-mllvm,-interleave-small-loop-scalar-reduction",
         "-Wl,-mllvm,-loop-rotate-multi",
         "-Wl,-mllvm,-scalar-evolution-use-expensive-range-sharpening",
+        "-Wl,-mllvm,-extra-vectorizer-passes",
         "-Wl,-mllvm,-polly",
+        "-Wl,-mllvm,-polly-2nd-level-tiling",
         "-Wl,-mllvm,-polly-detect-profitability-min-per-loop-insts=40",
         "-Wl,-mllvm,-polly-invariant-load-hoisting",
+        "-Wl,-mllvm,-polly-loopfusion-greedy",
+        "-Wl,-mllvm,-polly-register-tiling",
+        "-Wl,-mllvm,-polly-run-dce",
         "-Wl,-mllvm,-polly-vectorizer=stripmine",
         # "-Wl,-mllvm,-pass-remarks-analysis=polly",
-     ]
+      ]
 
       # Enabling ThinLTO on Chrome OS too, in an effort to reduce the memory
       # usage in crbug.com/1038040. Note this will increase build time in
@@ -920,7 +958,7 @@ config("compiler") {
     # directory from appearing in build outputs.
     "-Zremap-cwd-prefix=.",
 
-    "-Ctune-cpu=haswell", "-Ctarget-feature=+avx,+aes,-pclmul",
+    "-Ctarget-cpu=haswell", "-Ctarget-feature=+aes",
   ]
   if (rust_abi_target != "") {
     rustflags += [ "--target=$rust_abi_target" ]
@@ -953,7 +991,7 @@ config("rust_defer_lto_to_linker") {
 # building with ThinLTO, no optimization is performed in the link step.
 config("thinlto_optimize_default") {
   if (!is_debug && use_thin_lto && is_a_target_toolchain) {
-    lto_opt_level = 2
+    lto_opt_level = 3
 
     if (is_win) {
       ldflags = [ "/opt:lldlto=" + lto_opt_level ]
@@ -976,13 +1014,14 @@ config("thinlto_optimize_default") {
 config("thinlto_optimize_max") {
   if (!is_debug && use_thin_lto && is_a_target_toolchain) {
     if (thin_lto_enable_optimizations) {
-      lto_opt_level = 2
+      lto_opt_level = 3
     } else {
-      lto_opt_level = 2
+      lto_opt_level = 3
     }
 
     if (is_win) {
       ldflags = [ "/opt:lldlto=" + lto_opt_level ]
+      ldflags += [ "-opt:lldltocgo=" + lto_opt_level ]
     } else {
       ldflags = [ "-Wl,--lto-O" + lto_opt_level ]
     }
@@ -2098,7 +2137,7 @@ if (is_win) {
     # Aix does not support these.
 
     common_optimize_on_cflags += [
-      # Put data and code in their own sections, so that unused symbols
+      # P ut data and code in their own sections, so that unused symbols
       # can be removed at link time with --gc-sections.
       "-fdata-sections",
       "-ffunction-sections",
@@ -2152,12 +2191,12 @@ config("optimize") {
     if (chrome_pgo_phase != 2) {
       # Favor size over speed, /O1 must be before the common flags.
       # /O1 implies /Os and /GF.
-      cflags = [ "/O2" ] + common_optimize_on_cflags + [ "/Oi" ]
+      cflags = [ "-Xclang", "-O3", ] + common_optimize_on_cflags + [ "/Oi" ]
       rustflags = [ "-Copt-level=s" ]
     } else {
       # PGO requires all translation units to be compiled with /O2. The actual
       # optimization level will be decided based on the profiling data.
-      cflags = [ "/O2" ] + common_optimize_on_cflags + [ "/Oi" ]
+      cflags = [ "-Xclang", "-O3", ] + common_optimize_on_cflags + [ "/Oi" ]
 
       # https://doc.rust-lang.org/rustc/profile-guided-optimization.html#usage
       # suggests not using an explicit `-Copt-level` at all, and the default is
@@ -2167,7 +2206,7 @@ config("optimize") {
   } else if (optimize_for_size) {
     # Favor size over speed.
     if (is_clang) {
-      cflags = [ "-O2	" ] + common_optimize_on_cflags
+      cflags = [ "-O3" ] + common_optimize_on_cflags
 
       if (use_ml_inliner && is_a_target_toolchain) {
         cflags += [
@@ -2176,7 +2215,7 @@ config("optimize") {
         ]
       }
     } else {
-      cflags = [ "-Os" ] + common_optimize_on_cflags
+      cflags = [ "-O3" ] + common_optimize_on_cflags
     }
 
     # Like with `-Oz` on Clang, `-Copt-level=z` will also turn off loop
@@ -2195,7 +2234,7 @@ config("optimize") {
     # vectorization while otherwise optimizing for size.
     rustflags = [ "-Copt-level=s" ]
   } else {
-    cflags = [ "-O2" ] + common_optimize_on_cflags
+    cflags = [ "-Xclang", "-O3", ] + common_optimize_on_cflags
 
     # The `-O3` for clang turns on extra optimizations compared to the standard
     # `-O2`. But for rust, `-Copt-level=3` is the default and is thus reliable
@@ -2262,11 +2301,11 @@ config("optimize_max") {
     if (is_win) {
       # Favor speed over size, /O2 must be before the common flags.
       # /O2 implies /Ot, /Oi, and /GF.
-      cflags = [ "/O2" ] + common_optimize_on_cflags
+      cflags = [ "-Xclang", "-O3", "/clang:-ffast-math", "/clang:-fno-finite-math-only", ] + common_optimize_on_cflags
     } else if (optimize_for_fuzzing) {
       cflags = [ "-O1" ] + common_optimize_on_cflags
     } else {
-      cflags = [ "-O3" ] + common_optimize_on_cflags
+      cflags = [ "-O3","-ffast-math", "-fno-finite-math-only", ] + common_optimize_on_cflags
     }
     rustflags = [ "-Copt-level=3" ]
   }
@@ -2295,7 +2334,33 @@ config("optimize_speed") {
     if (is_win) {
       # Favor speed over size, /O2 must be before the common flags.
       # /O2 implies /Ot, /Oi, and /GF.
-      cflags = [ "/O2" ] + common_optimize_on_cflags
+      cflags = [ "-Xclang", "-O3", "/clang:-ffast-math", "/clang:-fno-finite-math-only", ] + common_optimize_on_cflags
+    } else if (optimize_for_fuzzing) {
+      cflags = [ "-O1" ] + common_optimize_on_cflags
+    } else {
+      cflags = [ "-O3", "-ffast-math", "-fno-finite-math-only", ] + common_optimize_on_cflags
+    }
+    rustflags = [ "-Copt-level=3" ]
+  }
+}
+
+config("optimize_v8") {
+  if (is_nacl && is_nacl_irt) {
+    # The NaCl IRT is a special case and always wants its own config.
+    # Various components do:
+    #   if (!is_debug) {
+    #     configs -= [ "//build/config/compiler:default_optimization" ]
+    #     configs += [ "//build/config/compiler:optimize_max" ]
+    #   }
+    # So this config has to have the selection logic just like
+    # "default_optimization", below.
+    configs = [ "//build/config/nacl:irt_optimize" ]
+  } else {
+    ldflags = common_optimize_on_ldflags
+    if (is_win) {
+      # Favor speed over size, /O2 must be before the common flags.
+      # /O2 implies /Ot, /Oi, and /GF.
+      cflags = [ "-Xclang", "-O3", ] + common_optimize_on_cflags
     } else if (optimize_for_fuzzing) {
       cflags = [ "-O1" ] + common_optimize_on_cflags
     } else {

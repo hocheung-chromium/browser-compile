@@ -680,7 +680,7 @@ def main():
 
   cflags = [ '-O3 -DNDEBUG -w -march=native -fmerge-all-constants -fdata-sections -ffunction-sections -funique-section-names -mllvm -adce-remove-loops -mllvm -aggressive-ext-opt -mllvm -enable-cse-in-irtranslator -mllvm -enable-cse-in-legalizer -mllvm -enable-gvn-hoist -mllvm -gvn-hoist-max-bbs=-1 -mllvm -gvn-hoist-max-depth=-1 -mllvm -gvn-hoist-max-chain-length=-1 -mllvm -enable-interleaved-mem-accesses -mllvm -enable-masked-interleaved-mem-accesses -mllvm -enable-loopinterchange -mllvm -enable-loop-distribute -mllvm -enable-loop-flatten -mllvm -interleave-small-loop-scalar-reduction -mllvm -loop-rotate-multi -mllvm -scalar-evolution-use-expensive-range-sharpening -mllvm -extra-vectorizer-passes' ]
   cxxflags = [ '-O3 -DNDEBUG -w -march=native -fmerge-all-constants -fdata-sections -ffunction-sections -funique-section-names -mllvm -adce-remove-loops -mllvm -aggressive-ext-opt -mllvm -enable-cse-in-irtranslator -mllvm -enable-cse-in-legalizer -march=native -mllvm -enable-gvn-hoist -mllvm -gvn-hoist-max-bbs=-1 -mllvm -gvn-hoist-max-depth=-1 -mllvm -gvn-hoist-max-chain-length=-1 -mllvm -enable-interleaved-mem-accesses -mllvm -enable-masked-interleaved-mem-accesses -mllvm -enable-loopinterchange -mllvm -enable-loop-distribute -mllvm -enable-loop-flatten -mllvm -interleave-small-loop-scalar-reduction -mllvm -loop-rotate-multi -mllvm -scalar-evolution-use-expensive-range-sharpening -mllvm -extra-vectorizer-passes' ]
-  ldflags = [ '-fuse-ld=lld -Wl,-O2 -Wl,--gc-sections -Wl,--icf=all -Wl,-z,keep-text-section-prefix' ]
+  ldflags = [ '-fuse-ld=lld -Wl,-O2 -Wl,--gc-sections -Wl,--icf=all' ]
 
   if args.x86_only:
     targets = 'X86'

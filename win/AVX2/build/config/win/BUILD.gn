@@ -129,7 +129,7 @@ config("compiler") {
     # microarchitecture. MSVC only supports a subset of architectures, and the
     # next step after SSE2 will be AVX.
     if (current_cpu == "x86" || current_cpu == "x64") {
-      cflags += [ "-mavx", "-maes", "-mvaes", ]
+      cflags += [ "/arch:AVX2", "-maes", ]
     }
 
     # Enable ANSI escape codes if something emulating them is around (cmd.exe
@@ -192,9 +192,7 @@ config("compiler") {
     ]
 
     if (use_lld) {
-      # String tail merging leads to smaller binaries, but they don't compress
-      # as well, leading to increased mini_installer size (crbug.com/838449).
-      # ldflags += [ "/OPT:NOLLDTAILMERGE" ]
+      ldflags += [ "/OPT:LLDTAILMERGE" ]
     }
 
     # TODO(siggi): Is this of any use anymore?
@@ -337,12 +335,16 @@ config("default_cfg_compiler") {
   # This is needed to allow functions to be called by code that is built
   # with CFG enabled, such as system libraries.
   # The CFG guards are only emitted if |win_enable_cfg_guards| is enabled.
-  if (is_clang) {
-    if (win_enable_cfg_guards) {
+  if (win_enable_cfg_guards) {
+    if (is_clang) {
       cflags = [ "/guard:cf" ]
-    } else {
+    }
+    rustflags = [ "-Ccontrol-flow-guard" ]
+  } else {
+    if (is_clang) {
       cflags = [ "/guard:cf,nochecks" ]
     }
+    rustflags = [ "-Ccontrol-flow-guard=nochecks" ]
   }
 }
 
@@ -355,6 +357,7 @@ config("disable_guards_cfg_compiler") {
   if (is_clang) {
     cflags = [ "/guard:cf,nochecks" ]
   }
+  rustflags = [ "-Ccontrol-flow-guard=nochecks" ]
 }
 
 config("cfi_linker") {
