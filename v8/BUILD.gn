@@ -1649,6 +1649,8 @@ if (v8_postmortem_support) {
       "src/objects/bytecode-array-inl.h",
       "src/objects/abstract-code.h",
       "src/objects/abstract-code-inl.h",
+      "src/objects/instruction-stream.h",
+      "src/objects/instruction-stream-inl.h",
       "src/objects/code.h",
       "src/objects/code-inl.h",
       "src/objects/data-handler.h",
@@ -2671,6 +2673,7 @@ v8_header_set("v8_config_headers") {
 
   sources = [
     "include/v8-platform.h",
+    "include/v8-source-location.h",
     "include/v8config.h",
   ]
 
@@ -3101,8 +3104,8 @@ v8_header_set("v8_internal_headers") {
     "src/compiler/turboshaft/typed-optimizations-reducer.h",
     "src/compiler/turboshaft/typer.h",
     "src/compiler/turboshaft/types.h",
-    "src/compiler/turboshaft/undef-assembler.macros.inc",
-    "src/compiler/turboshaft/uniform-reducer-adapater.h",
+    "src/compiler/turboshaft/undef-assembler-macros.inc",
+    "src/compiler/turboshaft/uniform-reducer-adapter.h",
     "src/compiler/turboshaft/utils.h",
     "src/compiler/turboshaft/value-numbering-reducer.h",
     "src/compiler/turboshaft/variable-reducer.h",
@@ -4871,6 +4874,7 @@ v8_source_set("v8_base_without_compiler") {
     "src/objects/embedder-data-array.cc",
     "src/objects/feedback-vector.cc",
     "src/objects/field-type.cc",
+    "src/objects/instruction-stream.cc",
     "src/objects/intl-objects.cc",
     "src/objects/js-array-buffer.cc",
     "src/objects/js-atomics-synchronization.cc",
@@ -6265,7 +6269,6 @@ v8_source_set("cppgc_base") {
     "src/heap/cppgc/raw-heap.h",
     "src/heap/cppgc/remembered-set.cc",
     "src/heap/cppgc/remembered-set.h",
-    "src/heap/cppgc/source-location.cc",
     "src/heap/cppgc/stats-collector.cc",
     "src/heap/cppgc/stats-collector.h",
     "src/heap/cppgc/sweeper.cc",

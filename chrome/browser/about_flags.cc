@@ -32,6 +32,7 @@
 #include "cc/base/switches.h"
 #include "chrome/browser/browser_features.h"
 #include "chrome/browser/browser_process.h"
+#include "chrome/browser/companion/core/features.h"
 #include "chrome/browser/fast_checkout/fast_checkout_features.h"
 #include "chrome/browser/feature_guide/notifications/feature_notification_guide_service.h"
 #include "chrome/browser/flag_descriptions.h"
@@ -2929,6 +2930,8 @@ constexpr char kWallpaperGooglePhotosSharedAlbumsInternalName[] =
 constexpr char kWallpaperPerDeskName[] = "per-desk-wallpaper";
 constexpr char kLibAssistantV2MigrationInternalName[] =
     "cros-libassistant-v2-migration";
+constexpr char kTimeOfDayWallpaperInternalName[] = "time-of-day-wallpaper";
+constexpr char kTimeOfDayScreenSaverInternalName[] = "time-of-day-screen-saver";
 #endif  // BUILDFLAG(IS_CHROMEOS_ASH)
 
 #if BUILDFLAG(IS_CHROMEOS_ASH)
@@ -4057,12 +4060,14 @@ const FeatureEntry kFeatureEntries[] = {
      kOsCrOS,
      FEATURE_VALUE_TYPE(
          ash::features::kPolicyProvidedTrustAnchorsAllowedAtLockScreen)},
-    {"time-of-day-screen-saver", flag_descriptions::kTimeOfDayScreenSaverName,
+    {kTimeOfDayScreenSaverInternalName,
+     flag_descriptions::kTimeOfDayScreenSaverName,
      flag_descriptions::kTimeOfDayScreenSaverDescription, kOsCrOS,
      FEATURE_WITH_PARAMS_VALUE_TYPE(ash::features::kTimeOfDayScreenSaver,
                                     kTimeOfDayScreenSaverVideoVariations,
                                     "FeatureManagementTimeOfDayScreenSaver")},
-    {"time-of-day-wallpaper", flag_descriptions::kTimeOfDayWallpaperName,
+    {kTimeOfDayWallpaperInternalName,
+     flag_descriptions::kTimeOfDayWallpaperName,
      flag_descriptions::kTimeOfDayWallpaperDescription, kOsCrOS,
      FEATURE_VALUE_TYPE(ash::features::kTimeOfDayWallpaper)},
     {"enable-rfc-8925", flag_descriptions::kEnableRFC8925Name,
@@ -4560,6 +4565,10 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kWebAppManifestImmediateUpdatingName,
      flag_descriptions::kWebAppManifestImmediateUpdatingDescription, kOsDesktop,
      FEATURE_VALUE_TYPE(features::kWebAppManifestImmediateUpdating)},
+    {"web-app-sync-generated-icon-fix",
+     flag_descriptions::kWebAppSyncGeneratedIconFixName,
+     flag_descriptions::kWebAppSyncGeneratedIconFixDescription, kOsDesktop,
+     FEATURE_VALUE_TYPE(features::kWebAppSyncGeneratedIconFix)},
 #endif  // !BUILDFLAG(IS_ANDROID)
     {"use-sync-sandbox", flag_descriptions::kSyncSandboxName,
      flag_descriptions::kSyncSandboxDescription, kOsAll,
@@ -5436,6 +5445,11 @@ const FeatureEntry kFeatureEntries[] = {
      FEATURE_WITH_PARAMS_VALUE_TYPE(omnibox::kOmniboxAssistantVoiceSearch,
                                     kOmniboxAssistantVoiceSearchVariations,
                                     "OmniboxAssistantVoiceSearch")},
+
+    {"omnibox-cache-suggestion-resources",
+     flag_descriptions::kOmniboxCacheSuggestionResourcesName,
+     flag_descriptions::kOmniboxCacheSuggestionResourcesDescription, kOsAndroid,
+     FEATURE_VALUE_TYPE(chrome::android::kOmniboxCacheSuggestionResources)},
 
     {"omnibox-consumes-ime-insets",
      flag_descriptions::kOmniboxConsumesImeInsetsName,
@@ -6499,10 +6513,6 @@ const FeatureEntry kFeatureEntries[] = {
      FEATURE_WITH_PARAMS_VALUE_TYPE(chrome::android::kTabGridLayoutAndroid,
                                     kTabGridLayoutAndroidVariations,
                                     "TabGridLayoutAndroid")},
-
-    {"enable-commerce-coupons", flag_descriptions::kCommerceCouponsName,
-     flag_descriptions::kCommerceCouponsDescription, kOsAndroid,
-     FEATURE_VALUE_TYPE(commerce::kCommerceCoupons)},
 
     {"enable-commerce-merchant-viewer",
      flag_descriptions::kCommerceMerchantViewerAndroidName,
@@ -7771,6 +7781,9 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kProductivityLauncherImageSearchName,
      flag_descriptions::kProductivityLauncherImageSearchDescription, kOsCrOS,
      FEATURE_VALUE_TYPE(ash::features::kProductivityLauncherImageSearch)},
+    {"scanning-app-jelly", flag_descriptions::kScanningAppJellyName,
+     flag_descriptions::kScanningAppJellyDescription, kOsCrOS,
+     FEATURE_VALUE_TYPE(ash::features::kScanningAppJelly)},
     {"shelf-auto-hide-separation",
      flag_descriptions::kShelfAutoHideSeparationName,
      flag_descriptions::kShelfAutoHideSeparationDescription, kOsCrOS,
@@ -7796,6 +7809,10 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kLauncherSystemInfoAnswerCardsName,
      flag_descriptions::kLauncherSystemInfoAnswerCardsDescription, kOsCrOS,
      FEATURE_VALUE_TYPE(search_features::kLauncherSystemInfoAnswerCards)},
+    {"launcher-omnibox-publish-logic-log",
+     flag_descriptions::kLauncherOmniboxPublishLogicLogName,
+     flag_descriptions::kLauncherOmniboxPublishLogicLogDescription, kOsCrOS,
+     FEATURE_VALUE_TYPE(search_features::kLauncherOmniboxPublishLogicLog)},
     {"quick-gesture-show-launcher",
      flag_descriptions::kQuickActionShowBubbleLauncherName,
      flag_descriptions::kQuickActionShowBubbleLauncherDescription, kOsCrOS,
@@ -8418,7 +8435,7 @@ const FeatureEntry kFeatureEntries[] = {
 #if BUILDFLAG(ENABLE_LENS_DESKTOP_GOOGLE_BRANDED_FEATURES)
     {"csc", flag_descriptions::kCscName, flag_descriptions::kCscDescription,
      kOsDesktop,
-     FEATURE_WITH_PARAMS_VALUE_TYPE(features::kSidePanelCompanion,
+     FEATURE_WITH_PARAMS_VALUE_TYPE(companion::features::kSidePanelCompanion,
                                     kCscVariations,
                                     "CSC")},
 
@@ -10217,6 +10234,22 @@ bool ShouldSkipConditionalFeatureEntry(const flags_ui::FlagsStorage* storage,
     return base::FeatureList::GetInstance()->IsFeatureOverriddenFromCommandLine(
         floss::features::kFlossIsAvailable.name,
         base::FeatureList::OVERRIDE_DISABLE_FEATURE);
+  }
+
+  // Only show Time of Day wallpaper flag if channel is one of
+  // Dev/Canary/Unknown.
+  if (!strcmp(kTimeOfDayWallpaperInternalName, entry.internal_name)) {
+    return (channel != version_info::Channel::DEV &&
+            channel != version_info::Channel::CANARY &&
+            channel != version_info::Channel::UNKNOWN);
+  }
+
+  // Only show Time of Day Screen Saver flag if channel is one of
+  // Dev/Canary/Unknown.
+  if (!strcmp(kTimeOfDayScreenSaverInternalName, entry.internal_name)) {
+    return (channel != version_info::Channel::DEV &&
+            channel != version_info::Channel::CANARY &&
+            channel != version_info::Channel::UNKNOWN);
   }
 #endif  // BUILDFLAG(IS_CHROMEOS_ASH)
 
