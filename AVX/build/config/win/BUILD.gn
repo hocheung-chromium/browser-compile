@@ -193,6 +193,7 @@ config("compiler") {
 
     if (use_lld) {
       ldflags += [ "/OPT:LLDTAILMERGE" ]
+      ldflags += [ "/threads:8" ]
     }
 
     # TODO(siggi): Is this of any use anymore?

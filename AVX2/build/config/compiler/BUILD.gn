@@ -349,6 +349,7 @@ config("compiler") {
 
     if (use_lld) {
       ldflags += [ "-fuse-ld=lld" ]
+      ldflags += [ "-Wl,--threads=8" ]
       if (lld_path != "") {
         ldflags += [ "-B$lld_path" ]
       }
@@ -958,7 +959,7 @@ config("compiler") {
     # directory from appearing in build outputs.
     "-Zremap-cwd-prefix=.",
 
-    "-Ctarget-cpu=haswell", "-Ctarget-feature=+aes",
+    "-Ctune-cpu=haswell", "-Ctarget-feature=+avx,+aes",
   ]
   if (rust_abi_target != "") {
     rustflags += [ "--target=$rust_abi_target" ]
@@ -995,8 +996,10 @@ config("thinlto_optimize_default") {
 
     if (is_win) {
       ldflags = [ "/opt:lldlto=" + lto_opt_level ]
+      ldflags += [ "-opt:lldltocgo=" + lto_opt_level ]
     } else {
       ldflags = [ "-Wl,--lto-O" + lto_opt_level ]
+      ldflags += [ "-Wl,--lto-CGO" + lto_opt_level ]
     }
 
     rustflags = [ "-Clto=thin" ]
@@ -1024,6 +1027,7 @@ config("thinlto_optimize_max") {
       ldflags += [ "-opt:lldltocgo=" + lto_opt_level ]
     } else {
       ldflags = [ "-Wl,--lto-O" + lto_opt_level ]
+      ldflags += [ "-Wl,--lto-CGO" + lto_opt_level ]
     }
 
     rustflags = [ "-Clto=thin" ]
@@ -2301,11 +2305,11 @@ config("optimize_max") {
     if (is_win) {
       # Favor speed over size, /O2 must be before the common flags.
       # /O2 implies /Ot, /Oi, and /GF.
-      cflags = [ "-Xclang", "-O3", "/clang:-ffast-math", "/clang:-fno-finite-math-only", ] + common_optimize_on_cflags
+      cflags = [ "-Xclang", "-O3", ] + common_optimize_on_cflags
     } else if (optimize_for_fuzzing) {
       cflags = [ "-O1" ] + common_optimize_on_cflags
     } else {
-      cflags = [ "-O3","-ffast-math", "-fno-finite-math-only", ] + common_optimize_on_cflags
+      cflags = [ "-O3" ] + common_optimize_on_cflags
     }
     rustflags = [ "-Copt-level=3" ]
   }
@@ -2334,11 +2338,11 @@ config("optimize_speed") {
     if (is_win) {
       # Favor speed over size, /O2 must be before the common flags.
       # /O2 implies /Ot, /Oi, and /GF.
-      cflags = [ "-Xclang", "-O3", "/clang:-ffast-math", "/clang:-fno-finite-math-only", ] + common_optimize_on_cflags
+      cflags = [ "-Xclang", "-O3", ] + common_optimize_on_cflags
     } else if (optimize_for_fuzzing) {
       cflags = [ "-O1" ] + common_optimize_on_cflags
     } else {
-      cflags = [ "-O3", "-ffast-math", "-fno-finite-math-only", ] + common_optimize_on_cflags
+      cflags = [ "-O3", ] + common_optimize_on_cflags
     }
     rustflags = [ "-Copt-level=3" ]
   }
