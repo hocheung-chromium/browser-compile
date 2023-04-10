@@ -35,7 +35,7 @@ cd $HOME/chromium/src &&
 
 git stash &&
 
-git fetch https://chromium.googlesource.com/chromium/src refs/changes/56/4257656/63 && git cherry-pick FETCH_HEAD &&
+git fetch https://chromium.googlesource.com/chromium/src refs/changes/56/4257656/64 && git cherry-pick FETCH_HEAD &&
 
 gclient sync &&
 
