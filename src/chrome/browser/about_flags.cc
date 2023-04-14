@@ -4608,6 +4608,11 @@ const FeatureEntry kFeatureEntries[] = {
                                     kOsIntegrationSubManagersConfigVariations,
                                     "OsIntegrationSubManagers")},
 
+    {"access-code-cast-freeze-ui",
+     flag_descriptions::kAccessCodeCastFreezeUiName,
+     flag_descriptions::kAccessCodeCastFreezeUiDescription, kOsDesktop,
+     FEATURE_VALUE_TYPE(features::kAccessCodeCastFreezeUI)},
+
 #endif  // !BUILDFLAG(IS_ANDROID)
 
 #if BUILDFLAG(IS_ANDROID)
@@ -4920,9 +4925,6 @@ const FeatureEntry kFeatureEntries[] = {
      FEATURE_VALUE_TYPE(feed::kWebUiFeed)},
 #endif  // BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS) || BUILDFLAG(IS_MAC) ||
         // BUILDFLAG(IS_WIN) || BUILDFLAG(IS_FUCHSIA)
-    {"password-import", flag_descriptions::kPasswordImportName,
-     flag_descriptions::kPasswordImportDescription, kOsAll,
-     FEATURE_VALUE_TYPE(password_manager::features::kPasswordImport)},
     {"enable-force-dark", flag_descriptions::kAutoWebContentsDarkModeName,
      flag_descriptions::kAutoWebContentsDarkModeDescription, kOsAll,
 #if BUILDFLAG(IS_CHROMEOS_ASH)
@@ -5459,6 +5461,11 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kOmniboxMostVisitedTilesAddRecycledViewPoolDescription,
      kOsAndroid,
      FEATURE_VALUE_TYPE(omnibox::kOmniboxMostVisitedTilesAddRecycledViewPool)},
+
+    {"omnibox-warm-recycled-view-pool",
+     flag_descriptions::kOmniboxWarmRecycledViewPoolName,
+     flag_descriptions::kOmniboxWarmRecycledViewPoolDescription, kOsAndroid,
+     FEATURE_VALUE_TYPE(chrome::android::kOmniboxWarmRecycledViewPool)},
 #endif  // BUILDFLAG(IS_ANDROID)
 
     {"omnibox-local-history-zero-suggest-beyond-ntp",
@@ -5753,6 +5760,10 @@ const FeatureEntry kFeatureEntries[] = {
      FEATURE_WITH_PARAMS_VALUE_TYPE(omnibox::kUniformRowHeight,
                                     kOmniboxSuggestionHeightVariations,
                                     "Uniform Omnibox Suggest Heights")},
+    {"omnibox-cr23-action-chips",
+     flag_descriptions::kOmniboxCR23ActionChipsName,
+     flag_descriptions::kOmniboxCR23ActionChipsDescription, kOsDesktop,
+     FEATURE_VALUE_TYPE(omnibox::kCr2023ActionChips)},
 
     {"omnibox-cr23-expanded-state-height",
      flag_descriptions::kOmniboxCR23ExpandedStateHeightName,
@@ -6355,14 +6366,6 @@ const FeatureEntry kFeatureEntries[] = {
         FEATURE_VALUE_TYPE(blink::features::kZeroCopyTabCapture),
     },
 
-    {
-        "region-capture-experimental-subtypes",
-        flag_descriptions::kEnableRegionCaptureExperimentalSubtypesName,
-        flag_descriptions::kEnableRegionCaptureExperimentalSubtypesDescription,
-        kOsDesktop,
-        FEATURE_VALUE_TYPE(blink::features::kRegionCaptureExperimentalSubtypes),
-    },
-
 #if BUILDFLAG(ENABLE_PDF)
     {"accessible-pdf-form", flag_descriptions::kAccessiblePDFFormName,
      flag_descriptions::kAccessiblePDFFormDescription, kOsDesktop,
@@ -6535,6 +6538,10 @@ const FeatureEntry kFeatureEntries[] = {
      FEATURE_WITH_PARAMS_VALUE_TYPE(chrome::android::kTabStripRedesign,
                                     kTabStripRedesignVariations,
                                     "TabStripRedesignAndroid")},
+
+    {"enable-empty-states", flag_descriptions::kEmptyStatesAndroidName,
+     flag_descriptions::kEmptyStatesAndroidDescription, kOsAndroid,
+     FEATURE_VALUE_TYPE(chrome::android::kEmptyStates)},
 
     {"enable-foldable-jank-fix", flag_descriptions::kFoldableJankFixAndroidName,
      flag_descriptions::kFoldableJankFixAndroidDescription, kOsAndroid,
@@ -8016,6 +8023,12 @@ const FeatureEntry kFeatureEntries[] = {
          "EsbIphBubbleAndCollapseSettingsVariations")},
 #endif  // !BUILDFLAG(IS_ANDROID)
 
+    {"enable-tailored-security-updated-messages",
+     flag_descriptions::kEnableTailoredSecurityUpdatedMessagesName,
+     flag_descriptions::kEnableTailoredSecurityUpdatedMessagesDescription,
+     kOsAll,
+     FEATURE_VALUE_TYPE(safe_browsing::kTailoredSecurityUpdatedMessages)},
+
 #if !BUILDFLAG(IS_ANDROID)
     {"sct-auditing", flag_descriptions::kSCTAuditingName,
      flag_descriptions::kSCTAuditingDescription, kOsDesktop,
@@ -8190,6 +8203,9 @@ const FeatureEntry kFeatureEntries[] = {
     {"enable-run-on-os-login", flag_descriptions::kRunOnOsLoginName,
      flag_descriptions::kRunOnOsLoginDescription, kOsCrOS | kOsLacros,
      FEATURE_VALUE_TYPE(features::kDesktopPWAsRunOnOsLogin)},
+    {"enable-prevent-close", flag_descriptions::kPreventCloseName,
+     flag_descriptions::kPreventCloseDescription, kOsCrOS | kOsLacros,
+     FEATURE_VALUE_TYPE(features::kDesktopPWAsPreventClose)},
 #endif  // BUILDFLAG(IS_CHROMEOS)
 
 #if BUILDFLAG(IS_CHROMEOS)
@@ -9442,11 +9458,9 @@ const FeatureEntry kFeatureEntries[] = {
      FEATURE_VALUE_TYPE(password_manager::features::kPasswordManagerRedesign)},
 #endif
 
-#if !BUILDFLAG(IS_ANDROID)
     {"passwords-import-m2", flag_descriptions::kPasswordsImportM2Name,
      flag_descriptions::kPasswordsImportM2Description, kOsDesktop,
      FEATURE_VALUE_TYPE(password_manager::features::kPasswordsImportM2)},
-#endif
 
 #if !BUILDFLAG(IS_CHROMEOS) && !BUILDFLAG(IS_ANDROID)
     {flag_descriptions::kDesktopPWAsAppHomePageFlagId,
@@ -10239,6 +10253,14 @@ bool ShouldSkipConditionalFeatureEntry(const flags_ui::FlagsStorage* storage,
             channel != version_info::Channel::UNKNOWN);
   }
 #endif  // BUILDFLAG(IS_CHROMEOS_ASH)
+
+#if !BUILDFLAG(IS_ANDROID)
+  // Only show the Access Code Cast Freeze UI flag if the Access Code Cast
+  // policy is enabled.
+  if (!strcmp("access-code-cast-freeze-ui", entry.internal_name)) {
+    return !media_router::IsAccessCodeCastEnabled();
+  }
+#endif  // !BUILDFALG(IS_ANDROID)
 
   // enable-unsafe-webgpu is only available on Dev/Canary channels.
   if (!strcmp("enable-unsafe-webgpu", entry.internal_name) &&
