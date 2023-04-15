@@ -95,13 +95,6 @@ def GetWinSDKDir():
 
 
 def RunCommand(command, msvc_arch=None, env=None, fail_hard=True):
-  """Run command and return success (True) or failure; or if fail_hard is
-     True, exit on failure.  If msvc_arch is set, runs the command in a
-     shell with the msvc tools for that architecture."""
-
-  if msvc_arch and sys.platform == 'win32':
-    command = [os.path.join(GetWinSDKDir(), 'bin', 'SetEnv.cmd'),
-               "/" + msvc_arch, '&&'] + command
 
   # https://docs.python.org/2/library/subprocess.html:
   # "On Unix with shell=True [...] if args is a sequence, the first item
