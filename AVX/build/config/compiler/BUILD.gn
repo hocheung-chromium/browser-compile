@@ -720,15 +720,6 @@ config("compiler") {
         "-mllvm:-loop-rotate-multi",
         "-mllvm:-scalar-evolution-use-expensive-range-sharpening",
         "-mllvm:-extra-vectorizer-passes",
-        "-mllvm:-polly",
-        "-mllvm:-polly-2nd-level-tiling",
-        "-mllvm:-polly-detect-profitability-min-per-loop-insts=40",
-        "-mllvm:-polly-invariant-load-hoisting",
-        "-mllvm:-polly-loopfusion-greedy",
-        "-mllvm:-polly-register-tiling",
-        "-mllvm:-polly-run-dce",
-        "-mllvm:-polly-vectorizer=stripmine",
-        # "-mllvm:-pass-remarks-analysis=polly",
       ]
     } else {
       ldflags += [
@@ -750,15 +741,6 @@ config("compiler") {
         "-Wl,-mllvm,-loop-rotate-multi",
         "-Wl,-mllvm,-scalar-evolution-use-expensive-range-sharpening",
         "-Wl,-mllvm,-extra-vectorizer-passes",
-        "-Wl,-mllvm,-polly",
-        "-Wl,-mllvm,-polly-2nd-level-tiling",
-        "-Wl,-mllvm,-polly-detect-profitability-min-per-loop-insts=40",
-        "-Wl,-mllvm,-polly-invariant-load-hoisting",
-        "-Wl,-mllvm,-polly-loopfusion-greedy",
-        "-Wl,-mllvm,-polly-register-tiling",
-        "-Wl,-mllvm,-polly-run-dce",
-        "-Wl,-mllvm,-polly-vectorizer=stripmine",
-        # "-Wl,-mllvm,-pass-remarks-analysis=polly",
       ]
 
       # Enabling ThinLTO on Chrome OS too, in an effort to reduce the memory
