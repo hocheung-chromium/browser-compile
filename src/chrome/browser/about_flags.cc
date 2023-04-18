@@ -77,7 +77,6 @@
 #include "components/autofill/core/common/autofill_switches.h"
 #include "components/autofill/core/common/autofill_util.h"
 #include "components/browser_sync/browser_sync_switches.h"
-#include "components/browser_ui/settings/android/features.h"
 #include "components/browser_ui/site_settings/android/features.h"
 #include "components/browsing_data/core/features.h"
 #include "components/commerce/core/commerce_feature_list.h"
@@ -1546,18 +1545,18 @@ const FeatureEntry::FeatureParam kRealboxTwoPreviousSearchRelatedSuggestions[] =
     {
         {"RealboxMaxPreviousSearchRelatedSuggestions", "2"},
 };
-const FeatureEntry::FeatureParam
-    kRealboxThreePreviousSearchRelatedSuggestions[] = {
-        {"RealboxMaxPreviousSearchRelatedSuggestions", "3"},
+const FeatureEntry::FeatureParam kRealboxSecondaryZeroSuggestCounterfactual[] =
+    {
+        {"RealboxSecondaryZeroSuggestCounterfactual", "true"},
 };
 
-const FeatureEntry::FeatureVariation
-    kRealboxMaxPreviousSearchRelatedSuggestionsVariations[] = {
-        {"2 secondary suggestions", kRealboxTwoPreviousSearchRelatedSuggestions,
-         std::size(kRealboxTwoPreviousSearchRelatedSuggestions), nullptr},
-        {"3 secondary suggestions",
-         kRealboxThreePreviousSearchRelatedSuggestions,
-         std::size(kRealboxThreePreviousSearchRelatedSuggestions), nullptr}};
+const FeatureEntry::FeatureVariation kRealboxSecondaryZeroSuggestVariations[] =
+    {{"2 secondary suggestions (default is 3)",
+      kRealboxTwoPreviousSearchRelatedSuggestions,
+      std::size(kRealboxTwoPreviousSearchRelatedSuggestions), nullptr},
+     {"counterfactual (don't show secondary suggestions)",
+      kRealboxSecondaryZeroSuggestCounterfactual,
+      std::size(kRealboxSecondaryZeroSuggestCounterfactual), nullptr}};
 
 #endif  // BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS) || BUILDFLAG(IS_MAC) ||
         // BUILDFLAG(IS_WIN) || BUILDFLAG(IS_FUCHSIA)
@@ -3777,10 +3776,6 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kBluetoothFlossCoredumpDescription, kOsCrOS,
      FEATURE_VALUE_TYPE(
          chromeos::bluetooth::features::kBluetoothFlossCoredump)},
-    {"robust-audio-device-select-logic",
-     flag_descriptions::kRobustAudioDeviceSelectLogicName,
-     flag_descriptions::kRobustAudioDeviceSelectLogicDescription, kOsCrOS,
-     FEATURE_VALUE_TYPE(ash::features::kRobustAudioDeviceSelectLogic)},
     {"speak-on-mute-detection", flag_descriptions::kSpeakOnMuteName,
      flag_descriptions::kSpeakOnMuteDescription, kOsCrOS,
      FEATURE_VALUE_TYPE(ash::features::kSpeakOnMuteEnabled)},
@@ -4525,10 +4520,21 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kWebAppManifestImmediateUpdatingName,
      flag_descriptions::kWebAppManifestImmediateUpdatingDescription, kOsDesktop,
      FEATURE_VALUE_TYPE(features::kWebAppManifestImmediateUpdating)},
-    {"web-app-sync-generated-icon-fix",
-     flag_descriptions::kWebAppSyncGeneratedIconFixName,
-     flag_descriptions::kWebAppSyncGeneratedIconFixDescription, kOsDesktop,
-     FEATURE_VALUE_TYPE(features::kWebAppSyncGeneratedIconFix)},
+    {"web-app-sync-generated-icon-background-fix",
+     flag_descriptions::kWebAppSyncGeneratedIconBackgroundFixName,
+     flag_descriptions::kWebAppSyncGeneratedIconBackgroundFixDescription,
+     kOsDesktop,
+     FEATURE_VALUE_TYPE(features::kWebAppSyncGeneratedIconBackgroundFix)},
+    {"web-app-sync-generated-icon-retroactive-fix",
+     flag_descriptions::kWebAppSyncGeneratedIconRetroactiveFixName,
+     flag_descriptions::kWebAppSyncGeneratedIconRetroactiveFixDescription,
+     kOsDesktop,
+     FEATURE_VALUE_TYPE(features::kWebAppSyncGeneratedIconRetroactiveFix)},
+    {"web-app-sync-generated-icon-update-fix",
+     flag_descriptions::kWebAppSyncGeneratedIconUpdateFixName,
+     flag_descriptions::kWebAppSyncGeneratedIconUpdateFixDescription,
+     kOsDesktop,
+     FEATURE_VALUE_TYPE(features::kWebAppSyncGeneratedIconUpdateFix)},
 #endif  // !BUILDFLAG(IS_ANDROID)
     {"use-sync-sandbox", flag_descriptions::kSyncSandboxName,
      flag_descriptions::kSyncSandboxDescription, kOsAll,
@@ -5617,10 +5623,9 @@ const FeatureEntry kFeatureEntries[] = {
     {"realbox-secondary-zero-suggest",
      flag_descriptions::kRealboxSecondaryZeroSuggestName,
      flag_descriptions::kRealboxSecondaryZeroSuggestDescription, kOsDesktop,
-     FEATURE_WITH_PARAMS_VALUE_TYPE(
-         omnibox::kRealboxSecondaryZeroSuggest,
-         kRealboxMaxPreviousSearchRelatedSuggestionsVariations,
-         "RealboxSecondaryZeroSuggest")},
+     FEATURE_WITH_PARAMS_VALUE_TYPE(omnibox::kRealboxSecondaryZeroSuggest,
+                                    kRealboxSecondaryZeroSuggestVariations,
+                                    "RealboxSecondaryZeroSuggest")},
 #endif  // BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS) || BUILDFLAG(IS_MAC) ||
         // BUILDFLAG(IS_WIN) || BUILDFLAG(IS_FUCHSIA)
 
@@ -5920,6 +5925,13 @@ const FeatureEntry kFeatureEntries[] = {
      FEATURE_WITH_PARAMS_VALUE_TYPE(history_clusters::internal::kHideVisits,
                                     kJourneysHideVisitsVariations,
                                     "JourneysHide")},
+
+    {"history-journeys-zero-state-filtering",
+     flag_descriptions::kJourneysZeroStateFilteringName,
+     flag_descriptions::kJourneysZeroStateFilteringDescription,
+     kOsDesktop | kOsAndroid,
+     FEATURE_VALUE_TYPE(
+         history_clusters::internal::kJourneysZeroStateFiltering)},
 
     {"extract-related-searches-from-prefetched-zps-response",
      flag_descriptions::kExtractRelatedSearchesFromPrefetchedZPSResponseName,
@@ -8202,6 +8214,9 @@ const FeatureEntry kFeatureEntries[] = {
     {"enable-prevent-close", flag_descriptions::kPreventCloseName,
      flag_descriptions::kPreventCloseDescription, kOsCrOS | kOsLacros,
      FEATURE_VALUE_TYPE(features::kDesktopPWAsPreventClose)},
+    {"enable-keep-alive", flag_descriptions::kKeepAliveName,
+     flag_descriptions::kKeepAliveDescription, kOsCrOS | kOsLacros,
+     FEATURE_VALUE_TYPE(features::kDesktopPWAsKeepAlive)},
 #endif  // BUILDFLAG(IS_CHROMEOS)
 
 #if BUILDFLAG(IS_CHROMEOS)
@@ -9473,11 +9488,6 @@ const FeatureEntry kFeatureEntries[] = {
 #endif
 
 #if !BUILDFLAG(IS_ANDROID)
-    {"battery-saver-mode-available",
-     flag_descriptions::kBatterySaverModeAvailableName,
-     flag_descriptions::kBatterySaverModeAvailableDescription, kOsDesktop,
-     FEATURE_VALUE_TYPE(
-         performance_manager::features::kBatterySaverModeAvailable)},
     {"heuristic-memory-saver-mode",
      flag_descriptions::kHeuristicMemorySaverName,
      flag_descriptions::kHeuristicMemorySaverDescription, kOsDesktop,
@@ -9577,14 +9587,6 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kCertDualVerificationEnabledDescription, kOsAndroid,
      FEATURE_VALUE_TYPE(net::features::kCertDualVerificationTrialFeature)},
 #endif  // BUILDFLAG(TRIAL_COMPARISON_CERT_VERIFIER_SUPPORTED)
-
-#if BUILDFLAG(IS_ANDROID)
-    {"highlight-managed-pref-disclaimer-android",
-     flag_descriptions::kHighlightManagedPrefDisclaimerAndroidName,
-     flag_descriptions::kHighlightManagedPrefDisclaimerAndroidDescription,
-     kOsAndroid,
-     FEATURE_VALUE_TYPE(browser_ui::kHighlightManagedPrefDisclaimerAndroid)},
-#endif
 
 #if BUILDFLAG(IS_ANDROID)
     {"policy-logs-page-android", flag_descriptions::kPolicyLogsPageAndroidName,
