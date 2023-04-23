@@ -984,7 +984,7 @@ config("thinlto_optimize_default") {
       ldflags += [ "-Wl,--lto-CGO" + lto_opt_level ]
     }
 
-    rustflags = [ "-Clto=thin" ]
+    rustflags = [ "-Clinker-plugin-lto=yes" ]
   }
 }
 
@@ -1012,7 +1012,7 @@ config("thinlto_optimize_max") {
       ldflags += [ "-Wl,--lto-CGO" + lto_opt_level ]
     }
 
-    rustflags = [ "-Clto=thin" ]
+    rustflags = [ "-Clinker-plugin-lto=yes" ]
   }
 }
 

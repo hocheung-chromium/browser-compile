@@ -47,6 +47,7 @@
 #include "chrome/browser/net/system_network_context_manager.h"
 #include "chrome/browser/notifications/scheduler/public/features.h"
 #include "chrome/browser/page_info/page_info_features.h"
+#include "chrome/browser/performance_manager/public/user_tuning/user_performance_tuning_manager.h"
 #include "chrome/browser/permissions/notifications_permission_revocation_config.h"
 #include "chrome/browser/permissions/quiet_notification_permission_ui_config.h"
 #include "chrome/browser/predictors/loading_predictor_config.h"
@@ -2290,15 +2291,20 @@ const FeatureEntry::FeatureVariation kTabGroupsContinuationAndroidVariations[] =
 };
 
 const FeatureEntry::FeatureParam kStartSurfaceReturnTime_Immediate[] = {
-    {"start_surface_return_time_seconds", "0"}};
+    {"start_surface_return_time_seconds", "0"},
+    {"start_surface_return_time_on_tablet_seconds", "0"}};
 const FeatureEntry::FeatureParam kStartSurfaceReturnTime_10Seconds[] = {
-    {"start_surface_return_time_seconds", "10"}};
+    {"start_surface_return_time_seconds", "10"},
+    {"start_surface_return_time_on_tablet_seconds", "10"}};
 const FeatureEntry::FeatureParam kStartSurfaceReturnTime_1Minute[] = {
-    {"start_surface_return_time_seconds", "60"}};
+    {"start_surface_return_time_seconds", "60"},
+    {"start_surface_return_time_on_tablet_seconds", "60"}};
 const FeatureEntry::FeatureParam kStartSurfaceReturnTime_5Minute[] = {
-    {"start_surface_return_time_seconds", "300"}};
+    {"start_surface_return_time_seconds", "300"},
+    {"start_surface_return_time_on_tablet_seconds", "300"}};
 const FeatureEntry::FeatureParam kStartSurfaceReturnTime_60Minute[] = {
-    {"start_surface_return_time_seconds", "3600"}};
+    {"start_surface_return_time_seconds", "3600"},
+    {"start_surface_return_time_on_tablet_seconds", "3600"}};
 const FeatureEntry::FeatureVariation kStartSurfaceReturnTimeVariations[] = {
     {"Immediate", kStartSurfaceReturnTime_Immediate,
      std::size(kStartSurfaceReturnTime_Immediate), nullptr},
@@ -2649,52 +2655,53 @@ const FeatureEntry::FeatureVariation kOmniboxAssistantVoiceSearchVariations[] =
 };
 
 const FeatureEntry::FeatureParam
-    kOmniboxModernizeVisualUpdateExcludeTabletsActiveOmniboxSmallMargin[] = {
+    kOmniboxModernizeVisualUpdateExcludeTabletsSmallMargin[] = {
         {"enable_modernize_visual_update_on_tablet", "false"},
         {"modernize_visual_update_active_color_on_omnibox", "true"},
         {"modernize_visual_update_small_bottom_margin", "true"}};
 
 const FeatureEntry::FeatureParam
-    kOmniboxModernizeVisualUpdateExcludeTabletsActiveOmniboxBigMargin[] = {
+    kOmniboxModernizeVisualUpdateExcludeTabletsSmallerMarginsMergeClipboard[] =
+        {{"enable_modernize_visual_update_on_tablet", "false"},
+         {"modernize_visual_update_active_color_on_omnibox", "true"},
+         {"modernize_visual_update_smaller_margins", "true"},
+         {"modernize_visual_update_merge_clipboard_on_ntp", "true"}};
+
+const FeatureEntry::FeatureParam
+    kOmniboxModernizeVisualUpdateExcludeTabletsSmallestMargins[] = {
         {"enable_modernize_visual_update_on_tablet", "false"},
         {"modernize_visual_update_active_color_on_omnibox", "true"},
-        {"modernize_visual_update_small_bottom_margin", "false"}};
+        {"modernize_visual_update_smallest_margins", "true"},
+        {"modernize_visual_update_merge_clipboard_on_ntp", "false"}};
 
 const FeatureEntry::FeatureParam
-    kOmniboxModernizeVisualUpdateExcludeTabletsDeactiveOmniboxSmallMargin[] = {
-        {"enable_modernize_visual_update_on_tablet", "false"},
-        {"modernize_visual_update_active_color_on_omnibox", "false"},
-        {"modernize_visual_update_small_bottom_margin", "true"}};
-
-const FeatureEntry::FeatureParam
-    kOmniboxModernizeVisualUpdateExcludeTabletsDeactiveOmniboxBigMargin[] = {
-        {"enable_modernize_visual_update_on_tablet", "false"},
-        {"modernize_visual_update_active_color_on_omnibox", "false"},
-        {"modernize_visual_update_small_bottom_margin", "false"}};
+    kOmniboxModernizeVisualUpdateExcludeTabletsSmallestMarginsMergeClipboard[] =
+        {{"enable_modernize_visual_update_on_tablet", "false"},
+         {"modernize_visual_update_active_color_on_omnibox", "true"},
+         {"modernize_visual_update_smallest_margins", "true"},
+         {"modernize_visual_update_merge_clipboard_on_ntp", "true"}};
 
 const FeatureEntry::FeatureParam kOmniboxModernizeVisualUpdateIncludeTablets[] =
     {{"enable_modernize_visual_update_on_tablet", "true"}};
 
 const FeatureEntry::FeatureVariation kOmniboxModernizeVisualUpdateVariations[] = {
-    {"(+color, Short)",
-     kOmniboxModernizeVisualUpdateExcludeTabletsActiveOmniboxSmallMargin,
-     std::size(
-         kOmniboxModernizeVisualUpdateExcludeTabletsActiveOmniboxSmallMargin),
+    {"(Small vertical margin)",
+     kOmniboxModernizeVisualUpdateExcludeTabletsSmallMargin,
+     std::size(kOmniboxModernizeVisualUpdateExcludeTabletsSmallMargin),
      nullptr},
-    {"(+color, Tall)",
-     kOmniboxModernizeVisualUpdateExcludeTabletsActiveOmniboxBigMargin,
+    {"(Smaller margins, merge clipboard)",
+     kOmniboxModernizeVisualUpdateExcludeTabletsSmallerMarginsMergeClipboard,
      std::size(
-         kOmniboxModernizeVisualUpdateExcludeTabletsActiveOmniboxBigMargin),
+         kOmniboxModernizeVisualUpdateExcludeTabletsSmallerMarginsMergeClipboard),
      nullptr},
-    {"(-color, Short)",
-     kOmniboxModernizeVisualUpdateExcludeTabletsDeactiveOmniboxSmallMargin,
+    {"(Smallest margins, merge clipboard)",
+     kOmniboxModernizeVisualUpdateExcludeTabletsSmallestMarginsMergeClipboard,
      std::size(
-         kOmniboxModernizeVisualUpdateExcludeTabletsDeactiveOmniboxSmallMargin),
+         kOmniboxModernizeVisualUpdateExcludeTabletsSmallestMarginsMergeClipboard),
      nullptr},
-    {"(-color, Tall)",
-     kOmniboxModernizeVisualUpdateExcludeTabletsDeactiveOmniboxBigMargin,
-     std::size(
-         kOmniboxModernizeVisualUpdateExcludeTabletsDeactiveOmniboxBigMargin),
+    {"(Smallest margins, don't merge clipboard)",
+     kOmniboxModernizeVisualUpdateExcludeTabletsSmallestMargins,
+     std::size(kOmniboxModernizeVisualUpdateExcludeTabletsSmallestMargins),
      nullptr},
     {"(Tablet)", kOmniboxModernizeVisualUpdateIncludeTablets,
      std::size(kOmniboxModernizeVisualUpdateIncludeTablets), nullptr},
@@ -3122,6 +3129,43 @@ constexpr FeatureEntry::FeatureVariation
 
 #endif  // BUILDFLAG(IS_ANDROID)
 
+#if !BUILDFLAG(IS_ANDROID) && BUILDFLAG(GOOGLE_CHROME_BRANDING)
+constexpr FeatureEntry::FeatureParam kIOSPromoPasswordBubbleContextualDirect[] =
+    {{"activation", "contextual-direct"}};
+constexpr FeatureEntry::FeatureParam
+    kIOSPromoPasswordBubbleContextualIndirect[] = {
+        {"activation", "contextual-indirect"}};
+constexpr FeatureEntry::FeatureParam
+    kIOSPromoPasswordBubbleNonContextualDirect[] = {
+        {"activation", "non-contextual-direct"}};
+constexpr FeatureEntry::FeatureParam
+    kIOSPromoPasswordBubbleNonContextualIndirect[] = {
+        {"activation", "non-contextual-indirect"}};
+constexpr FeatureEntry::FeatureParam kIOSPromoPasswordBubbleAlwaysShowDirect[] =
+    {{"activation", "always-show-direct"}};
+constexpr FeatureEntry::FeatureParam
+    kIOSPromoPasswordBubbleAlwaysShowIndirect[] = {
+        {"activation", "always-show-indirect"}};
+
+constexpr FeatureEntry::FeatureVariation kIOSPromoPasswordBubbleVariations[] = {
+    {"contextual & direct activation", kIOSPromoPasswordBubbleContextualDirect,
+     std::size(kIOSPromoPasswordBubbleContextualDirect), nullptr},
+    {"contextual & indirect activation",
+     kIOSPromoPasswordBubbleContextualIndirect,
+     std::size(kIOSPromoPasswordBubbleContextualIndirect), nullptr},
+    {"non-contextual & direct activation",
+     kIOSPromoPasswordBubbleNonContextualDirect,
+     std::size(kIOSPromoPasswordBubbleNonContextualDirect), nullptr},
+    {"non-contextual & indirect activation",
+     kIOSPromoPasswordBubbleNonContextualIndirect,
+     std::size(kIOSPromoPasswordBubbleNonContextualIndirect), nullptr},
+    {"always show direct activation", kIOSPromoPasswordBubbleAlwaysShowDirect,
+     std::size(kIOSPromoPasswordBubbleAlwaysShowDirect), nullptr},
+    {"always show indirect activation",
+     kIOSPromoPasswordBubbleAlwaysShowIndirect,
+     std::size(kIOSPromoPasswordBubbleAlwaysShowIndirect), nullptr}};
+#endif
+
 const FeatureEntry::FeatureParam kUnthrottledNestedTimeout_NestingLevel = {
     "nesting", "15"};
 
@@ -3256,6 +3300,42 @@ const FeatureEntry::FeatureVariation kHeuristicMemorySaverVariations[] = {
      std::size(kHeuristicMemorySaverBalanced), nullptr},
     {"Conservative", kHeuristicMemorySaverConservative,
      std::size(kHeuristicMemorySaverConservative), nullptr},
+};
+
+const FeatureEntry::Choice kHighEfficiencyModeTimeBeforeDiscardChoices[] = {
+    {flags_ui::kGenericExperimentChoiceDefault, "", ""},
+    {"1 Minute Discard",
+     performance_manager::user_tuning::UserPerformanceTuningManager::
+         kTimeBeforeDiscardInMinutesSwitch,
+     "1"},
+    {"5 Minute Discard",
+     performance_manager::user_tuning::UserPerformanceTuningManager::
+         kTimeBeforeDiscardInMinutesSwitch,
+     "5"},
+    {"15 Minute Discard",
+     performance_manager::user_tuning::UserPerformanceTuningManager::
+         kTimeBeforeDiscardInMinutesSwitch,
+     "15"},
+    {"30 Minute Discard",
+     performance_manager::user_tuning::UserPerformanceTuningManager::
+         kTimeBeforeDiscardInMinutesSwitch,
+     "30"},
+    {"1 Hour Discard",
+     performance_manager::user_tuning::UserPerformanceTuningManager::
+         kTimeBeforeDiscardInMinutesSwitch,
+     "60"},
+    {"4 Hour Discard",
+     performance_manager::user_tuning::UserPerformanceTuningManager::
+         kTimeBeforeDiscardInMinutesSwitch,
+     "240"},
+    {"6 Hour Discard",
+     performance_manager::user_tuning::UserPerformanceTuningManager::
+         kTimeBeforeDiscardInMinutesSwitch,
+     "360"},
+    {"12 Hour Discard",
+     performance_manager::user_tuning::UserPerformanceTuningManager::
+         kTimeBeforeDiscardInMinutesSwitch,
+     "720"},
 };
 #endif  // !BUILDFLAG(IS_ANDROID)
 
@@ -4800,10 +4880,6 @@ const FeatureEntry kFeatureEntries[] = {
     {"video-tutorials", flag_descriptions::kVideoTutorialsName,
      flag_descriptions::kVideoTutorialsDescription, kOsAndroid,
      FEATURE_VALUE_TYPE(video_tutorials::features::kVideoTutorials)},
-    {"video-tutorials-instant-fetch",
-     flag_descriptions::kVideoTutorialsInstantFetchName,
-     flag_descriptions::kVideoTutorialsInstantFetchDescription, kOsAndroid,
-     SINGLE_VALUE_TYPE(video_tutorials::switches::kVideoTutorialsInstantFetch)},
     {"reengagement-notification",
      flag_descriptions::kReengagementNotificationName,
      flag_descriptions::kReengagementNotificationDescription, kOsAndroid,
@@ -5216,6 +5292,10 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kArcEnableVirtioBlkForDataName,
      flag_descriptions::kArcEnableVirtioBlkForDataDesc, kOsCrOS,
      FEATURE_VALUE_TYPE(arc::kEnableVirtioBlkForData)},
+    {"arc-external-storage-access",
+     flag_descriptions::kArcExternalStorageAccessName,
+     flag_descriptions::kArcExternalStorageAccessDescription, kOsCrOS,
+     FEATURE_VALUE_TYPE(arc::kExternalStorageAccess)},
     {"arc-file-picker-experiment",
      flag_descriptions::kArcFilePickerExperimentName,
      flag_descriptions::kArcFilePickerExperimentDescription, kOsCrOS,
@@ -5311,9 +5391,6 @@ const FeatureEntry kFeatureEntries[] = {
      SINGLE_VALUE_TYPE(ash::switches::kEnableTouchCalibrationSetting)},
 #endif  // BUILDFLAG(IS_CHROMEOS_ASH)
 #if BUILDFLAG(IS_CHROMEOS_ASH)
-    {"audio-url", flag_descriptions::kAudioUrlName,
-     flag_descriptions::kAudioUrlDescription, kOsCrOS,
-     FEATURE_VALUE_TYPE(ash::features::kAudioUrl)},
     {"prefer-constant-frame-rate",
      flag_descriptions::kPreferConstantFrameRateName,
      flag_descriptions::kPreferConstantFrameRateDescription, kOsCrOS,
@@ -7299,13 +7376,13 @@ const FeatureEntry kFeatureEntries[] = {
      FEATURE_VALUE_TYPE(supervised_user::kEnableProtoApiForClassifyUrl)},
 #endif  // BUILDFLAG(ENABLE_SUPERVISED_USERS)
 
-#if BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS)
+#if BUILDFLAG(ALLOW_OOP_VIDEO_DECODER)
     {"use-out-of-process-video-decoding",
      flag_descriptions::kUseOutOfProcessVideoDecodingName,
      flag_descriptions::kUseOutOfProcessVideoDecodingDescription,
      kOsLinux | kOsCrOS | kOsLacros,
      FEATURE_VALUE_TYPE(media::kUseOutOfProcessVideoDecoding)},
-#endif  // BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS)
+#endif  // BUILDFLAG(ALLOW_OOP_VIDEO_DECODER)
 
 #if BUILDFLAG(ENABLE_SUPERVISED_USERS)
     {"enable-web-filter-interstitial-refresh",
@@ -8177,6 +8254,11 @@ const FeatureEntry kFeatureEntries[] = {
                                     kChromeRefresh2023Variations,
                                     "ChromeRefresh2023")},
 
+    {"chrome-webui-refresh-2023",
+     flag_descriptions::kChromeWebuiRefresh2023Name,
+     flag_descriptions::kChromeWebuiRefresh2023Description, kOsDesktop,
+     FEATURE_VALUE_TYPE(features::kChromeWebuiRefresh2023)},
+
 #if BUILDFLAG(IS_MAC)
     {"cr2023-mac-font-smoothing",
      flag_descriptions::kCr2023MacFontSmoothingName,
@@ -8565,6 +8647,15 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kForceEnableFastCheckoutCapabilitiesDescription,
      kOsAndroid,
      FEATURE_VALUE_TYPE(features::kForceEnableFastCheckoutCapabilities)},
+#endif
+
+#if !BUILDFLAG(IS_ANDROID) && BUILDFLAG(GOOGLE_CHROME_BRANDING)
+    {"ios-promo-password-bubble",
+     flag_descriptions::kIOSPromoPasswordBubbleName,
+     flag_descriptions::kIOSPromoPasswordBubbleDecription, kOsDesktop,
+     FEATURE_WITH_PARAMS_VALUE_TYPE(features::kIOSPromoPasswordBubble,
+                                    kIOSPromoPasswordBubbleVariations,
+                                    "IOSPromoPasswordBubble")},
 #endif
 
 #if BUILDFLAG(IS_CHROMEOS_ASH)
@@ -9561,6 +9652,10 @@ const FeatureEntry kFeatureEntries[] = {
          performance_manager::features::kHeuristicMemorySaver,
          kHeuristicMemorySaverVariations,
          "HeuristicMemorySaver")},
+    {"high-efficiency-mode-time-before-discard",
+     flag_descriptions::kHighEfficiencyModeTimeBeforeDiscardName,
+     flag_descriptions::kHighEfficiencyModeTimeBeforeDiscardDescription,
+     kOsDesktop, MULTI_VALUE_TYPE(kHighEfficiencyModeTimeBeforeDiscardChoices)},
 #endif
 
 #if BUILDFLAG(IS_ANDROID)

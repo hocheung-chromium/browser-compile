@@ -678,7 +678,7 @@ def main():
   if args.x86_only:
     targets = 'X86'
   else:
-    targets = 'AArch64;ARM;Mips;PowerPC;RISCV;SystemZ;WebAssembly;X86'
+    targets = 'AArch64;ARM;LoongArch;Mips;PowerPC;RISCV;SystemZ;WebAssembly;X86'
 
   if args.without_clang_extra:
     projects = 'clang;lld;polly'
@@ -1093,6 +1093,9 @@ def main():
     elif platform.machine() == 'riscv64':
       cmake_args.append(
           '-DLLVM_DEFAULT_TARGET_TRIPLE=riscv64-unknown-linux-gnu')
+    elif platform.machine() == 'loongarch64':
+      cmake_args.append(
+          '-DLLVM_DEFAULT_TARGET_TRIPLE=loongarch64-unknown-linux-gnu')
     else:
       cmake_args.append('-DLLVM_DEFAULT_TARGET_TRIPLE=x86_64-unknown-linux-gnu')
     cmake_args.append('-DLLVM_ENABLE_PER_TARGET_RUNTIME_DIR=ON')
