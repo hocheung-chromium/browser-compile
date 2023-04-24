@@ -359,7 +359,7 @@ def BuildLibXml2():
           '-DLIBXML2_WITH_XPATH=OFF',
           '-DLIBXML2_WITH_XPTR=OFF',
           '-DLIBXML2_WITH_ZLIB=OFF',
-          '-DCMAKE_C_FLAGS_RELEASE=-O3 -DNDEBUG -w -march=native -pipe',
+          '-DCMAKE_C_FLAGS_RELEASE=-O3 -DNDEBUG -w -march=native -pipe -fgraphite -fgraphite-identity -floop-nest-optimize -fipa-pta',
           '..',
       ],
       msvc_arch='x64')
@@ -516,8 +516,6 @@ def gn_arg(v):
 
 def main():
   parser = argparse.ArgumentParser(description='Build Clang.')
-  # parser.add_argument('--bootstrap', action='store_true',
-  #                     help='first build clang with CC, then with itself.')
   parser.add_argument('--build-mac-arm', action='store_true',
                       help='Build arm binaries. Only valid on macOS.')
   parser.add_argument('--disable-asserts', action='store_true',
@@ -593,9 +591,6 @@ def main():
 
   global CLANG_REVISION, PACKAGE_VERSION, LLVM_BUILD_DIR
 
-  # if (args.pgo or args.thinlto) and not args.bootstrap:
-  #   print('--pgo/--thinlto requires --bootstrap')
-  #   return 1
   if args.with_android and not os.path.exists(ANDROID_NDK_DIR):
     print('Android NDK not found at ' + ANDROID_NDK_DIR)
     print('The Android NDK is needed to build a Clang whose -fsanitize=address')
@@ -676,17 +671,14 @@ def main():
   # LLVM_ENABLE_LLD).
   cc, cxx, lld = None, None, None
 
-  cflags = [ '-O3 -DNDEBUG -w -march=native' ]
-  cxxflags = [ '-O3 -DNDEBUG -w -march=native' ]
-  ldflags = [ '-fuse-ld=lld' ]
-
-  # targets = 'AArch64;ARM;Mips;PowerPC;RISCV;SystemZ;WebAssembly;X86'
-  # projects = 'clang;lld;clang-tools-extra'
+  cflags = [ '-O3 -DNDEBUG -w -march=native -fmerge-all-constants -fdata-sections -ffunction-sections -funique-section-names -mllvm -adce-remove-loops -mllvm -aggressive-ext-opt -mllvm -enable-cse-in-irtranslator -mllvm -enable-cse-in-legalizer -mllvm -enable-gvn-hoist -mllvm -gvn-hoist-max-bbs=-1 -mllvm -gvn-hoist-max-depth=-1 -mllvm -gvn-hoist-max-chain-length=-1 -mllvm -enable-interleaved-mem-accesses -mllvm -enable-masked-interleaved-mem-accesses -mllvm -enable-loopinterchange -mllvm -enable-loop-distribute -mllvm -enable-loop-flatten -mllvm -interleave-small-loop-scalar-reduction -mllvm -loop-rotate-multi -mllvm -scalar-evolution-use-expensive-range-sharpening -mllvm -extra-vectorizer-passes' ]
+  cxxflags = [ '-O3 -DNDEBUG -w -march=native -fmerge-all-constants -fdata-sections -ffunction-sections -funique-section-names -mllvm -adce-remove-loops -mllvm -aggressive-ext-opt -mllvm -enable-cse-in-irtranslator -mllvm -enable-cse-in-legalizer -march=native -mllvm -enable-gvn-hoist -mllvm -gvn-hoist-max-bbs=-1 -mllvm -gvn-hoist-max-depth=-1 -mllvm -gvn-hoist-max-chain-length=-1 -mllvm -enable-interleaved-mem-accesses -mllvm -enable-masked-interleaved-mem-accesses -mllvm -enable-loopinterchange -mllvm -enable-loop-distribute -mllvm -enable-loop-flatten -mllvm -interleave-small-loop-scalar-reduction -mllvm -loop-rotate-multi -mllvm -scalar-evolution-use-expensive-range-sharpening -mllvm -extra-vectorizer-passes' ]
+  ldflags = [ '-fuse-ld=lld -Wl,-O2 -Wl,--gc-sections -Wl,--icf=all -Wl,-z,keep-text-section-prefix' ]
 
   if args.x86_only:
     targets = 'X86'
   else:
-    targets = 'AArch64;ARM;Mips;PowerPC;RISCV;SystemZ;WebAssembly;X86'
+    targets = 'AArch64;ARM;LoongArch;Mips;PowerPC;RISCV;SystemZ;WebAssembly;X86'
 
   if args.without_clang_extra:
     projects = 'clang;lld;polly'
@@ -864,9 +856,7 @@ def main():
     '-GNinja',
     '-DCMAKE_BUILD_TYPE=Release',
     '-DLLVM_ENABLE_ASSERTIONS=%s' % ('OFF' if args.disable_asserts else 'ON'),
-    '-DLLVM_ENABLE_PROJECTS=clang;lld;polly',
-    '-DLLVM_ENABLE_RUNTIMES=' + ';'.join(runtimes),
-    '-DLLVM_TARGETS_TO_BUILD=' + bootstrap_targets,
+    '-DLLVM_ENABLE_RUNTIMES=compiler-rt',
     '-DLLVM_ENABLE_PIC=ON',
     '-DLLVM_ENABLE_UNWIND_TABLES=OFF',
     '-DLLVM_ENABLE_TERMINFO=OFF',
@@ -881,7 +871,9 @@ def main():
     '-DLLVM_ENABLE_PER_TARGET_RUNTIME_DIR=OFF',
     '-DLLVM_ENABLE_CURL=OFF',
     '-DLIBCLANG_BUILD_STATIC=ON',
-    '-DLLVM_ENABLE_ZSTD=OFF',
+    '-DLLVM_TARGETS_TO_BUILD=' + bootstrap_targets,
+    '-DLLVM_ENABLE_PROJECTS=clang;lld;polly',
+    '-DLLVM_ENABLE_RUNTIMES=' + ';'.join(runtimes),
     '-DCMAKE_INSTALL_PREFIX=' + LLVM_BOOTSTRAP_INSTALL_DIR,
     '-DCMAKE_C_FLAGS=' + ' '.join(cflags),
     '-DCMAKE_CXX_FLAGS=' + ' '.join(cxxflags),
@@ -940,8 +932,8 @@ def main():
 
     instrument_args = base_cmake_args + [
         '-DLLVM_ENABLE_PROJECTS=clang;polly',
-        '-DCMAKE_C_FLAGS=-mllvm -vp-counters-per-site=3 -mllvm -polly -mllvm -polly-invariant-load-hoisting -mllvm -polly-run-dce -mllvm -polly-vectorizer=stripmine ' + ' '.join(cflags),
-        '-DCMAKE_CXX_FLAGS=-mllvm -vp-counters-per-site=3 -mllvm -polly -mllvm -polly-invariant-load-hoisting -mllvm -polly-run-dce -mllvm -polly-vectorizer=stripmine ' + ' '.join(cxxflags),
+        '-DCMAKE_C_FLAGS=-mllvm -vp-counters-per-site=3 -mllvm -polly -mllvm -polly-2nd-level-tiling -mllvm -polly-detect-profitability-min-per-loop-insts=40 -mllvm -polly-invariant-load-hoisting -mllvm -polly-loopfusion-greedy -mllvm -polly-register-tiling -mllvm -polly-run-dce -mllvm -polly-vectorizer=stripmine ' + ' '.join(cflags),
+        '-DCMAKE_CXX_FLAGS=-mllvm -vp-counters-per-site=3 -mllvm -polly -mllvm -polly-2nd-level-tiling -mllvm -polly-detect-profitability-min-per-loop-insts=40 -mllvm -polly-invariant-load-hoisting -mllvm -polly-loopfusion-greedy -mllvm -polly-register-tiling -mllvm -polly-run-dce -mllvm -polly-vectorizer=stripmine ' + ' '.join(cxxflags),
         '-DCMAKE_EXE_LINKER_FLAGS=' + ' '.join(ldflags),
         '-DCMAKE_SHARED_LINKER_FLAGS=' + ' '.join(ldflags),
         '-DCMAKE_MODULE_LINKER_FLAGS=' + ' '.join(ldflags),
@@ -955,7 +947,7 @@ def main():
 
     RunCommand(['cmake'] + instrument_args + [os.path.join(LLVM_DIR, 'llvm')],
                msvc_arch='x64')
-    RunCommand(['ninja', 'clang' ], msvc_arch='x64')
+    RunCommand(['ninja', 'clang'], msvc_arch='x64')
     print('Instrumented compiler built.')
 
     # Train by building some C++ code.
@@ -985,8 +977,22 @@ def main():
       DownloadUrl(CDS_URL + '/' + training_source, f)
     train_cmd = [os.path.join(LLVM_INSTRUMENTED_DIR, 'bin', 'clang++'),
                 '-target', 'x86_64-unknown-unknown', '-O3', '-march=native',
-                '-mllvm', '-polly', '-mllvm', '-polly-run-dce',
-                '-mllvm', '-polly-vectorizer=stripmine',
+                '-fmerge-all-constants', '-fdata-sections', '-ffunction-sections',
+                '-funique-section-names', '-mllvm', '-adce-remove-loops',
+                '-mllvm', '-aggressive-ext-opt', '-mllvm', '-enable-cse-in-irtranslator',
+                '-mllvm', '-enable-cse-in-legalizer', '-mllvm', '-enable-gvn-hoist',
+                '-mllvm', '-gvn-hoist-max-bbs=-1', '-mllvm', '-gvn-hoist-max-depth=-1',
+                '-mllvm', '-gvn-hoist-max-chain-length=-1', '-mllvm', '-enable-interleaved-mem-accesses',
+                '-mllvm', '-enable-masked-interleaved-mem-accesses', '-mllvm', '-enable-loopinterchange',
+                '-mllvm', '-enable-loop-distribute', '-mllvm', '-enable-loop-flatten',
+                '-mllvm', '-interleave-small-loop-scalar-reduction', '-mllvm', '-loop-rotate-multi',
+                '-mllvm', '-scalar-evolution-use-expensive-range-sharpening',
+                '-mllvm', '-extra-vectorizer-passes',
+                '-mllvm', '-polly', '-mllvm', '-polly-2nd-level-tiling',
+                '-mllvm', '-polly-detect-profitability-min-per-loop-insts=40',
+                '-mllvm', '-polly-invariant-load-hoisting',
+                '-mllvm', '-polly-loopfusion-greedy', '-mllvm', '-polly-register-tiling',
+                '-mllvm', '-polly-run-dce', '-mllvm', '-polly-vectorizer=stripmine',
                 '-g', '-std=c++14','-fno-exceptions', '-fno-rtti', '-w', '-c',
                 training_source]
     if sys.platform == 'darwin':
@@ -1037,32 +1043,32 @@ def main():
   if lld is not None: base_cmake_args.append('-DCMAKE_LINKER=' + lld)
   final_install_dir = args.install_dir if args.install_dir else LLVM_BUILD_DIR
   cmake_args = base_cmake_args + [
-      '-DCMAKE_INSTALL_PREFIX=' + final_install_dir,
-      '-DLLVM_ENABLE_PROJECTS=' + projects,
-  ]
+    '-DCMAKE_INSTALL_PREFIX=' + final_install_dir,
+    '-DLLVM_ENABLE_PROJECTS=' + projects,
+    ]
   if not args.no_tools:
     cmake_args.extend([
         '-DLLVM_EXTERNAL_PROJECTS=chrometools',
         '-DLLVM_EXTERNAL_CHROMETOOLS_SOURCE_DIR=' +
         os.path.join(CHROMIUM_DIR, 'tools', 'clang'),
         '-DCHROMIUM_TOOLS=%s' % ';'.join(chrome_tools)
-    ])
+   ])
   if args.pgo:
     cmake_args.append('-DLLVM_PROFDATA_FILE=' + LLVM_PROFDATA_FILE)
   if args.thinlto:
     cmake_args.append( '-DLLVM_ENABLE_LTO=Thin' )
-    cmake_args.append( '-DLLVM_PARALLEL_LINK_JOBS=8' )
+    cmake_args.append( '-DLLVM_PARALLEL_LINK_JOBS=4' )
     cmake_args.append( '-DCMAKE_C_FLAGS=-fno-split-lto-unit ' + ' '.join(cflags) )
     cmake_args.append( '-DCMAKE_CXX_FLAGS=-fno-split-lto-unit ' + ' '.join(cxxflags) )
-    cmake_args.append( '-DCMAKE_EXE_LINKER_FLAGS=-Wl,-mllvm,-import-instr-limit=30 -Wl,--lto-O3 -Wl,--thinlto-jobs=all -Wl,-mllvm,-polly -Wl,-mllvm,-polly-invariant-load-hoisting -Wl,-mllvm,-polly-run-dce -Wl,-mllvm,-polly-vectorizer=stripmine ' + ' '.join(ldflags) )
-    cmake_args.append( '-DCMAKE_SHARED_LINKER_FLAGS=-Wl,-mllvm,-import-instr-limit=30 -Wl,--lto-O3 -Wl,--thinlto-jobs=all -Wl,-mllvm,-polly -Wl,-mllvm,-polly-invariant-load-hoisting -Wl,-mllvm,-polly-run-dce -Wl,-mllvm,-polly-vectorizer=stripmine ' + ' '.join(ldflags) )
-    cmake_args.append( '-DCMAKE_MODULE_LINKER_FLAGS=-Wl,-mllvm,-import-instr-limit=30 -Wl,--lto-O3 -Wl,--thinlto-jobs=all -Wl,-mllvm,-polly -Wl,-mllvm,-polly-invariant-load-hoisting -Wl,-mllvm,-polly-run-dce -Wl,-mllvm,-polly-vectorizer=stripmine ' + ' '.join(ldflags) )
+    cmake_args.append( '-DCMAKE_EXE_LINKER_FLAGS=-Wl,-mllvm,-adce-remove-loops -Wl,-mllvm,-aggressive-ext-opt -Wl,-mllvm,-enable-cse-in-irtranslator -Wl,-mllvm,-enable-cse-in-legalizer -Wl,-mllvm,-enable-gvn-hoist -Wl,-mllvm,-gvn-hoist-max-bbs=-1 -Wl,-mllvm,-gvn-hoist-max-depth=-1 -Wl,-mllvm,-gvn-hoist-max-chain-length=-1 -Wl,-mllvm,-enable-interleaved-mem-accesses -Wl,-mllvm,-enable-masked-interleaved-mem-accesses -Wl,-mllvm,-enable-loopinterchange -Wl,-mllvm,-enable-loop-distribute -Wl,-mllvm,-enable-loop-flatten -Wl,-mllvm,-interleave-small-loop-scalar-reduction -Wl,-mllvm,-loop-rotate-multi -Wl,-mllvm,-scalar-evolution-use-expensive-range-sharpening -Wl,-mllvm,-extra-vectorizer-passes -Wl,-mllvm,-import-instr-limit=30 -Wl,--lto-O3 -Wl,--thinlto-jobs=all -Wl,-mllvm,-polly -Wl,-mllvm,-polly-2nd-level-tiling -Wl,-mllvm,-polly-detect-profitability-min-per-loop-insts=40 -Wl,-mllvm,-polly-invariant-load-hoisting -Wl,-mllvm,-polly-loopfusion-greedy -Wl,-mllvm,-polly-register-tiling -Wl,-mllvm,-polly-run-dce -Wl,-mllvm,-polly-vectorizer=stripmine ' + ' '.join(ldflags) )
+    cmake_args.append( '-DCMAKE_SHARED_LINKER_FLAGS=-Wl,-mllvm,-adce-remove-loops -Wl,-mllvm,-aggressive-ext-opt -Wl,-mllvm,-enable-cse-in-irtranslator -Wl,-mllvm,-enable-cse-in-legalizer -Wl,-mllvm,-enable-gvn-hoist -Wl,-mllvm,-gvn-hoist-max-bbs=-1 -Wl,-mllvm,-gvn-hoist-max-depth=-1 -Wl,-mllvm,-gvn-hoist-max-chain-length=-1 -Wl,-mllvm,-enable-interleaved-mem-accesses -Wl,-mllvm,-enable-masked-interleaved-mem-accesses -Wl,-mllvm,-enable-loopinterchange -Wl,-mllvm,-enable-loop-distribute -Wl,-mllvm,-enable-loop-flatten -Wl,-mllvm,-interleave-small-loop-scalar-reduction -Wl,-mllvm,-loop-rotate-multi -Wl,-mllvm,-scalar-evolution-use-expensive-range-sharpening -Wl,-mllvm,-extra-vectorizer-passes -Wl,-mllvm,-import-instr-limit=30 -Wl,--lto-O3 -Wl,--thinlto-jobs=all -Wl,-mllvm,-polly -Wl,-mllvm,-polly-2nd-level-tiling -Wl,-mllvm,-polly-detect-profitability-min-per-loop-insts=40 -Wl,-mllvm,-polly-invariant-load-hoisting -Wl,-mllvm,-polly-loopfusion-greedy -Wl,-mllvm,-polly-register-tiling -Wl,-mllvm,-polly-run-dce -Wl,-mllvm,-polly-vectorizer=stripmine ' + ' '.join(ldflags) )
+    cmake_args.append( '-DCMAKE_MODULE_LINKER_FLAGS=-Wl,-mllvm,-adce-remove-loops -Wl,-mllvm,-aggressive-ext-opt -Wl,-mllvm,-enable-cse-in-irtranslator -Wl,-mllvm,-enable-cse-in-legalizer -Wl,-mllvm,-enable-gvn-hoist -Wl,-mllvm,-gvn-hoist-max-bbs=-1 -Wl,-mllvm,-gvn-hoist-max-depth=-1 -Wl,-mllvm,-gvn-hoist-max-chain-length=-1 -Wl,-mllvm,-enable-interleaved-mem-accesses -Wl,-mllvm,-enable-masked-interleaved-mem-accesses -Wl,-mllvm,-enable-loopinterchange -Wl,-mllvm,-enable-loop-distribute -Wl,-mllvm,-enable-loop-flatten -Wl,-mllvm,-interleave-small-loop-scalar-reduction -Wl,-mllvm,-loop-rotate-multi -Wl,-mllvm,-scalar-evolution-use-expensive-range-sharpening -Wl,-mllvm,-extra-vectorizer-passes -Wl,-mllvm,-import-instr-limit=30 -Wl,--lto-O3 -Wl,--thinlto-jobs=all -Wl,-mllvm,-polly -Wl,-mllvm,-polly-2nd-level-tiling -Wl,-mllvm,-polly-detect-profitability-min-per-loop-insts=40 -Wl,-mllvm,-polly-invariant-load-hoisting -Wl,-mllvm,-polly-loopfusion-greedy -Wl,-mllvm,-polly-register-tiling -Wl,-mllvm,-polly-run-dce -Wl,-mllvm,-polly-vectorizer=stripmine ' + ' '.join(ldflags) )
   else:
-    cmake_args.append( '-DCMAKE_C_FLAGS=-mllvm -polly -mllvm -polly-invariant-load-hoisting -mllvm -polly-run-dce -mllvm -polly-vectorizer=stripmine ' + ' '.join(cflags) )
-    cmake_args.append( '-DCMAKE_CXX_FLAGS=-mllvm -polly -mllvm -polly-invariant-load-hoisting -mllvm -polly-run-dce -mllvm -polly-vectorizer=stripmine ' + ' '.join(cxxflags) )
-    cmake_args.append( '-DCMAKE_EXE_LINKER_FLAGS=' + ' '.join(ldflags) )
-    cmake_args.append( '-DCMAKE_SHARED_LINKER_FLAGS=' + ' '.join(ldflags) )
-    cmake_args.append( '-DCMAKE_MODULE_LINKER_FLAGS=' + ' '.join(ldflags) )
+     cmake_args.append( '-DCMAKE_C_FLAGS=-mllvm -polly -mllvm -polly-2nd-level-tiling -mllvm -polly-detect-profitability-min-per-loop-insts=40 -mllvm -polly-invariant-load-hoisting -mllvm -polly-loopfusion-greedy -mllvm -polly-register-tiling -mllvm -polly-run-dce -mllvm -polly-vectorizer=stripmine ' + ' '.join(cflags) )
+     cmake_args.append( '-DCMAKE_CXX_FLAGS=-mllvm -polly -mllvm -polly-2nd-level-tiling -mllvm -polly-detect-profitability-min-per-loop-insts=40 -mllvm -polly-invariant-load-hoisting -mllvm -polly-loopfusion-greedy -mllvm -polly-register-tiling -mllvm -polly-run-dce -mllvm -polly-vectorizer=stripmine ' + ' '.join(cxxflags) )
+     cmake_args.append( '-DCMAKE_EXE_LINKER_FLAGS=' + ' '.join(ldflags) )
+     cmake_args.append( '-DCMAKE_SHARED_LINKER_FLAGS=' + ' '.join(ldflags) )
+     cmake_args.append( '-DCMAKE_MODULE_LINKER_FLAGS=' + ' '.join(ldflags) )
   if sys.platform == 'win32':
     cmake_args.append('-DLLVM_ENABLE_ZLIB=FORCE_ON')
 
@@ -1087,6 +1093,9 @@ def main():
     elif platform.machine() == 'riscv64':
       cmake_args.append(
           '-DLLVM_DEFAULT_TARGET_TRIPLE=riscv64-unknown-linux-gnu')
+    elif platform.machine() == 'loongarch64':
+      cmake_args.append(
+          '-DLLVM_DEFAULT_TARGET_TRIPLE=loongarch64-unknown-linux-gnu')
     else:
       cmake_args.append('-DLLVM_DEFAULT_TARGET_TRIPLE=x86_64-unknown-linux-gnu')
     cmake_args.append('-DLLVM_ENABLE_PER_TARGET_RUNTIME_DIR=ON')
@@ -1327,8 +1336,8 @@ def main():
         os.path.join(LLVM_BUILD_DIR, 'bin/clang-bolt.inst'),
         '-DCMAKE_ASM_COMPILER_ID=Clang',
     ]
-    cmake_args.append( '-DCMAKE_C_FLAGS=-mllvm -polly -mllvm -polly-invariant-load-hoisting -mllvm -polly-run-dce -mllvm -polly-vectorizer=stripmine ' + ' '.join(cflags) )
-    cmake_args.append( '-DCMAKE_CXX_FLAGS=-mllvm -polly -mllvm -polly-invariant-load-hoisting -mllvm -polly-run-dce -mllvm -polly-vectorizer=stripmine ' + ' '.join(cxxflags) )
+    cmake_args.append( '-DCMAKE_C_FLAGS=-mllvm -polly -mllvm -polly-2nd-level-tiling -mllvm -polly-detect-profitability-min-per-loop-insts=40 -mllvm -polly-invariant-load-hoisting -mllvm -polly-loopfusion-greedy -mllvm -polly-register-tiling -mllvm -polly-run-dce -mllvm -polly-vectorizer=stripmine ' + ' '.join(cflags) )
+    cmake_args.append( '-DCMAKE_CXX_FLAGS=-mllvm -polly -mllvm -polly-2nd-level-tiling -mllvm -polly-detect-profitability-min-per-loop-insts=40 -mllvm -polly-invariant-load-hoisting -mllvm -polly-loopfusion-greedy -mllvm -polly-register-tiling -mllvm -polly-run-dce -mllvm -polly-vectorizer=stripmine ' + ' '.join(cxxflags) )
     RunCommand(['cmake'] + bolt_train_cmake_args +
                [os.path.join(LLVM_DIR, 'llvm')])
     RunCommand([
@@ -1376,6 +1385,7 @@ def main():
                msvc_arch='x64')
   if args.install_dir:
     RunCommand(['ninja', 'install'], msvc_arch='x64')
+
 
   WriteStampFile(PACKAGE_VERSION, STAMP_FILE)
   WriteStampFile(PACKAGE_VERSION, FORCE_HEAD_REVISION_FILE)

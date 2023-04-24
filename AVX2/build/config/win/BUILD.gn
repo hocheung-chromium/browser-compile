@@ -126,7 +126,7 @@ config("compiler") {
     # microarchitecture. MSVC only supports a subset of architectures, and the
     # next step after SSE2 will be AVX.
     if (current_cpu == "x86" || current_cpu == "x64") {
-      cflags += [ "/arch:AVX2" ]
+      cflags += [ "/arch:AVX2", "-maes", ]
     }
 
     # Enable ANSI escape codes if something emulating them is around (cmd.exe
