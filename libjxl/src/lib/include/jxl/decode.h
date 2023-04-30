@@ -23,6 +23,7 @@
 #include "jxl/memory_manager.h"
 #include "jxl/parallel_runner.h"
 #include "jxl/types.h"
+#include "jxl/version.h"
 
 #if defined(__cplusplus) || defined(c_plusplus)
 extern "C" {
@@ -1435,7 +1436,7 @@ JXL_EXPORT JxlDecoderStatus JxlDecoderFlushImage(JxlDecoder* dec);
  *     incompatible custom bit depth and pixel data type.
  */
 JXL_EXPORT JxlDecoderStatus
-JxlDecoderSetImageOutBitDepth(JxlDecoder* dec);
+JxlDecoderSetImageOutBitDepth(JxlDecoder* dec, const JxlBitDepth* bit_depth);
 
 #if defined(__cplusplus) || defined(c_plusplus)
 }
