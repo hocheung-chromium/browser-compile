@@ -703,6 +703,7 @@ config("compiler") {
         # "/lldltocache:" +
         #     rebase_path("$root_out_dir/thinlto-cache", root_build_dir),
         # "/lldltocachepolicy:$cache_policy",
+        "-mllvm:-disable-auto-upgrade-debug-info",
         "-mllvm:-adce-remove-loops",
         "-mllvm:-aggressive-ext-opt",
         "-mllvm:-enable-cse-in-irtranslator",
@@ -779,6 +780,14 @@ config("compiler") {
       }
 
       ldflags += [ "-Wl,-mllvm,-import-instr-limit=$import_instr_limit" ]
+
+      if (!is_chromeos) {
+        # TODO(https://crbug.com/972449): turn on for ChromeOS when that
+        # toolchain has this flag.
+        # We only use one version of LLVM within a build so there's no need to
+        # upgrade debug info, which can be expensive since it runs the verifier.
+        ldflags += [ "-Wl,-mllvm,-disable-auto-upgrade-debug-info" ]
+      }
     }
 
     # TODO(https://crbug.com/1211155): investigate why this isn't effective on
@@ -955,21 +964,6 @@ config("compiler") {
   }
 }
 
-# Defers LTO optimization to the linker, for use when:
-# * Having the C++ toolchain do the linking against Rust staticlibs, and it
-#   will be using LTO.
-# * Having Rust toolchain invoke the linker, and you're linking Rust and C++
-#   together, so this defers LTO to the linker.
-#
-# Otherwise, Rust does LTO during compilation.
-#
-# https://doc.rust-lang.org/rustc/linker-plugin-lto.html
-config("rust_defer_lto_to_linker") {
-  if (!is_debug && use_thin_lto && is_a_target_toolchain) {
-    rustflags = [ "-Clinker-plugin-lto" ]
-  }
-}
-
 # The BUILDCONFIG file sets this config on targets by default, which means when
 # building with ThinLTO, no optimization is performed in the link step.
 config("thinlto_optimize_default") {
@@ -984,6 +978,9 @@ config("thinlto_optimize_default") {
       ldflags += [ "-Wl,--lto-CGO" + lto_opt_level ]
     }
 
+    # We always point Rust to a linker that performs LTO, so we don't want Rust
+    # to preemptively do so during compilation too or they conflict. But we do
+    # want Rust to generate LTO metadata in order for the linker to do its job.
     rustflags = [ "-Clinker-plugin-lto=yes" ]
   }
 }
@@ -1012,6 +1009,9 @@ config("thinlto_optimize_max") {
       ldflags += [ "-Wl,--lto-CGO" + lto_opt_level ]
     }
 
+    # We always point Rust to a linker that performs LTO, so we don't want Rust
+    # to preemptively do so during compilation too or they conflict. But we do
+    # want Rust to generate LTO metadata in order for the linker to do its job.
     rustflags = [ "-Clinker-plugin-lto=yes" ]
   }
 }
@@ -2127,7 +2127,7 @@ if (is_win) {
     # Aix does not support these.
 
     common_optimize_on_cflags += [
-      # P ut data and code in their own sections, so that unused symbols
+      # Put data and code in their own sections, so that unused symbols
       # can be removed at link time with --gc-sections.
       "-fdata-sections",
       "-ffunction-sections",
@@ -2486,6 +2486,7 @@ config("win_pdbaltpath") {
 
 # Full symbols.
 config("symbols") {
+  rustflags = []
   if (is_win) {
     if (is_clang) {
       cflags = [
@@ -2524,11 +2525,13 @@ config("symbols") {
     if (!is_nacl && current_os != "aix") {
       if (use_dwarf5) {
         cflags += [ "-gdwarf-5" ]
+        rustflags += [ "-Zdwarf-version=5" ]
       } else if (!is_apple) {
         # Recent clang versions default to DWARF5 on Linux, and Android is about
         # to switch. TODO: Adopt that in controlled way.
         # Apple platforms still default to 4, so the flag is not needed there.
         cflags += [ "-gdwarf-4" ]
+        rustflags += [ "-Zdwarf-version=4" ]
       }
     }
 
@@ -2619,7 +2622,7 @@ config("symbols") {
       ]
     }
   }
-  rustflags = [ "-g" ]
+  rustflags += [ "-g" ]
 }
 
 # Minimal symbols.

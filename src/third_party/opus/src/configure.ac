@@ -948,3 +948,4 @@ AC_MSG_NOTICE([
  Type "make; make install" to compile and install
  Type "make check" to run the test suite
 ])
+

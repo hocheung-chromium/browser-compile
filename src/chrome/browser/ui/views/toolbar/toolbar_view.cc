@@ -227,7 +227,6 @@ void ToolbarView::Init() {
   if (display_mode_ == DisplayMode::CUSTOM_TAB) {
     custom_tab_bar_ =
         AddChildView(std::make_unique<CustomTabBarView>(browser_view_, this));
-
     SetLayoutManager(std::make_unique<views::FillLayout>());
     initialized_ = true;
     return;
