@@ -317,6 +317,10 @@ void TabStripModel::SetTabStripUI(TabStripModelObserver* observer) {
 }
 
 void TabStripModel::AddObserver(TabStripModelObserver* observer) {
+#if BUILDFLAG(IS_CHROMEOS_LACROS)
+  // TODO(crbug.com/1427990): Remove this after fixing the bug.
+  CHECK(!observers_.HasObserver(observer));
+#endif
   observers_.AddObserver(observer);
   observer->StartedObserving(TabStripModelObserver::ModelPasskey(), this);
 }

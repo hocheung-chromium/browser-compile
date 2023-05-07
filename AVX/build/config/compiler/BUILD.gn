@@ -181,6 +181,13 @@ declare_args() {
   # Allow projects that wish to stay on C++17 to override Chromium's default.
   # TODO(crbug.com/1402249): evaluate removing this end of 2023
   use_cxx17 = false
+
+  # Enable ShadowCallStack for compiled binaries. SCS stores a pointer to a
+  # shadow call stack in register x18. Hence, x18 must not be used by the OS
+  # or libraries. We assume that to be the case for high end Android
+  # configurations. For more details see
+  # https://clang.llvm.org/docs/ShadowCallStack.html
+  enable_shadow_call_stack = false
 }
 
 declare_args() {
@@ -322,28 +329,44 @@ config("compiler") {
     # --------------------------------
     cflags += [ "-fno-strict-aliasing" ]  # See http://crbug.com/32204
 
-    # Stack protection.
-    if (is_apple) {
-      # The strong variant of the stack protector significantly increases
-      # binary size, so only enable it in debug mode.
-      if (is_debug) {
-        cflags += [ "-fstack-protector-strong" ]
-      } else {
-        cflags += [ "-fstack-protector" ]
-      }
-    } else if ((is_posix && !is_chromeos && !is_nacl) || is_fuchsia) {
-      # TODO(phajdan.jr): Use -fstack-protector-strong when our gcc supports it.
-      # See also https://crbug.com/533294
-      if (current_os != "zos") {
-        cflags += [ "--param=ssp-buffer-size=4" ]
-      }
+    # Stack protection. ShadowCallStack and Stack protector address the same
+    # problems. Therefore, we only enable one or the other. Clang advertises SCS as
+    # a stronger alternative to StackProtector, so we give SCS precedence over SP.
+    if (enable_shadow_call_stack) {
+      # On Aarch64, SCS requires the x18 register to be unused because it will hold
+      # a pointer to the shadow stack. For Android we know that Clang doesn't use
+      # x18 by default. On other OSs adding "-ffixed-x18" might be required.
+      assert(is_android)
 
-      # The x86 toolchain currently has problems with stack-protector.
-      if (is_android && current_cpu == "x86") {
-        cflags += [ "-fno-stack-protector" ]
-      } else if (current_os != "aix") {
-        # Not available on aix.
-        cflags += [ "-fstack-protector" ]
+      scs_parameters = [
+        "-fsanitize=shadow-call-stack",
+        "-fno-stack-protector",
+      ]
+      cflags += scs_parameters
+      ldflags += scs_parameters
+    } else {
+      if (is_apple) {
+        # The strong variant of the stack protector significantly increases
+        # binary size, so only enable it in debug mode.
+        if (is_debug) {
+          cflags += [ "-fstack-protector-strong" ]
+        } else {
+          cflags += [ "-fstack-protector" ]
+        }
+      } else if ((is_posix && !is_chromeos && !is_nacl) || is_fuchsia) {
+        # TODO(phajdan.jr): Use -fstack-protector-strong when our gcc supports it.
+        # See also https://crbug.com/533294
+        if (current_os != "zos") {
+          cflags += [ "--param=ssp-buffer-size=4" ]
+        }
+
+        # The x86 toolchain currently has problems with stack-protector.
+        if (is_android && current_cpu == "x86") {
+          cflags += [ "-fno-stack-protector" ]
+        } else if (current_os != "aix") {
+          # Not available on aix.
+          cflags += [ "-fstack-protector" ]
+        }
       }
     }
 
@@ -666,24 +689,7 @@ config("compiler") {
 
     cflags += [
       "-flto=thin",
-      "-fsplit-lto-unit",
-      "-mllvm", "-adce-remove-loops",
-      "-mllvm", "-aggressive-ext-opt",
-      "-mllvm", "-enable-cse-in-irtranslator",
-      "-mllvm", "-enable-cse-in-legalizer",
-      "-mllvm", "-enable-gvn-hoist",
-      "-mllvm", "-gvn-hoist-max-bbs=-1",
-      "-mllvm", "-gvn-hoist-max-depth=-1",
-      "-mllvm", "-gvn-hoist-max-chain-length=-1",
-      "-mllvm", "-enable-interleaved-mem-accesses",
-      "-mllvm", "-enable-masked-interleaved-mem-accesses",
-      "-mllvm", "-enable-loopinterchange",
-      "-mllvm", "-enable-loop-distribute",
-      "-mllvm", "-enable-loop-flatten",
-      "-mllvm", "-interleave-small-loop-scalar-reduction",
-      "-mllvm", "-loop-rotate-multi",
-      "-mllvm", "-scalar-evolution-use-expensive-range-sharpening",
-      "-mllvm", "-extra-vectorizer-passes",
+      "-fno-split-lto-unit",
     ]
 
     # Limit the size of the ThinLTO cache to the lesser of 10% of
@@ -697,6 +703,20 @@ config("compiler") {
     import_instr_limit = 30
 
     if (is_win) {
+      cflags += [
+        "-Xclang", "-freroll-loops",
+        "-mllvm", "-aggressive-ext-opt",
+        "-mllvm", "-enable-ext-tsp-block-placement",
+        "-mllvm", "-enable-gvn-hoist",
+        "-mllvm", "-enable-loopinterchange",
+        "-mllvm", "-enable-loop-flatten",
+        "-mllvm", "-extra-vectorizer-passes",
+        "-mllvm", "-interleave-small-loop-scalar-reduction",
+        "-mllvm", "-loop-rotate-multi",
+        "-mllvm", "-scalar-evolution-use-expensive-range-sharpening",
+        "-mllvm", "-unroll-runtime",
+        "-mllvm", "-unroll-runtime-multi-exit",
+    ]
       ldflags += [
         "/opt:lldltojobs=all",
         "-mllvm:-import-instr-limit=$import_instr_limit",
@@ -704,45 +724,20 @@ config("compiler") {
         #     rebase_path("$root_out_dir/thinlto-cache", root_build_dir),
         # "/lldltocachepolicy:$cache_policy",
         "-mllvm:-disable-auto-upgrade-debug-info",
-        "-mllvm:-adce-remove-loops",
         "-mllvm:-aggressive-ext-opt",
-        "-mllvm:-enable-cse-in-irtranslator",
-        "-mllvm:-enable-cse-in-legalizer",
+        "-mllvm:-enable-ext-tsp-block-placement",
         "-mllvm:-enable-gvn-hoist",
-        "-mllvm:-gvn-hoist-max-bbs=-1",
-        "-mllvm:-gvn-hoist-max-depth=-1",
-        "-mllvm:-gvn-hoist-max-chain-length=-1",
-        "-mllvm:-enable-interleaved-mem-accesses",
-        "-mllvm:-enable-masked-interleaved-mem-accesses",
         "-mllvm:-enable-loopinterchange",
-        "-mllvm:-enable-loop-distribute",
         "-mllvm:-enable-loop-flatten",
+        "-mllvm:-extra-vectorizer-passes",
         "-mllvm:-interleave-small-loop-scalar-reduction",
         "-mllvm:-loop-rotate-multi",
         "-mllvm:-scalar-evolution-use-expensive-range-sharpening",
-        "-mllvm:-extra-vectorizer-passes",
+        "-mllvm:-unroll-runtime",
+        "-mllvm:-unroll-runtime-multi-exit",
       ]
     } else {
-      ldflags += [
-        "-flto=thin",
-        "-Wl,-mllvm,-adce-remove-loops",
-        "-Wl,-mllvm,-aggressive-ext-opt",
-        "-Wl,-mllvm,-enable-cse-in-irtranslator",
-        "-Wl,-mllvm,-enable-cse-in-legalizer",
-        "-Wl,-mllvm,-enable-gvn-hoist",
-        "-Wl,-mllvm,-gvn-hoist-max-bbs=-1",
-        "-Wl,-mllvm,-gvn-hoist-max-depth=-1",
-        "-Wl,-mllvm,-gvn-hoist-max-chain-length=-1",
-        "-Wl,-mllvm,-enable-interleaved-mem-accesses",
-        "-Wl,-mllvm,-enable-masked-interleaved-mem-accesses",
-        "-Wl,-mllvm,-enable-loopinterchange",
-        "-Wl,-mllvm,-enable-loop-distribute",
-        "-Wl,-mllvm,-enable-loop-flatten",
-        "-Wl,-mllvm,-interleave-small-loop-scalar-reduction",
-        "-Wl,-mllvm,-loop-rotate-multi",
-        "-Wl,-mllvm,-scalar-evolution-use-expensive-range-sharpening",
-        "-Wl,-mllvm,-extra-vectorizer-passes",
-      ]
+      ldflags += [ "-flto=thin" ]
 
       # Enabling ThinLTO on Chrome OS too, in an effort to reduce the memory
       # usage in crbug.com/1038040. Note this will increase build time in
@@ -779,7 +774,7 @@ config("compiler") {
         import_instr_limit = 5
       }
 
-      ldflags += [ "-Wl,-mllvm,-import-instr-limit=$import_instr_limit" ]
+      ldflags += [ "-Wl,-mllvm,-import-instr-limit=5" ]
 
       if (!is_chromeos) {
         # TODO(https://crbug.com/972449): turn on for ChromeOS when that
@@ -901,6 +896,24 @@ config("compiler") {
     }
   }
 
+  if (clang_embed_bitcode) {
+    assert(!use_thin_lto,
+           "clang_embed_bitcode is only supported in non-ThinLTO builds")
+    cflags += [
+      "-Xclang",
+      "-fembed-bitcode=all",
+    ]
+  }
+
+  if (lld_emit_indexes_and_imports) {
+    assert(use_thin_lto,
+           "lld_emit_indexes_and_imports is only supported with ThinLTO builds")
+    ldflags += [
+      "-Wl,--save-temps=import",
+      "-Wl,--thinlto-emit-index-files",
+    ]
+  }
+
   # Pass the same C/C++ flags to the objective C/C++ compiler.
   cflags_objc += cflags_c
   cflags_objcc += cflags_cc
@@ -950,8 +963,16 @@ config("compiler") {
     # directory from appearing in build outputs.
     "-Zremap-cwd-prefix=.",
 
-    "-Ctarget-feature=+avx,+aes",
+    "-Ctarget-feature=+avx",
   ]
+
+  if (!is_win || force_rustc_color_output) {
+    # Colorize error output. The analogous flag is passed for clang. This must
+    # be platform-gated since rustc will unconditionally output ANSI escape
+    # sequences, ignoring the platform, when stderr is not a terminal.
+    rustflags += [ "--color=always" ]
+  }
+
   if (rust_abi_target != "") {
     rustflags += [ "--target=$rust_abi_target" ]
   }
@@ -974,7 +995,7 @@ config("thinlto_optimize_default") {
       ldflags = [ "/opt:lldlto=" + lto_opt_level ]
       ldflags += [ "-opt:lldltocgo=" + lto_opt_level ]
     } else {
-      ldflags = [ "-Wl,--lto-O" + lto_opt_level ]
+      ldflags = [ "-Wl,--lto-O0" ]
       ldflags += [ "-Wl,--lto-CGO" + lto_opt_level ]
     }
 
@@ -1005,7 +1026,7 @@ config("thinlto_optimize_max") {
       ldflags = [ "/opt:lldlto=" + lto_opt_level ]
       ldflags += [ "-opt:lldltocgo=" + lto_opt_level ]
     } else {
-      ldflags = [ "-Wl,--lto-O" + lto_opt_level ]
+      ldflags = [ "-Wl,--lto-O0" ]
       ldflags += [ "-Wl,--lto-CGO" + lto_opt_level ]
     }
 
@@ -2131,12 +2152,11 @@ if (is_win) {
       # can be removed at link time with --gc-sections.
       "-fdata-sections",
       "-ffunction-sections",
-      "-funique-section-names",
     ]
     if ((!is_nacl || is_nacl_saigo) && is_clang) {
       # We don't care about unique section names, this makes object files a bit
       # smaller.
-      # common_optimize_on_cflags += [ "-fno-unique-section-names" ]
+      common_optimize_on_cflags += [ "-fno-unique-section-names" ]
     }
 
     common_optimize_on_ldflags += [
@@ -2182,7 +2202,7 @@ config("optimize") {
       # Favor size over speed, /O1 must be before the common flags.
       # /O1 implies /Os and /GF.
       cflags = [ "-Xclang", "-O3", ] + common_optimize_on_cflags + [ "/Oi" ]
-      rustflags = [ "-Copt-level=s" ]
+      rustflags = [ ]
     } else {
       # PGO requires all translation units to be compiled with /O2. The actual
       # optimization level will be decided based on the profiling data.
@@ -2205,12 +2225,12 @@ config("optimize") {
         ]
       }
     } else {
-      cflags = [ "-O3" ] + common_optimize_on_cflags
+      cflags = [ "-Os" ] + common_optimize_on_cflags
     }
 
     # Like with `-Oz` on Clang, `-Copt-level=z` will also turn off loop
     # vectorization.
-    rustflags = [ "-Copt-level=s" ]
+    rustflags = [ "-Copt-level=3" ]
   } else if (is_chromeos) {
     # TODO(gbiv): This is partially favoring size over speed. CrOS exclusively
     # uses clang, and -Os in clang is more of a size-conscious -O2 than "size at
@@ -2224,7 +2244,7 @@ config("optimize") {
     # vectorization while otherwise optimizing for size.
     rustflags = [ "-Copt-level=s" ]
   } else {
-    cflags = [ "-Xclang", "-O3", ] + common_optimize_on_cflags
+    cflags = [ "-O3" ] + common_optimize_on_cflags
 
     # The `-O3` for clang turns on extra optimizations compared to the standard
     # `-O2`. But for rust, `-Copt-level=3` is the default and is thus reliable
@@ -2291,7 +2311,7 @@ config("optimize_max") {
     if (is_win) {
       # Favor speed over size, /O2 must be before the common flags.
       # /O2 implies /Ot, /Oi, and /GF.
-      cflags = [ "-Xclang", "-O3", ] + common_optimize_on_cflags
+      cflags = [ "-Xclang", "-O3", ] + common_optimize_on_cflags + [ "/Oi" ]
     } else if (optimize_for_fuzzing) {
       cflags = [ "-O1" ] + common_optimize_on_cflags
     } else {
@@ -2324,33 +2344,7 @@ config("optimize_speed") {
     if (is_win) {
       # Favor speed over size, /O2 must be before the common flags.
       # /O2 implies /Ot, /Oi, and /GF.
-      cflags = [ "-Xclang", "-O3", ] + common_optimize_on_cflags
-    } else if (optimize_for_fuzzing) {
-      cflags = [ "-O1" ] + common_optimize_on_cflags
-    } else {
-      cflags = [ "-O3", ] + common_optimize_on_cflags
-    }
-    rustflags = [ "-Copt-level=3" ]
-  }
-}
-
-config("optimize_v8") {
-  if (is_nacl && is_nacl_irt) {
-    # The NaCl IRT is a special case and always wants its own config.
-    # Various components do:
-    #   if (!is_debug) {
-    #     configs -= [ "//build/config/compiler:default_optimization" ]
-    #     configs += [ "//build/config/compiler:optimize_max" ]
-    #   }
-    # So this config has to have the selection logic just like
-    # "default_optimization", below.
-    configs = [ "//build/config/nacl:irt_optimize" ]
-  } else {
-    ldflags = common_optimize_on_ldflags
-    if (is_win) {
-      # Favor speed over size, /O2 must be before the common flags.
-      # /O2 implies /Ot, /Oi, and /GF.
-      cflags = [ "-Xclang", "-O3", ] + common_optimize_on_cflags
+      cflags = [ "-Xclang", "-O3", ] + common_optimize_on_cflags + [ "/Oi" ]
     } else if (optimize_for_fuzzing) {
       cflags = [ "-O1" ] + common_optimize_on_cflags
     } else {

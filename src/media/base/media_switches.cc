@@ -291,6 +291,11 @@ const char kCastStreamingForceEnableHardwareVp8[] =
 const char kDisableUseMojoVideoDecoderForPepper[] =
     "disable-use-mojo-video-decoder-for-pepper";
 
+#if !BUILDFLAG(IS_ANDROID)
+const char kCastMirroringTargetPlayoutDelay[] =
+    "cast-mirroring-target-playout-delay";
+#endif  // !BUILDFLAG(IS_ANDROID)
+
 }  // namespace switches
 
 namespace media {
@@ -309,6 +314,13 @@ const base::FeatureParam<base::TimeDelta>
 BASE_FEATURE(kFFmpegDecodeOpaqueVP8,
              "FFmpegDecodeOpaqueVP8",
              base::FEATURE_ENABLED_BY_DEFAULT);
+
+
+// Enable an updated dialog UI for the getDisplayMedia picker dialog under the
+// preferCurrentTab constraint.
+BASE_FEATURE(kShareThisTabDialog,
+             "ShareThisTabDialog",
+             base::FEATURE_DISABLED_BY_DEFAULT);
 
 // Only used for disabling overlay fullscreen (aka SurfaceView) in Clank.
 BASE_FEATURE(kOverlayFullscreenVideo,
@@ -797,6 +809,17 @@ BASE_FEATURE(kVaapiVp9kSVCHWEncoding,
              "VaapiVp9kSVCHWEncoding",
              base::FEATURE_ENABLED_BY_DEFAULT);
 #endif  // defined(ARCH_CPU_X86_FAMILY) && BUILDFLAG(IS_CHROMEOS)
+#if defined(ARCH_CPU_ARM_FAMILY) && BUILDFLAG(IS_CHROMEOS)
+// Enables the new V4L2StatefulVideoDecoder instead of V4L2VideoDecoder.
+BASE_FEATURE(kV4L2FlatStatelessVideoDecoder,
+             "V4L2FlatStatelessVideoDecoder",
+             base::FEATURE_DISABLED_BY_DEFAULT);
+
+// Enables the new V4L2StatefulVideoDecoder instead of V4L2VideoDecoder.
+BASE_FEATURE(kV4L2FlatStatefulVideoDecoder,
+             "V4L2FlatStatefulVideoDecoder",
+             base::FEATURE_DISABLED_BY_DEFAULT)
+#endif
 
 // Inform video blitter of video color space.
 BASE_FEATURE(kVideoBlitColorAccuracy,
