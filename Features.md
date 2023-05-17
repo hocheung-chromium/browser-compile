@@ -33,8 +33,6 @@ Features:
 
 9、删去默认浏览器提示条（本人修改）
 
-10、新增双击关闭标签页功能（本人修改）
-
-11、jpeg-xl支持及其对应的图像仿真 （透过chrome://flags控制）
+10、jpeg-xl支持及其对应的图像仿真 （透过chrome://flags控制）
 <https://chromium-review.googlesource.com/c/chromium/src/+/4255409>
 <https://chromium-review.googlesource.com/c/devtools/devtools-frontend/+/4257582>

@@ -267,6 +267,7 @@ config("compiler") {
   cflags_cc = []
   cflags_objc = []
   cflags_objcc = []
+  rustflags = []
   ldflags = []
   defines = []
   configs = []
@@ -474,6 +475,7 @@ config("compiler") {
     asmflags += [ "-fPIC" ]
     cflags += [ "-fPIC" ]
     ldflags += [ "-fPIC" ]
+    rustflags += [ "-Crelocation-model=pic" ]
 
     if (!is_clang) {
       # Use pipes for communicating between sub-processes. Faster.
@@ -689,7 +691,7 @@ config("compiler") {
 
     cflags += [
       "-flto=thin",
-      "-fno-split-lto-unit",
+      "-fsplit-lto-unit",
     ]
 
     # Limit the size of the ThinLTO cache to the lesser of 10% of
@@ -700,41 +702,16 @@ config("compiler") {
     # binary size than the default setting of 100.
     # TODO(gbiv): We ideally shouldn't need to specify this; ThinLTO
     # should be able to better manage binary size increases on its own.
-    import_instr_limit = 30
+    # import_instr_limit = 30
 
     if (is_win) {
-      cflags += [
-        "-Xclang", "-freroll-loops",
-        "-mllvm", "-aggressive-ext-opt",
-        "-mllvm", "-enable-ext-tsp-block-placement",
-        "-mllvm", "-enable-gvn-hoist",
-        "-mllvm", "-enable-loopinterchange",
-        "-mllvm", "-enable-loop-flatten",
-        "-mllvm", "-extra-vectorizer-passes",
-        "-mllvm", "-interleave-small-loop-scalar-reduction",
-        "-mllvm", "-loop-rotate-multi",
-        "-mllvm", "-scalar-evolution-use-expensive-range-sharpening",
-        "-mllvm", "-unroll-runtime",
-        "-mllvm", "-unroll-runtime-multi-exit",
-    ]
       ldflags += [
         "/opt:lldltojobs=all",
-        "-mllvm:-import-instr-limit=$import_instr_limit",
+        # "-mllvm:-import-instr-limit=$import_instr_limit",
         # "/lldltocache:" +
         #     rebase_path("$root_out_dir/thinlto-cache", root_build_dir),
         # "/lldltocachepolicy:$cache_policy",
         "-mllvm:-disable-auto-upgrade-debug-info",
-        "-mllvm:-aggressive-ext-opt",
-        "-mllvm:-enable-ext-tsp-block-placement",
-        "-mllvm:-enable-gvn-hoist",
-        "-mllvm:-enable-loopinterchange",
-        "-mllvm:-enable-loop-flatten",
-        "-mllvm:-extra-vectorizer-passes",
-        "-mllvm:-interleave-small-loop-scalar-reduction",
-        "-mllvm:-loop-rotate-multi",
-        "-mllvm:-scalar-evolution-use-expensive-range-sharpening",
-        "-mllvm:-unroll-runtime",
-        "-mllvm:-unroll-runtime-multi-exit",
       ]
     } else {
       ldflags += [ "-flto=thin" ]
@@ -928,7 +905,7 @@ config("compiler") {
 
   # Rust compiler flags setup.
   # ---------------------------
-  rustflags = [
+  rustflags += [
     # Overflow checks are optional in Rust, but even if switched
     # off they do not cause undefined behavior (the overflowing
     # behavior is defined). Because containers are bounds-checked
@@ -963,7 +940,7 @@ config("compiler") {
     # directory from appearing in build outputs.
     "-Zremap-cwd-prefix=.",
 
-    "-Ctarget-feature=+avx",
+   "-Ctarget-feature=+avx",
   ]
 
   if (!is_win || force_rustc_color_output) {
@@ -972,7 +949,6 @@ config("compiler") {
     # sequences, ignoring the platform, when stderr is not a terminal.
     rustflags += [ "--color=always" ]
   }
-
   if (rust_abi_target != "") {
     rustflags += [ "--target=$rust_abi_target" ]
   }
@@ -982,6 +958,16 @@ config("compiler") {
   }
   if (is_official_build) {
     rustflags += [ "-Ccodegen-units=1" ]
+  }
+  if (!rust_prebuilt_stdlib) {
+    # When building against the Chromium Rust stdlib (which we compile) always
+    # abort instead of unwinding when panic occurs. In official builds, panics
+    # abort immediately (this is configured in the stdlib) to keep binary size
+    # down. So we unconditionally match behaviour in unofficial too.
+    rustflags += [
+      "-Cpanic=abort",
+      "-Zpanic_abort_tests",
+    ]
   }
 }
 
@@ -994,6 +980,7 @@ config("thinlto_optimize_default") {
     if (is_win) {
       ldflags = [ "/opt:lldlto=" + lto_opt_level ]
       ldflags += [ "-opt:lldltocgo=" + lto_opt_level ]
+      ldflags += [ "-mllvm:-import-instr-limit=5" ]
     } else {
       ldflags = [ "-Wl,--lto-O0" ]
       ldflags += [ "-Wl,--lto-CGO" + lto_opt_level ]
@@ -1025,6 +1012,8 @@ config("thinlto_optimize_max") {
     if (is_win) {
       ldflags = [ "/opt:lldlto=" + lto_opt_level ]
       ldflags += [ "-opt:lldltocgo=" + lto_opt_level ]
+      ldflags += [ "-mllvm:-import-instr-limit=30" ]
+      ldflags += [ "-mllvm:-enable-gvn-hoist" ]
     } else {
       ldflags = [ "-Wl,--lto-O0" ]
       ldflags += [ "-Wl,--lto-CGO" + lto_opt_level ]
@@ -1096,10 +1085,6 @@ config("compiler_cpu_abi") {
           !(is_chromeos_lacros && is_chromeos_device)) {
         cflags += [ "--target=aarch64-linux-gnu" ]
         ldflags += [ "--target=aarch64-linux-gnu" ]
-      }
-      if (is_high_end_android) {
-        cflags += [ "-march=armv8-a+lse" ]
-        ldflags += [ "-march=armv8-a+lse" ]
       }
     } else if (current_cpu == "mipsel" && !is_nacl) {
       ldflags += [ "-Wl,--hash-style=sysv" ]
@@ -1342,7 +1327,7 @@ config("compiler_cpu_abi") {
         ldflags += [ "-m64" ]
       }
     } else if (current_cpu == "riscv64") {
-      if (is_clang) {
+      if (is_clang && !is_android) {
         cflags += [ "--target=riscv64-linux-gnu" ]
         ldflags += [ "--target=riscv64-linux-gnu" ]
       }
@@ -2202,7 +2187,7 @@ config("optimize") {
       # Favor size over speed, /O1 must be before the common flags.
       # /O1 implies /Os and /GF.
       cflags = [ "-Xclang", "-O3", ] + common_optimize_on_cflags + [ "/Oi" ]
-      rustflags = [ ]
+      rustflags = [ "-Copt-level=3" ]
     } else {
       # PGO requires all translation units to be compiled with /O2. The actual
       # optimization level will be decided based on the profiling data.
@@ -2211,7 +2196,7 @@ config("optimize") {
       # https://doc.rust-lang.org/rustc/profile-guided-optimization.html#usage
       # suggests not using an explicit `-Copt-level` at all, and the default is
       # to optimize for performance like `/O2` for clang.
-      rustflags = []
+      rustflags = [ "-Copt-level=3" ]
     }
   } else if (optimize_for_size) {
     # Favor size over speed.
@@ -2225,7 +2210,7 @@ config("optimize") {
         ]
       }
     } else {
-      cflags = [ "-Os" ] + common_optimize_on_cflags
+      cflags = [ "-O3" ] + common_optimize_on_cflags
     }
 
     # Like with `-Oz` on Clang, `-Copt-level=z` will also turn off loop
@@ -2623,10 +2608,18 @@ config("symbols") {
 # This config guarantees to hold symbol for stack trace which are shown to user
 # when crash happens in unittests running on buildbot.
 config("minimal_symbols") {
+  rustflags = []
   if (is_win) {
     # Functions, files, and line tables only.
     cflags = []
 
+    if (is_clang) {
+      cflags += [
+        # Disable putting the compiler command line into the debug info to
+        # prevent some types of non-determinism.
+        "-gno-codeview-command-line",
+      ]
+    }
     if (is_clang && use_lld && use_ghash) {
       cflags += [ "-gcodeview-ghash" ]
       ldflags = [ "/DEBUG:GHASH" ]
@@ -2650,15 +2643,18 @@ config("minimal_symbols") {
       # at least 10.11.
       # TODO(thakis): Remove this once mac_deployment_target is 10.11.
       cflags += [ "-gdwarf-4" ]
+      rustflags += [ "-Zdwarf-version=4" ]
     } else if (!use_dwarf5 && !is_nacl && current_os != "aix") {
       # On aix -gdwarf causes linker failures due to thread_local variables.
       # Recent clang versions default to DWARF5 on Linux, and Android is about
       # to switch. TODO: Adopt that in controlled way.
       cflags += [ "-gdwarf-4" ]
+      rustflags += [ "-Zdwarf-version=4" ]
     }
 
     if (use_dwarf5 && !is_nacl) {
       cflags += [ "-gdwarf-5" ]
+      rustflags += [ "-Zdwarf-version=5" ]
     }
 
     # The gcc-based nacl compilers don't support -fdebug-compilation-dir (see
@@ -2690,7 +2686,7 @@ config("minimal_symbols") {
 
     asmflags = cflags
   }
-  rustflags = [ "-Cdebuginfo=1" ]
+  rustflags += [ "-Cdebuginfo=1" ]
 }
 
 # This configuration contains function names only. That is, the compiler is

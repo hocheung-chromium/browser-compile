@@ -238,6 +238,12 @@ MEDIA_EXPORT extern const char kLacrosUseChromeosProtectedMedia[] =
     "lacros-use-chromeos-protected-media";
 MEDIA_EXPORT extern const char kLacrosUseChromeosProtectedAv1[] =
     "lacros-use-chromeos-protected-av1";
+
+// Allows remote attestation (RA) in dev mode for testing purpose. Usually RA
+// is disabled in dev mode because it will always fail. However, there are cases
+// in testing where we do want to go through the permission flow even in dev
+// mode. This can be enabled by this flag.
+const char kAllowRAInDevMode[] = "allow-ra-in-dev-mode";
 #endif  // BUILDFLAG(IS_CHROMEOS)
 
 namespace autoplay {
@@ -285,12 +291,6 @@ const char kCastStreamingForceEnableHardwareH264[] =
 const char kCastStreamingForceEnableHardwareVp8[] =
     "cast-streaming-force-enable-hardware-vp8";
 
-// Disables the code path that makes Pepper use the MojoVideoDecoder for
-// hardware accelerated video decoding. It overrides the value of the
-// kUseMojoVideoDecoderForPepper feature flag.
-const char kDisableUseMojoVideoDecoderForPepper[] =
-    "disable-use-mojo-video-decoder-for-pepper";
-
 #if !BUILDFLAG(IS_ANDROID)
 const char kCastMirroringTargetPlayoutDelay[] =
     "cast-mirroring-target-playout-delay";
@@ -315,12 +315,16 @@ BASE_FEATURE(kFFmpegDecodeOpaqueVP8,
              "FFmpegDecodeOpaqueVP8",
              base::FEATURE_ENABLED_BY_DEFAULT);
 
-
 // Enable an updated dialog UI for the getDisplayMedia picker dialog under the
 // preferCurrentTab constraint.
 BASE_FEATURE(kShareThisTabDialog,
              "ShareThisTabDialog",
              base::FEATURE_DISABLED_BY_DEFAULT);
+
+// The length of the initial delay during which the "Allow"-button is disabled
+// in the share-this-tab dialog.
+const base::FeatureParam<int> kShareThisTabDialogActivationDelayMs{
+    &kShareThisTabDialog, "activation_delay_ms", 500};
 
 // Only used for disabling overlay fullscreen (aka SurfaceView) in Clank.
 BASE_FEATURE(kOverlayFullscreenVideo,
@@ -546,7 +550,12 @@ BASE_FEATURE(kMemoryPressureBasedSourceBufferGC,
 // hardware video decoders.
 BASE_FEATURE(kUseMultiPlaneFormatForHardwareVideo,
              "UseMultiPlaneFormatForHardwareVideo",
-             base::FEATURE_DISABLED_BY_DEFAULT);
+#if BUILDFLAG(IS_ANDROID)
+             base::FEATURE_ENABLED_BY_DEFAULT
+#else
+             base::FEATURE_DISABLED_BY_DEFAULT
+#endif
+);
 
 // Enables creating single shared image and mailbox for multi-planar formats for
 // software video decoders.
@@ -580,6 +589,12 @@ BASE_FEATURE(kMultiPlaneVideoCaptureSharedImages,
 BASE_FEATURE(kOpenscreenCastStreamingSession,
              "OpenscreenCastStreamingSession",
              base::FEATURE_DISABLED_BY_DEFAULT);
+
+// Controls whether or not frame drops are included in the video bitrate
+// calculation for the OpenscreenFrameSender backed VideoSender implementation.
+BASE_FEATURE(kOpenscreenVideoBitrateFactorInFrameDrops,
+             "OpenscreenVideoBitrateFactorInFrameDrops",
+             base::FEATURE_ENABLED_BY_DEFAULT);
 
 // Controls whether the Mirroring Service will fetch, analyze, and store
 // information on the quality of the session using RTCP logs.
@@ -662,24 +677,6 @@ BASE_FEATURE(kMediaRemotingWithoutFullscreen,
 #endif
 );
 #endif
-
-// Allow Global Media Controls in system tray of CrOS.
-BASE_FEATURE(kGlobalMediaControlsForChromeOS,
-             "GlobalMediaControlsForChromeOS",
-             base::FEATURE_ENABLED_BY_DEFAULT);
-
-constexpr base::FeatureParam<kCrosGlobalMediaControlsPinOptions>::Option
-    kCrosGlobalMediaControlsParamOptions[] = {
-        {kCrosGlobalMediaControlsPinOptions::kPin, "default-pinned"},
-        {kCrosGlobalMediaControlsPinOptions::kNotPin, "default-unpinned"},
-        {kCrosGlobalMediaControlsPinOptions::kHeuristic, "heuristic"}};
-
-constexpr base::FeatureParam<kCrosGlobalMediaControlsPinOptions>
-    kCrosGlobalMediaControlsPinParam(
-        &kGlobalMediaControlsForChromeOS,
-        "CrosGlobalMediaControlsPinParam",
-        kCrosGlobalMediaControlsPinOptions::kHeuristic,
-        &kCrosGlobalMediaControlsParamOptions);
 
 // Show picture-in-picture button in Global Media Controls.
 BASE_FEATURE(kGlobalMediaControlsPictureInPicture,
@@ -803,7 +800,7 @@ BASE_FEATURE(kVaapiH264TemporalLayerHWEncoding,
 // Enable VP8 temporal layer encoding with HW encoder on ChromeOS.
 BASE_FEATURE(kVaapiVp8TemporalLayerHWEncoding,
              "VaapiVp8TemporalLayerEncoding",
-             base::FEATURE_DISABLED_BY_DEFAULT);
+             base::FEATURE_ENABLED_BY_DEFAULT);
 // Enable VP9 k-SVC encoding with HW encoder for webrtc use case on ChromeOS.
 BASE_FEATURE(kVaapiVp9kSVCHWEncoding,
              "VaapiVp9kSVCHWEncoding",
@@ -818,7 +815,7 @@ BASE_FEATURE(kV4L2FlatStatelessVideoDecoder,
 // Enables the new V4L2StatefulVideoDecoder instead of V4L2VideoDecoder.
 BASE_FEATURE(kV4L2FlatStatefulVideoDecoder,
              "V4L2FlatStatefulVideoDecoder",
-             base::FEATURE_DISABLED_BY_DEFAULT)
+             base::FEATURE_DISABLED_BY_DEFAULT);
 #endif
 
 // Inform video blitter of video color space.
@@ -893,6 +890,11 @@ BASE_FEATURE(kLiveCaptionMultiLanguage,
 BASE_FEATURE(kLiveCaptionRightClick,
              "LiveCaptionRightClick",
              base::FEATURE_DISABLED_BY_DEFAULT);
+
+// Enable or disable Live Caption support for WebAudio.
+BASE_FEATURE(kLiveCaptionWebAudio,
+             "LiveCaptionWebAudio",
+             base::FEATURE_ENABLED_BY_DEFAULT);
 
 // Live Caption runs system-wide on ChromeOS, as opposed to just in the browser.
 BASE_FEATURE(kLiveCaptionSystemWideOnChromeOS,
@@ -1067,6 +1069,14 @@ BASE_FEATURE(kUseAudioLatencyFromHAL,
 BASE_FEATURE(kUsePooledSharedImageVideoProvider,
              "UsePooledSharedImageVideoProvider",
              base::FEATURE_ENABLED_BY_DEFAULT);
+
+// Allow the media pipeline to prioritize the software decoder provided by
+// MediaCodec, instead of the built-in software decoders. This is only enabled
+// for platforms which shows worse performance when using the built-in software
+// decoders, e.g. Cast on ATV.
+BASE_FEATURE(kAllowMediaCodecSoftwareDecoder,
+             "AllowMediaCodecSoftwareDecoder",
+             base::FEATURE_DISABLED_BY_DEFAULT);
 
 #endif  // BUILDFLAG(IS_ANDROID)
 
@@ -1282,13 +1292,6 @@ const base::Feature MEDIA_EXPORT kUseOutOfProcessVideoDecoding{
 const base::Feature MEDIA_EXPORT kUseOutOfProcessVideoEncoding{
     "UseOutOfProcessVideoEncoding", base::FEATURE_DISABLED_BY_DEFAULT};
 #endif  // BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS)
-
-// Make the PepperVideoDecoderHost use the MojoVideoDecoder to talk to hardware
-// decoders instead of using the GpuVideoDecodeAcceleratorHost. Note: this
-// doesn't affect the PPB_VideoDecoder_Impl which will continue to use the
-// GpuVideoDecodeAcceleratorHost for the PPB_VideoDecoder_Dev interface.
-const base::Feature MEDIA_EXPORT kUseMojoVideoDecoderForPepper{
-    "UseMojoVideoDecoderForPepper", base::FEATURE_ENABLED_BY_DEFAULT};
 
 // Use SequencedTaskRunner for MediaService.
 BASE_FEATURE(kUseSequencedTaskRunnerForMediaService,
