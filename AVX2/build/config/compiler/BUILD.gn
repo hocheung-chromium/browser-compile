@@ -219,7 +219,12 @@ if (is_android || (is_chromeos_ash && is_chromeos_device)) {
       # another variable.
       chrome_orderfile_path = default_chrome_orderfile
     } else if (is_chromeos_ash && is_chromeos_device) {
-      chrome_orderfile_path = "//chromeos/profiles/chromeos.orderfile.txt"
+      if (chromeos_afdo_platform == "arm" ||
+          chromeos_afdo_platform == "arm-exp") {
+        chrome_orderfile_path = "//chromeos/profiles/chromeos.arm.orderfile.txt"
+      } else {
+        chrome_orderfile_path = "//chromeos/profiles/chromeos.orderfile.txt"
+      }
     }
   }
 }
@@ -766,6 +771,15 @@ config("compiler") {
     # arm32.
     if (!is_android || current_cpu == "arm64") {
       cflags += [ "-fwhole-program-vtables" ]
+
+      # whole-program-vtables implies -fsplit-lto-unit, and Rust needs to match
+      # behaviour. Rust needs to know the linker will be doing LTO in this case
+      # or it rejects the Zsplit-lto-unit flag.
+      rustflags += [
+        "-Zsplit-lto-unit",
+        "-Clinker-plugin-lto=yes",
+      ]
+
       if (!is_win) {
         ldflags += [ "-fwhole-program-vtables" ]
       }
@@ -903,6 +917,35 @@ config("compiler") {
     asmflags += cflags_c
   }
 
+  if (is_chromeos_device && !is_nacl) {
+    # On ChromeOS devices, we want to ensure we're using Chrome's allocator
+    # symbols for all C++ new/delete operator overloads. PartitionAlloc
+    # and other local allocators should always take precedence over system or
+    # preloaded allocators. These are the mangled symbol names.
+    # See b/280115910 for details.
+    ldflags += [
+      "-Wl,--export-dynamic-symbol=_ZdaPv,-u,_ZdaPv",
+      "-Wl,--export-dynamic-symbol=_ZdaPvRKSt9nothrow_t,-u,_ZdaPvRKSt9nothrow_t",
+      "-Wl,--export-dynamic-symbol=_ZdlPv,-u,_ZdlPv",
+      "-Wl,--export-dynamic-symbol=_ZdlPvm,-u,_ZdlPvm",
+      "-Wl,--export-dynamic-symbol=_ZdlPvRKSt9nothrow_t,-u,_ZdlPvRKSt9nothrow_t",
+      "-Wl,--export-dynamic-symbol=_Znam,-u,_Znam",
+      "-Wl,--export-dynamic-symbol=_ZnamRKSt9nothrow_t,-u,_ZnamRKSt9nothrow_t",
+      "-Wl,--export-dynamic-symbol=_Znwm,-u,_Znwm",
+      "-Wl,--export-dynamic-symbol=_ZnwmRKSt9nothrow_t,-u,_ZnwmRKSt9nothrow_t",
+      "-Wl,--export-dynamic-symbol=_ZdaPvmSt11align_val_t,-u,_ZdaPvmSt11align_val_t",
+      "-Wl,--export-dynamic-symbol=_ZdaPvSt11align_val_t,-u,_ZdaPvSt11align_val_t",
+      "-Wl,--export-dynamic-symbol=_ZdaPvSt11align_val_tRKSt9nothrow_t,-u,_ZdaPvSt11align_val_tRKSt9nothrow_t",
+      "-Wl,--export-dynamic-symbol=_ZdlPvmSt11align_val_t,-u,_ZdlPvmSt11align_val_t",
+      "-Wl,--export-dynamic-symbol=_ZdlPvSt11align_val_t,-u,_ZdlPvSt11align_val_t",
+      "-Wl,--export-dynamic-symbol=_ZdlPvSt11align_val_tRKSt9nothrow_t,-u,_ZdlPvSt11align_val_tRKSt9nothrow_t",
+      "-Wl,--export-dynamic-symbol=_ZnamSt11align_val_t,-u,_ZnamSt11align_val_t",
+      "-Wl,--export-dynamic-symbol=_ZnamSt11align_val_tRKSt9nothrow_t,-u,_ZnamSt11align_val_tRKSt9nothrow_t",
+      "-Wl,--export-dynamic-symbol=_ZnwmSt11align_val_t,-u,_ZnwmSt11align_val_t",
+      "-Wl,--export-dynamic-symbol=_ZnwmSt11align_val_tRKSt9nothrow_t,-u,_ZnwmSt11align_val_tRKSt9nothrow_t",
+    ]
+  }
+
   # Rust compiler flags setup.
   # ---------------------------
   rustflags += [
@@ -940,7 +983,7 @@ config("compiler") {
     # directory from appearing in build outputs.
     "-Zremap-cwd-prefix=.",
 
-   "-Ctune-cpu=x86-64-v3", "-Ctarget-feature=+avx",
+    "-Ctarget-cpu=haswell",
   ]
 
   if (!is_win || force_rustc_color_output) {
@@ -975,11 +1018,11 @@ config("compiler") {
 # building with ThinLTO, no optimization is performed in the link step.
 config("thinlto_optimize_default") {
   if (!is_debug && use_thin_lto && is_a_target_toolchain) {
-    lto_opt_level = 3
+    lto_opt_level = 2
 
     if (is_win) {
       ldflags = [ "/opt:lldlto=" + lto_opt_level ]
-      ldflags += [ "-opt:lldltocgo=" + lto_opt_level ]
+      # ldflags += [ "-opt:lldltocgo=" + lto_opt_level ]
       ldflags += [ "-mllvm:-import-instr-limit=5" ]
     } else {
       ldflags = [ "-Wl,--lto-O0" ]
@@ -1004,16 +1047,22 @@ config("thinlto_optimize_default") {
 config("thinlto_optimize_max") {
   if (!is_debug && use_thin_lto && is_a_target_toolchain) {
     if (thin_lto_enable_optimizations) {
-      lto_opt_level = 3
+      lto_opt_level = 2
     } else {
-      lto_opt_level = 3
+      lto_opt_level = 2
     }
 
     if (is_win) {
       ldflags = [ "/opt:lldlto=" + lto_opt_level ]
-      ldflags += [ "-opt:lldltocgo=" + lto_opt_level ]
+      # ldflags += [ "-opt:lldltocgo=" + lto_opt_level ]
       ldflags += [ "-mllvm:-import-instr-limit=30" ]
-      ldflags += [ "-mllvm:-enable-gvn-hoist" ]
+      ldflags += [
+        "-mllvm:-aggressive-ext-opt",
+        "-mllvm:-enable-dfa-jump-thread",
+        "-mllvm:-enable-gvn-hoist",
+        "-mllvm:-loop-rotate-multi",
+        "-mllvm:-slp-vectorize-hor-store",
+      ]
     } else {
       ldflags = [ "-Wl,--lto-O0" ]
       ldflags += [ "-Wl,--lto-CGO" + lto_opt_level ]
@@ -1525,6 +1574,85 @@ config("compiler_arm") {
   }
 }
 
+# Rust and C++ both provide intrinsics for LLVM to call for math operations. We
+# want to use the C++ intrinsics, not the ones in the Rust compiler_builtins
+# library. The Rust symbols are marked as weak, so that they can be replaced by
+# the C++ symbols. This config ensures the C++ symbols exist and are strong in
+# order to cause that replacement to occur by explicitly linking in clang's
+# compiler-rt library.
+config("compiler_builtins") {
+  visibility = [ ":runtime_library" ]
+
+  _dir = ""
+  _libname = "builtins"
+  _prefix = "lib"
+  _suffix = ""
+  _ext = "a"
+  if (is_win) {
+    _dir = "windows"
+    _prefix = ""
+    _ext = "lib"
+    if (current_cpu == "x64") {
+      _suffix = "-x86_64"
+    } else if (current_cpu == "x86") {
+      _suffix = "-i386"
+    } else {
+      assert(false)  # Unhandled cpu type
+    }
+  } else if (is_mac) {
+    _dir = "darwin"
+    _libname = "osx"
+  } else if (is_ios) {
+    import("//build/config/ios/config.gni")  # For `target_environment`
+
+    _dir = "darwin"
+    if (target_environment == "simulator") {
+      _libname = "iossim"
+    } else {
+      _libname = "ios"
+    }
+  } else if (is_linux || is_chromeos) {
+    if (current_cpu == "x64") {
+      _dir = "x86_64-unknown-linux-gnu"
+    } else if (current_cpu == "x86") {
+      _dir = "i386-unknown-linux-gnu"
+    } else if (current_cpu == "arm") {
+      _dir = "armv7-unknown-linux-gnueabihf"
+    } else if (current_cpu == "arm64") {
+      _dir = "aarch64-unknown-linux-gnu"
+    } else {
+      assert(false)  # Unhandled cpu type
+    }
+  } else if (is_fuchsia) {
+    if (current_cpu == "x64") {
+      _dir = "x86_64-unknown-fuchsia"
+    } else if (current_cpu == "arm64") {
+      _dir = "aarch64-unknown-fuchsia"
+    } else {
+      assert(false)  # Unhandled cpu type
+    }
+  } else if (is_android) {
+    _dir = "linux"
+    if (current_cpu == "x64") {
+      _suffix = "-x86_64-android"
+    } else if (current_cpu == "x86") {
+      _suffix = "-i686-android"
+    } else if (current_cpu == "arm") {
+      _suffix = "-arm-android"
+    } else if (current_cpu == "arm64") {
+      _suffix = "-aarch64-android"
+    } else {
+      assert(false)  # Unhandled cpu type
+    }
+  } else {
+    assert(!toolchain_has_rust)  # Unhandled target platform
+  }
+
+  _clang_lib_dir = "$clang_base_path/lib/clang/$clang_version/lib"
+  _lib_file = "${_prefix}clang_rt.${_libname}${_suffix}.${_ext}"
+  libs = [ "$_clang_lib_dir/$_dir/$_lib_file" ]
+}
+
 # runtime_library -------------------------------------------------------------
 #
 # Sets the runtime library and associated options.
@@ -1544,6 +1672,10 @@ config("runtime_library") {
   # build errors related to symbols declared in math.h.
   if (use_custom_libcxx) {
     configs += [ "//build/config/c++:runtime_library" ]
+  }
+
+  if (toolchain_has_rust) {
+    configs += [ ":compiler_builtins" ]
   }
 
   # TODO(crbug.com/830987): Come up with a better name for is POSIX + Fuchsia
@@ -1717,6 +1849,11 @@ config("default_warnings") {
           # TODO(crbug.com/1412713) Evaluate and possibly enable.
           "-Wno-deprecated-this-capture",
         ]
+
+        if (llvm_force_head_revision) {
+          # TODO(https://crbug.com/1448905): Evaluate and possibly enable.
+          cflags += [ "-Wno-builtin-macro-redefined" ]
+        }
       }
     }
   }
@@ -1922,7 +2059,7 @@ config("no_chromium_code") {
 config("noshadowing") {
   # This flag has to be disabled for nacl because the nacl compiler is too
   # strict about shadowing.
-  if (is_clang && (!is_nacl || is_nacl_saigo)) {
+  if (is_clang && (!is_nacl || is_nacl_saigo) && !llvm_force_head_revision) {
     cflags = [ "-Wshadow" ]
   }
 }
@@ -2186,12 +2323,12 @@ config("optimize") {
     if (chrome_pgo_phase != 2) {
       # Favor size over speed, /O1 must be before the common flags.
       # /O1 implies /Os and /GF.
-      cflags = [ "-Xclang", "-O3", ] + common_optimize_on_cflags + [ "/Oi" ]
+      cflags = [ "/O1" ] + common_optimize_on_cflags + [ "/Oi" ]
       rustflags = [ "-Copt-level=3" ]
     } else {
       # PGO requires all translation units to be compiled with /O2. The actual
       # optimization level will be decided based on the profiling data.
-      cflags = [ "-Xclang", "-O3", ] + common_optimize_on_cflags + [ "/Oi" ]
+      cflags = [ "/O2" ] + common_optimize_on_cflags + [ "/Oi" ]
 
       # https://doc.rust-lang.org/rustc/profile-guided-optimization.html#usage
       # suggests not using an explicit `-Copt-level` at all, and the default is
@@ -2201,7 +2338,7 @@ config("optimize") {
   } else if (optimize_for_size) {
     # Favor size over speed.
     if (is_clang) {
-      cflags = [ "-O3" ] + common_optimize_on_cflags
+      cflags = [ "-Os" ] + common_optimize_on_cflags
 
       if (use_ml_inliner && is_a_target_toolchain) {
         cflags += [
@@ -2210,12 +2347,12 @@ config("optimize") {
         ]
       }
     } else {
-      cflags = [ "-O3" ] + common_optimize_on_cflags
+      cflags = [ "-Os" ] + common_optimize_on_cflags
     }
 
     # Like with `-Oz` on Clang, `-Copt-level=z` will also turn off loop
     # vectorization.
-    rustflags = [ "-Copt-level=3" ]
+    rustflags = [ "-Copt-level=s" ]
   } else if (is_chromeos) {
     # TODO(gbiv): This is partially favoring size over speed. CrOS exclusively
     # uses clang, and -Os in clang is more of a size-conscious -O2 than "size at
@@ -2229,7 +2366,7 @@ config("optimize") {
     # vectorization while otherwise optimizing for size.
     rustflags = [ "-Copt-level=s" ]
   } else {
-    cflags = [ "-O3" ] + common_optimize_on_cflags
+    cflags = [ "-O2" ] + common_optimize_on_cflags
 
     # The `-O3` for clang turns on extra optimizations compared to the standard
     # `-O2`. But for rust, `-Copt-level=3` is the default and is thus reliable
