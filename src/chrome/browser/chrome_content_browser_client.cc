@@ -8,6 +8,7 @@
 #include <map>
 #include <memory>
 #include <set>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -249,12 +250,12 @@
 #include "components/privacy_sandbox/privacy_sandbox_features.h"
 #include "components/privacy_sandbox/privacy_sandbox_prefs.h"
 #include "components/privacy_sandbox/privacy_sandbox_settings.h"
-#include "components/safe_browsing/buildflags.h"
 #include "components/safe_browsing/content/browser/browser_url_loader_throttle.h"
 #include "components/safe_browsing/content/browser/password_protection/password_protection_commit_deferring_condition.h"
 #include "components/safe_browsing/content/browser/safe_browsing_navigation_throttle.h"
 #include "components/safe_browsing/content/browser/ui_manager.h"
 #include "components/safe_browsing/core/browser/hashprefix_realtime/hash_realtime_service.h"
+#include "components/safe_browsing/core/browser/hashprefix_realtime/hash_realtime_utils.h"
 #include "components/safe_browsing/core/browser/ping_manager.h"
 #include "components/safe_browsing/core/browser/realtime/policy_engine.h"
 #include "components/safe_browsing/core/browser/realtime/url_lookup_service.h"
@@ -3698,11 +3699,6 @@ base::OnceClosure ChromeContentBrowserClient::SelectClientCertificate(
     return base::OnceClosure();
   }
 
-  GURL requesting_url("https://" + cert_request_info->host_and_port.ToString());
-  DCHECK(requesting_url.is_valid())
-      << "Invalid URL string: https://"
-      << cert_request_info->host_and_port.ToString();
-
   Profile* profile =
       Profile::FromBrowserContext(web_contents->GetBrowserContext());
 #if BUILDFLAG(IS_CHROMEOS_ASH)
@@ -3732,6 +3728,10 @@ base::OnceClosure ChromeContentBrowserClient::SelectClientCertificate(
     VLOG(1) << "Client cert requested in " << profile_name << " profile.";
   }
 #endif  // BUILDFLAG(IS_CHROMEOS_ASH)
+
+  GURL requesting_url = chrome::enterprise_util::GetRequestingUrl(
+      cert_request_info->host_and_port);
+  DCHECK(requesting_url.is_valid()) << "Invalid URL string: " << requesting_url;
 
   net::ClientCertIdentityList matching_certificates, nonmatching_certificates;
   chrome::enterprise_util::AutoSelectCertificates(
@@ -5368,25 +5368,14 @@ base::FilePath ChromeContentBrowserClient::GetLoggingFileName(
   return logging::GetLogFileName(command_line);
 }
 
-std::vector<std::unique_ptr<blink::URLLoaderThrottle>>
-ChromeContentBrowserClient::CreateURLLoaderThrottles(
+#if BUILDFLAG(SAFE_BROWSING_AVAILABLE)
+std::unique_ptr<blink::URLLoaderThrottle>
+ChromeContentBrowserClient::MaybeCreateSafeBrowsingURLLoaderThrottle(
     const network::ResourceRequest& request,
     content::BrowserContext* browser_context,
     const base::RepeatingCallback<content::WebContents*()>& wc_getter,
-    content::NavigationUIData* navigation_ui_data,
-    int frame_tree_node_id) {
-  DCHECK_CURRENTLY_ON(BrowserThread::UI);
-
-  std::vector<std::unique_ptr<blink::URLLoaderThrottle>> result;
-
-  DCHECK(browser_context);
-  Profile* profile = Profile::FromBrowserContext(browser_context);
-  DCHECK(profile);
-
-  ChromeNavigationUIData* chrome_navigation_ui_data =
-      static_cast<ChromeNavigationUIData*>(navigation_ui_data);
-
-#if BUILDFLAG(SAFE_BROWSING_AVAILABLE)
+    int frame_tree_node_id,
+    Profile* profile) {
   bool matches_enterprise_allowlist = safe_browsing::IsURLAllowlistedByPolicy(
       request.url, *profile->GetPrefs());
   if (!matches_enterprise_allowlist) {
@@ -5421,8 +5410,12 @@ ChromeContentBrowserClient::CreateURLLoaderThrottles(
             ? safe_browsing::ChromePingManagerFactory::GetForBrowserContext(
                   profile)
             : nullptr;
+    safe_browsing::hash_realtime_utils::HashRealTimeSelection
+        hash_realtime_selection =
+            safe_browsing::hash_realtime_utils::DetermineHashRealTimeSelection(
+                profile->IsOffTheRecord(), profile->GetPrefs());
 
-    result.push_back(safe_browsing::BrowserURLLoaderThrottle::Create(
+    return safe_browsing::BrowserURLLoaderThrottle::Create(
         base::BindOnce(
             &ChromeContentBrowserClient::GetSafeBrowsingUrlCheckerDelegate,
             base::Unretained(this),
@@ -5433,24 +5426,16 @@ ChromeContentBrowserClient::CreateURLLoaderThrottles(
         wc_getter, frame_tree_node_id,
         url_lookup_service ? url_lookup_service->GetWeakPtr() : nullptr,
         hash_realtime_service ? hash_realtime_service->GetWeakPtr() : nullptr,
-        ping_manager ? ping_manager->GetWeakPtr() : nullptr));
+        ping_manager ? ping_manager->GetWeakPtr() : nullptr,
+        hash_realtime_selection);
   }
+  return nullptr;
+}
 #endif
-
-#if BUILDFLAG(ENABLE_CAPTIVE_PORTAL_DETECTION)
-  result.push_back(
-      std::make_unique<captive_portal::CaptivePortalURLLoaderThrottle>(
-          wc_getter.Run()));
-#endif
-
-  if (chrome_navigation_ui_data &&
-      chrome_navigation_ui_data->is_no_state_prefetching()) {
-    result.push_back(std::make_unique<prerender::PrerenderURLLoaderThrottle>(
-        chrome_navigation_ui_data->prerender_histogram_prefix(),
-        GetPrerenderCanceler(wc_getter)));
-  }
 
 #if BUILDFLAG(IS_ANDROID)
+std::tuple<std::string /*client_data_header*/, bool /*is_custom_tab*/>
+GetClientDataHeader(int frame_tree_node_id) {
   std::string client_data_header;
   bool is_custom_tab = false;
   if (frame_tree_node_id != content::RenderFrameHost::kNoFrameTreeNodeId) {
@@ -5460,8 +5445,9 @@ ChromeContentBrowserClient::CreateURLLoaderThrottles(
       auto* client_data_header_observer =
           customtabs::ClientDataHeaderWebContentsObserver::FromWebContents(
               web_contents);
-      if (client_data_header_observer)
+      if (client_data_header_observer) {
         client_data_header = client_data_header_observer->header();
+      }
 
       auto* delegate =
           TabAndroid::FromWebContents(web_contents)
@@ -5473,8 +5459,15 @@ ChromeContentBrowserClient::CreateURLLoaderThrottles(
       }
     }
   }
+  return {client_data_header, is_custom_tab};
+}
 #endif
 
+std::unique_ptr<blink::URLLoaderThrottle> CreateGoogleURLLoaderThrottle(
+#if BUILDFLAG(IS_ANDROID)
+    const std::string& client_data_header,
+#endif
+    Profile* profile) {
 #if BUILDFLAG(ENABLE_BOUND_SESSION_CREDENTIALS)
   BoundSessionCookieRefreshService* bound_session_cookie_refresh_service =
       BoundSessionCookieRefreshServiceFactory::GetForProfile(profile);
@@ -5501,14 +5494,68 @@ ChromeContentBrowserClient::CreateURLLoaderThrottles(
           profile->GetPrefs()->GetInteger(
               policy::policy_prefs::kForceYouTubeRestrict),
           profile->GetPrefs()->GetString(prefs::kAllowedDomainsForApps));
-  result.push_back(std::make_unique<GoogleURLLoaderThrottle>(
+  return std::make_unique<GoogleURLLoaderThrottle>(
 #if BUILDFLAG(IS_ANDROID)
       client_data_header,
 #endif
 #if BUILDFLAG(ENABLE_BOUND_SESSION_CREDENTIALS)
       std::move(bound_session_request_throttled_listener),
 #endif
-      std::move(dynamic_params)));
+      std::move(dynamic_params));
+}
+
+std::vector<std::unique_ptr<blink::URLLoaderThrottle>>
+ChromeContentBrowserClient::CreateURLLoaderThrottles(
+    const network::ResourceRequest& request,
+    content::BrowserContext* browser_context,
+    const base::RepeatingCallback<content::WebContents*()>& wc_getter,
+    content::NavigationUIData* navigation_ui_data,
+    int frame_tree_node_id) {
+  DCHECK_CURRENTLY_ON(BrowserThread::UI);
+
+  std::vector<std::unique_ptr<blink::URLLoaderThrottle>> result;
+
+  DCHECK(browser_context);
+  Profile* profile = Profile::FromBrowserContext(browser_context);
+  DCHECK(profile);
+
+  ChromeNavigationUIData* chrome_navigation_ui_data =
+      static_cast<ChromeNavigationUIData*>(navigation_ui_data);
+
+#if BUILDFLAG(SAFE_BROWSING_AVAILABLE)
+  if (auto safe_browsing_throttle = MaybeCreateSafeBrowsingURLLoaderThrottle(
+          request, browser_context, wc_getter, frame_tree_node_id, profile);
+      safe_browsing_throttle) {
+    result.push_back(std::move(safe_browsing_throttle));
+  }
+#endif
+
+#if BUILDFLAG(ENABLE_CAPTIVE_PORTAL_DETECTION)
+  result.push_back(
+      std::make_unique<captive_portal::CaptivePortalURLLoaderThrottle>(
+          wc_getter.Run()));
+#endif
+
+  if (chrome_navigation_ui_data &&
+      chrome_navigation_ui_data->is_no_state_prefetching()) {
+    result.push_back(std::make_unique<prerender::PrerenderURLLoaderThrottle>(
+        chrome_navigation_ui_data->prerender_histogram_prefix(),
+        GetPrerenderCanceler(wc_getter)));
+  }
+
+#if BUILDFLAG(IS_ANDROID)
+  auto [client_data_header, is_custom_tab] =
+      GetClientDataHeader(frame_tree_node_id);
+#endif
+
+  if (auto google_throttle = CreateGoogleURLLoaderThrottle(
+#if BUILDFLAG(IS_ANDROID)
+          client_data_header,
+#endif
+          profile);
+      google_throttle) {
+    result.push_back(std::move(google_throttle));
+  }
 
   {
     auto* factory =
@@ -5537,6 +5584,45 @@ ChromeContentBrowserClient::CreateURLLoaderThrottles(
       signin::URLLoaderThrottle::MaybeCreate(std::move(delegate), wc_getter);
   if (signin_throttle)
     result.push_back(std::move(signin_throttle));
+
+  return result;
+}
+
+std::vector<std::unique_ptr<blink::URLLoaderThrottle>>
+ChromeContentBrowserClient::CreateURLLoaderThrottlesForKeepAlive(
+    const network::ResourceRequest& request,
+    content::BrowserContext* browser_context,
+    const base::RepeatingCallback<content::WebContents*()>& wc_getter,
+    int frame_tree_node_id) {
+  DCHECK_CURRENTLY_ON(BrowserThread::UI);
+
+  std::vector<std::unique_ptr<blink::URLLoaderThrottle>> result;
+
+  DCHECK(browser_context);
+  Profile* profile = Profile::FromBrowserContext(browser_context);
+  DCHECK(profile);
+
+#if BUILDFLAG(SAFE_BROWSING_AVAILABLE)
+  if (auto safe_browsing_throttle = MaybeCreateSafeBrowsingURLLoaderThrottle(
+          request, browser_context, wc_getter, frame_tree_node_id, profile);
+      safe_browsing_throttle) {
+    result.push_back(std::move(safe_browsing_throttle));
+  }
+#endif
+
+#if BUILDFLAG(IS_ANDROID)
+  auto [client_data_header, unused_is_custom_tab] =
+      GetClientDataHeader(frame_tree_node_id);
+#endif
+
+  if (auto google_throttle = CreateGoogleURLLoaderThrottle(
+#if BUILDFLAG(IS_ANDROID)
+          client_data_header,
+#endif
+          profile);
+      google_throttle) {
+    result.push_back(std::move(google_throttle));
+  }
 
   return result;
 }
@@ -5975,7 +6061,9 @@ bool ChromeContentBrowserClient::WillCreateURLLoaderFactory(
 std::vector<std::unique_ptr<content::URLLoaderRequestInterceptor>>
 ChromeContentBrowserClient::WillCreateURLLoaderRequestInterceptors(
     content::NavigationUIData* navigation_ui_data,
-    int frame_tree_node_id) {
+    int frame_tree_node_id,
+    int64_t navigation_id,
+    scoped_refptr<base::SequencedTaskRunner> navigation_response_task_runner) {
   std::vector<std::unique_ptr<content::URLLoaderRequestInterceptor>>
       interceptors;
 #if BUILDFLAG(ENABLE_OFFLINE_PAGES)
@@ -5994,8 +6082,8 @@ ChromeContentBrowserClient::WillCreateURLLoaderRequestInterceptors(
   }
 #endif
 
-  interceptors.push_back(
-      std::make_unique<SearchPrefetchURLLoaderInterceptor>(frame_tree_node_id));
+  interceptors.push_back(std::make_unique<SearchPrefetchURLLoaderInterceptor>(
+      frame_tree_node_id, navigation_id, navigation_response_task_runner));
 
   if (base::FeatureList::IsEnabled(features::kHttpsFirstModeV2)) {
     auto https_upgrades_interceptor =
@@ -6793,27 +6881,8 @@ std::string ChromeContentBrowserClient::GetUserAgentBasedOnPolicy(
   embedder_support::UserAgentReductionEnterprisePolicyState
       user_agent_reduction =
           embedder_support::GetUserAgentReductionFromPrefs(prefs);
-  switch (user_agent_reduction) {
-    case embedder_support::UserAgentReductionEnterprisePolicyState::
-        kForceDisabled:
-      return embedder_support::GetFullUserAgent(force_major_version_to_minor);
-    case embedder_support::UserAgentReductionEnterprisePolicyState::
-        kForceEnabled:
-      return embedder_support::GetReducedUserAgent(
-          force_major_version_to_minor);
-    case embedder_support::UserAgentReductionEnterprisePolicyState::kDefault:
-    default:
-      return embedder_support::GetUserAgent(force_major_version_to_minor,
-                                            user_agent_reduction);
-  }
-}
-
-std::string ChromeContentBrowserClient::GetFullUserAgent() {
-  return embedder_support::GetFullUserAgent();
-}
-
-std::string ChromeContentBrowserClient::GetReducedUserAgent() {
-  return embedder_support::GetReducedUserAgent();
+  return embedder_support::GetUserAgent(force_major_version_to_minor,
+                                        user_agent_reduction);
 }
 
 blink::UserAgentMetadata ChromeContentBrowserClient::GetUserAgentMetadata() {
@@ -6892,8 +6961,6 @@ ui::AXMode ChromeContentBrowserClient::GetAXModeForBrowserContext(
     if (pdf_ocr_controller && pdf_ocr_controller->IsEnabled()) {
       ax_mode.set_mode(ui::AXMode::kPDFOcr, true);
     }
-    // TODO(crbug.com/1393069): Destroy PdfOcrController when unused (i.e.
-    // when a screen reader gets turned off later).
   }
 #endif  // BUILDFLAG(ENABLE_SCREEN_AI_SERVICE)
   return ax_mode;
@@ -7510,22 +7577,26 @@ ChromeContentBrowserClient::GetAlternativeErrorPageOverrideInfo(
     }
   }
 
-  // TODO(b/247618374): Lacros implementation
 #if BUILDFLAG(IS_CHROMEOS_ASH)
   if (ash::features::IsCaptivePortalErrorPageEnabled()) {
-    auto alternative_error_page_override_info =
-        content::mojom::AlternativeErrorPageOverrideInfo::New();
-    // Use the alternative error page dictionary to provide additional
-    // suggestions in the default error page.
-    alternative_error_page_override_info->alternative_error_page_params.Set(
-        error_page::kOverrideErrorPage, base::Value(false));
-    bool is_portal_state =
-        ash::network_health::NetworkHealthManager::GetInstance()
-            ->helper()
-            ->IsWiFiPortalState();
-    alternative_error_page_override_info->alternative_error_page_params.Set(
-        error_page::kIsPortalStateKey, base::Value(is_portal_state));
-    return alternative_error_page_override_info;
+    using PortalState = chromeos::network_config::mojom::PortalState;
+    auto portal_state = ash::network_health::NetworkHealthManager::GetInstance()
+                            ->helper()
+                            ->WiFiPortalState();
+    if (portal_state != PortalState::kUnknown) {
+      auto alternative_error_page_override_info =
+          content::mojom::AlternativeErrorPageOverrideInfo::New();
+      bool is_portal_state = portal_state == PortalState::kPortal ||
+                             portal_state == PortalState::kPortalSuspected ||
+                             portal_state == PortalState::kProxyAuthRequired;
+      // Use the alternative error page dictionary to provide additional
+      // suggestions in the default error page.
+      alternative_error_page_override_info->alternative_error_page_params.Set(
+          error_page::kOverrideErrorPage, base::Value(false));
+      alternative_error_page_override_info->alternative_error_page_params.Set(
+          error_page::kIsPortalStateKey, base::Value(is_portal_state));
+      return alternative_error_page_override_info;
+    }
   }
 #endif
 
@@ -7533,11 +7604,10 @@ ChromeContentBrowserClient::GetAlternativeErrorPageOverrideInfo(
 }
 
 bool ChromeContentBrowserClient::OpenExternally(
-    content::RenderFrameHost* opener,
     const GURL& url,
     WindowOpenDisposition disposition) {
 #if BUILDFLAG(IS_CHROMEOS_ASH)
-  return ash::TryOpenUrl(url, disposition, opener->GetWebUI());
+  return ash::TryOpenUrl(url, disposition);
 #else
   return false;
 #endif  // BUILDFLAG(IS_CHROMEOS_ASH)
