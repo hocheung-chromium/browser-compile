@@ -57,9 +57,9 @@ printf "${YEL}Downloading PGO Profiles for Windows ...\n" &&
 printf "\n" &&
 tput sgr0 &&
 
-python3 tools/update_pgo_profiles.py --target=win64 update --gs-url-base=chromium-optimization-profiles/pgo_profiles &&
+vpython3 tools/update_pgo_profiles.py --target=win64 update --gs-url-base=chromium-optimization-profiles/pgo_profiles &&
 
-python3 v8/tools/builtins-pgo/download_profiles.py download &&
+vpython3 v8/tools/builtins-pgo/download_profiles.py --depot-tools=$HOME/depot_tools download &&
 
 printf "\n" &&
 
