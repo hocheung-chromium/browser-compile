@@ -1,16 +1,29 @@
-# Chromium Compile
+# PATCHES
 
-## 本repo存放所修改过的文件以及Release的版本
+<https://github.com/ungoogled-software/ungoogled-chromium/blob/master/patches/extra/ungoogled-chromium/add-flag-for-close-confirmation.patch>
 
-5月18日更新至 **115.0.5776.0**
+<https://github.com/ungoogled-software/ungoogled-chromium/blob/master/patches/extra/ungoogled-chromium/add-flag-for-custom-ntp.patch>
 
-### 本版本变更情况
+<https://github.com/ungoogled-software/ungoogled-chromium/blob/master/patches/extra/ungoogled-chromium/add-flag-to-close-window-with-last-tab.patch>
 
-1.同步上游更新
-2.更新highway以及libjxl
-3.删除双击关闭标签页功能
-4.便携版不再提供启动批处理和预置参数
+<https://github.com/ungoogled-software/ungoogled-chromium/blob/master/patches/extra/ungoogled-chromium/disable-formatting-in-omnibox.patch>
 
-## 本浏览器所拥有的功能
+<https://github.com/ungoogled-software/ungoogled-chromium/blob/master/patches/extra/ungoogled-chromium/enable-menu-on-reload-button.patch>
 
-具体详见：[Features](https://gitlab.com/Cheung_yfqh/chromium-compile/-/blob/main/Features.md)
+<https://github.com/RobRich999/Chromium_Clang/blob/main/Windows/win64-avx.patch>
+
+<https://github.com/RobRich999/Chromium_Clang/blob/main/Windows/win64-avx2.patch>
+
+<https://github.com/RobRich999/Chromium_Clang/blob/main/V8/v8.patch>
+
+<https://github.com/StaZhu/enable-chromium-hevc-hardware-decoding/blob/main/add-hevc-ffmpeg-decoder-parser.patch>
+
+<https://github.com/ungoogled-software/ungoogled-chromium-windows/blob/master/patches/ungoogled-chromium/windows/windows-disable-encryption.patch>
+
+<https://github.com/ungoogled-software/ungoogled-chromium-windows/blob/master/patches/ungoogled-chromium/windows/windows-disable-machine-id.patch>
+
+<https://github.com/ungoogled-software/ungoogled-chromium/blob/master/patches/extra/ungoogled-chromium/add-flag-to-hide-side-panel-button.patch>
+
+<https://chromium-review.googlesource.com/c/chromium/src/+/4255409>
+
+<https://chromium-review.googlesource.com/c/devtools/devtools-frontend/+/4257582>
