@@ -10,8 +10,6 @@
 
 <https://github.com/ungoogled-software/ungoogled-chromium/blob/master/patches/extra/ungoogled-chromium/enable-menu-on-reload-button.patch>
 
-<https://github.com/RobRich999/Chromium_Clang/blob/main/Windows/win64-avx.patch>
-
 <https://github.com/RobRich999/Chromium_Clang/blob/main/Windows/win64-avx2.patch>
 
 <https://github.com/RobRich999/Chromium_Clang/blob/main/V8/v8.patch>
@@ -24,6 +22,6 @@
 
 <https://github.com/ungoogled-software/ungoogled-chromium/blob/master/patches/extra/ungoogled-chromium/add-flag-to-hide-side-panel-button.patch>
 
-<https://chromium-review.googlesource.com/c/chromium/src/+/4255409>
+<https://chromium-review.googlesource.com/c/chromium/src/+/4257656>
 
 <https://chromium-review.googlesource.com/c/devtools/devtools-frontend/+/4257582>

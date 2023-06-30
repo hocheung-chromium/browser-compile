@@ -5,8 +5,8 @@
 #include <windows.h>
 
 #include "base/base64.h"
-#include "base/feature_list.h"
 #include "base/command_line.h"
+#include "base/feature_list.h"
 #include "base/logging.h"
 #include "base/memory/singleton.h"
 #include "base/metrics/histogram_functions.h"
@@ -88,7 +88,7 @@ bool DecryptStringWithDPAPI(const std::string& ciphertext,
     *plaintext = ciphertext;
     return true;
   }
-  
+
   DATA_BLOB input;
   input.pbData =
       const_cast<BYTE*>(reinterpret_cast<const BYTE*>(ciphertext.data()));

@@ -20,12 +20,15 @@ import signal
 import subprocess
 import sys
 import tempfile
+from robo_lib import config
 
-SCRIPTS_DIR = os.path.abspath(os.path.dirname(__file__))
-FFMPEG_DIR = os.path.abspath(os.path.join(SCRIPTS_DIR, '..', '..'))
-CHROMIUM_ROOT_DIR = os.path.abspath(os.path.join(FFMPEG_DIR, '..', '..'))
+ROBO_CONFIGURATION = config.RoboConfiguration()
+FFMPEG_DIR = ROBO_CONFIGURATION.ffmpeg_home()
+CHROMIUM_ROOT_DIR = ROBO_CONFIGURATION.chrome_src()
 NDK_ROOT_DIR = os.path.abspath(
     os.path.join(CHROMIUM_ROOT_DIR, 'third_party', 'android_ndk'))
+# Token to indicate that a build has completed successfully, so that we can
+# skip it with `--fast`.
 SUCCESS_TOKEN = 'THIS_BUILD_WORKED'
 
 sys.path.append(os.path.join(CHROMIUM_ROOT_DIR, 'build'))
@@ -537,7 +540,7 @@ def BuildFFmpeg(target_os, target_arch, host_os, host_arch, parallel_jobs,
   if target_os == 'mac' and host_os == 'linux':
     RewriteFile(
         os.path.join(config_dir, 'ffbuild/config.mak'), [(r'LD=ld64.lld',
-        r'LD=' + os.path.join(SCRIPTS_DIR, 'fake_linker.py'))])
+        r'LD=' + ROBO_CONFIGURATION.get_script_path('fake_linker.py'))])
 
   # The FFMPEG roll build hits a bug in lld-link that does not impact the
   # overall Chromium build.
@@ -545,7 +548,7 @@ def BuildFFmpeg(target_os, target_arch, host_os, host_arch, parallel_jobs,
   if target_os == 'win' and target_arch == 'arm64' and host_os == 'linux':
     RewriteFile(
         os.path.join(config_dir, 'ffbuild/config.mak'), [(r'LD=lld-link',
-        r'LD=' + os.path.join(SCRIPTS_DIR, 'fake_linker.py'))])
+        r'LD=' + ROBO_CONFIGURATION.get_script_path('fake_linker.py'))])
 
   if target_os in (host_os, host_os + '-noasm', 'android',
                    'win', 'mac') and not config_only:
@@ -817,7 +820,7 @@ def ConfigureAndBuild(target_arch, target_os, host_os, host_arch, parallel_jobs,
               '--extra-cflags=--target=arm-linux-gnueabihf',
               '--extra-ldflags=--target=arm-linux-gnueabihf',
               '--sysroot=' + os.path.join(CHROMIUM_ROOT_DIR,
-                                          'build/linux/debian_bullseye_arm-sysroot'),
+                                          'build/linux/debian_bullseye_armhf-sysroot'),
               '--extra-cflags=-mtune=cortex-a8',
               # NOTE: we don't need softfp for this hardware.
               '--extra-cflags=-mfloat-abi=hard',

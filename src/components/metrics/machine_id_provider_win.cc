@@ -33,6 +33,7 @@ std::string MachineIdProvider::GetMachineId() {
   if (base::CommandLine::ForCurrentProcess()->HasSwitch("disable-machine-id")) {
     return std::string();
   }
+
   base::ScopedBlockingCall scoped_blocking_call(FROM_HERE,
                                                 base::BlockingType::MAY_BLOCK);
 

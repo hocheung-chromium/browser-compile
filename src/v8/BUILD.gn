@@ -83,6 +83,17 @@ declare_args() {
   # Sets -dENABLE_HUGEPAGE
   v8_enable_hugepage = false
 
+  # Sets -dV8_ENABLE_PRIVATE_MAPPING_FORK_OPTIMIZATION.
+  #
+  # This flag speeds up the performance of fork/execve on Linux systems for
+  # embedders which use it (like Node.js). It works by marking the pages that
+  # V8 allocates as MADV_DONTFORK. Without MADV_DONTFORK, the Linux kernel
+  # spends a long time manipulating page mappings on fork and exec which the
+  # child process doesn't generally need to access.
+  #
+  # See v8:7381 for more details.
+  v8_enable_private_mapping_fork_optimization = false
+
   # Sets -dENABLE_HANDLE_ZAPPING.
   v8_enable_handle_zapping = is_asan || is_debug
 
@@ -278,6 +289,9 @@ declare_args() {
   # Use switch-based dispatch if this is false
   v8_enable_regexp_interpreter_threaded_dispatch = true
 
+  # Enforce equality of builtins hashes from compatible architectures.
+  v8_verify_builtins_compatibility = false
+
   # Check mksnapshot determinism by running it multiple times.
   v8_verify_deterministic_mksnapshot = false
 
@@ -318,6 +332,10 @@ declare_args() {
   # Enable the experimental V8 sandbox.
   # Sets -DV8_ENABLE_SANDBOX.
   v8_enable_sandbox = ""
+
+  # Enable experimental code pointer sandboxing for the V8 sandbox.
+  # Sets -DV8_CODE_POINTER_SANDBOXING
+  v8_code_pointer_sandboxing = false
 
   # Expose the memory corruption API to JavaScript. Useful for testing the sandbox.
   # WARNING This will expose builtins that (by design) cause memory corruption.
@@ -386,6 +404,13 @@ declare_args() {
   # iOS (non-simulator) does not have executable pages for 3rd party
   # applications yet so disable jit.
   v8_jitless = v8_enable_lite_mode || target_is_ios_device
+
+  # Enable Maglev's graph printer.
+  # Sets -DV8_MAGLEV_GRAPH_PRINTER.
+  v8_enable_maglev_graph_printer = !build_with_chromium
+
+  # Enable jump table switch for built-in.
+  v8_enable_builtin_jump_table_switch = v8_current_cpu == "x64"
 }
 
 # Derived defaults.
@@ -633,6 +658,9 @@ assert(!v8_enable_sandbox || v8_enable_pointer_compression_shared_cage,
 
 assert(!v8_enable_sandbox || v8_enable_external_code_space,
        "The sandbox requires the external code space")
+
+assert(!v8_code_pointer_sandboxing || v8_enable_sandbox,
+       "Code pointer sandboxing requires the sandbox")
 
 assert(!v8_expose_memory_corruption_api || v8_enable_sandbox,
        "The Memory Corruption API requires the sandbox")
@@ -991,6 +1019,9 @@ config("features") {
   if (v8_enable_hugepage) {
     defines += [ "ENABLE_HUGEPAGE" ]
   }
+  if (v8_enable_private_mapping_fork_optimization) {
+    defines += [ "V8_ENABLE_PRIVATE_MAPPING_FORK_OPTIMIZATION" ]
+  }
   if (v8_enable_object_print) {
     defines += [ "OBJECT_PRINT" ]
   }
@@ -1154,6 +1185,15 @@ config("features") {
   }
   if (v8_enable_wasm_simd256_revec) {
     defines += [ "V8_ENABLE_WASM_SIMD256_REVEC" ]
+  }
+  if (v8_code_pointer_sandboxing) {
+    defines += [ "V8_CODE_POINTER_SANDBOXING" ]
+  }
+  if (v8_enable_maglev_graph_printer) {
+    defines += [ "V8_ENABLE_MAGLEV_GRAPH_PRINTER" ]
+  }
+  if (v8_enable_builtin_jump_table_switch) {
+    defines += [ "V8_ENABLE_BUILTIN_JUMP_TABLE_SWITCH" ]
   }
 }
 
@@ -1424,6 +1464,7 @@ config("toolchain") {
 
   if (is_win) {
     cflags += [
+      "/wd4172",  # Returning address of local variable.
       "/wd4245",  # Conversion with signed/unsigned mismatch.
       "/wd4267",  # Conversion with possible loss of data.
       "/wd4324",  # Padding structure due to alignment.
@@ -1583,10 +1624,6 @@ config("toolchain") {
       "/wd4715",  # 'function' : not all control paths return a value'
                   # MSVC does not analyze switch (enum) for completeness.
     ]
-
-    # TODO(https://crbug.com/1377771): Keep MSVC on C++17 until source code is
-    # made compatible with C++20.
-    cflags_cc = [ "/std:c++17" ]
   }
 
   if (!is_clang && !is_win) {
@@ -1815,9 +1852,11 @@ torque_files = [
   "src/builtins/iterator.tq",
   "src/builtins/iterator-from.tq",
   "src/builtins/iterator-helpers.tq",
+  "src/builtins/map-groupby.tq",
   "src/builtins/math.tq",
   "src/builtins/number.tq",
   "src/builtins/object-fromentries.tq",
+  "src/builtins/object-groupby.tq",
   "src/builtins/object.tq",
   "src/builtins/promise-abstract-operations.tq",
   "src/builtins/promise-all.tq",
@@ -1853,6 +1892,9 @@ torque_files = [
   "src/builtins/regexp-split.tq",
   "src/builtins/regexp-test.tq",
   "src/builtins/regexp.tq",
+  "src/builtins/set-difference.tq",
+  "src/builtins/set-intersection.tq",
+  "src/builtins/set-symmetric-difference.tq",
   "src/builtins/set-union.tq",
   "src/builtins/string-at.tq",
   "src/builtins/string-endswith.tq",
@@ -1993,6 +2035,7 @@ if (v8_enable_i18n_support) {
 
 if (v8_enable_webassembly) {
   torque_files += [
+    "src/builtins/js-to-wasm.tq",
     "src/builtins/wasm.tq",
     "src/debug/debug-wasm-objects.tq",
     "src/wasm/wasm-objects.tq",
@@ -2117,6 +2160,15 @@ group("v8_maybe_icu") {
   }
 }
 
+group("v8_abseil") {
+  public_deps = [ "//third_party/abseil-cpp:absl" ]
+
+  public_configs = [
+    "//third_party/abseil-cpp:absl_define_config",
+    "//third_party/abseil-cpp:absl_include_config",
+  ]
+}
+
 v8_header_set("torque_runtime_support") {
   visibility = [ ":*" ]
 
@@ -2137,6 +2189,7 @@ v8_source_set("torque_generated_initializers") {
 
   public_deps = [
     ":torque_runtime_support",
+    ":v8_abseil",
     ":v8_maybe_icu",
   ]
 
@@ -2168,7 +2221,10 @@ v8_source_set("torque_generated_definitions") {
     ":v8_tracing",
   ]
 
-  public_deps = [ ":v8_maybe_icu" ]
+  public_deps = [
+    ":v8_abseil",
+    ":v8_maybe_icu",
+  ]
 
   sources = [
     "$target_gen_dir/torque-generated/class-forward-declarations.h",
@@ -2403,6 +2459,64 @@ if (v8_verify_deterministic_mksnapshot) {
   }
 }
 
+if (v8_verify_builtins_compatibility) {
+  # This specifies a separate mksnapshot target for each of:
+  # x86, x64, arm, arm64.
+  hashes = "builtins_hashes_$v8_current_cpu"
+  run_mksnapshot("dump_$v8_current_cpu") {
+    args = [
+      "--dump-builtins-hashes-to-file",
+      hashes,
+    ]
+    embedded_variant = "Default"
+  }
+
+  # This template defines a comparison action for the architecture the pgo
+  # profile is made for (e.g. x64) and the architecture the profile is used
+  # for (e.g. arm64 with toolchain x64_v8_arm64).
+  template("verify_builtins_hashes") {
+    forward_variables_from(invoker,
+                           [
+                             "profile_arch",
+                             "target_arch",
+                           ])
+    profile_toolchain = "//build/toolchain/linux:clang_${profile_arch}"
+    target_toolchain =
+        "//build/toolchain/linux:clang_${profile_arch}_v8_${target_arch}"
+    action("compare_builtins_$target_name") {
+      deps = [
+        ":run_mksnapshot_dump_${profile_arch}($profile_toolchain)",
+        ":run_mksnapshot_dump_${target_arch}($target_toolchain)",
+      ]
+      report_file = "$root_build_dir/builtins_comparison_$target_name"
+      script = "tools/builtins-pgo/assert_builtins_hashes.py"
+      args = [
+        "builtins_hashes_${profile_arch}",
+        "builtins_hashes_${target_arch}",
+        rebase_path(report_file, root_build_dir),
+      ]
+      outputs = [ report_file ]
+    }
+  }
+
+  verify_builtins_hashes("x86_arm") {
+    profile_arch = "x86"
+    target_arch = "arm"
+  }
+
+  verify_builtins_hashes("x64_arm64") {
+    profile_arch = "x64"
+    target_arch = "arm64"
+  }
+
+  group("verify_all_builtins_hashes") {
+    deps = [
+      ":compare_builtins_x64_arm64",
+      ":compare_builtins_x86_arm",
+    ]
+  }
+}
+
 action("v8_dump_build_config") {
   script = "tools/testrunner/utils/dump_build_config.py"
   outputs = [ "$root_out_dir/v8_build_config.json" ]
@@ -2540,7 +2654,10 @@ v8_source_set("v8_snapshot") {
 
     sources += [ "src/snapshot/snapshot-external.cc" ]
   } else {
-    public_deps += [ ":v8_maybe_icu" ]
+    public_deps += [
+      ":v8_abseil",
+      ":v8_maybe_icu",
+    ]
 
     sources += [ "$target_gen_dir/snapshot.cc" ]
   }
@@ -2723,7 +2840,10 @@ v8_source_set("v8_init") {
     "src/init/setup-isolate-full.cc",
   ]
 
-  public_deps = [ ":v8_maybe_icu" ]
+  public_deps = [
+    ":v8_abseil",
+    ":v8_maybe_icu",
+  ]
 
   configs = [ ":internal_config" ]
 }
@@ -3017,6 +3137,7 @@ v8_header_set("v8_internal_headers") {
     "src/compiler/backend/gap-resolver.h",
     "src/compiler/backend/instruction-codes.h",
     "src/compiler/backend/instruction-scheduler.h",
+    "src/compiler/backend/instruction-selector-adapter.h",
     "src/compiler/backend/instruction-selector-impl.h",
     "src/compiler/backend/instruction-selector.h",
     "src/compiler/backend/instruction.h",
@@ -3146,6 +3267,7 @@ v8_header_set("v8_internal_headers") {
     "src/compiler/turboshaft/graph-visualizer.h",
     "src/compiler/turboshaft/graph.h",
     "src/compiler/turboshaft/index.h",
+    "src/compiler/turboshaft/instruction-selection-phase.h",
     "src/compiler/turboshaft/late-escape-analysis-reducer.h",
     "src/compiler/turboshaft/layered-hash-map.h",
     "src/compiler/turboshaft/machine-lowering-phase.h",
@@ -3162,6 +3284,7 @@ v8_header_set("v8_internal_headers") {
     "src/compiler/turboshaft/recreate-schedule.h",
     "src/compiler/turboshaft/reducer-traits.h",
     "src/compiler/turboshaft/representations.h",
+    "src/compiler/turboshaft/required-optimization-reducer.h",
     "src/compiler/turboshaft/runtime-call-descriptors.h",
     "src/compiler/turboshaft/select-lowering-reducer.h",
     "src/compiler/turboshaft/sidetable.h",
@@ -3282,7 +3405,6 @@ v8_header_set("v8_internal_headers") {
     "src/heap/array-buffer-sweeper.h",
     "src/heap/base-space.h",
     "src/heap/basic-memory-chunk.h",
-    "src/heap/code-object-registry.h",
     "src/heap/code-range.h",
     "src/heap/code-stats.h",
     "src/heap/collection-barrier.h",
@@ -3349,6 +3471,7 @@ v8_header_set("v8_internal_headers") {
     "src/heap/marking-worklist.h",
     "src/heap/marking.h",
     "src/heap/memory-allocator.h",
+    "src/heap/memory-balancer.h",
     "src/heap/memory-chunk-inl.h",
     "src/heap/memory-chunk-layout.h",
     "src/heap/memory-chunk.h",
@@ -3723,6 +3846,10 @@ v8_header_set("v8_internal_headers") {
     "src/runtime/runtime.h",
     "src/sandbox/bounded-size-inl.h",
     "src/sandbox/bounded-size.h",
+    "src/sandbox/code-pointer-inl.h",
+    "src/sandbox/code-pointer-table-inl.h",
+    "src/sandbox/code-pointer-table.h",
+    "src/sandbox/code-pointer.h",
     "src/sandbox/external-entity-table-inl.h",
     "src/sandbox/external-entity-table.h",
     "src/sandbox/external-pointer-inl.h",
@@ -3742,6 +3869,7 @@ v8_header_set("v8_internal_headers") {
     "src/snapshot/embedded/embedded-file-writer-interface.h",
     "src/snapshot/object-deserializer.h",
     "src/snapshot/read-only-deserializer.h",
+    "src/snapshot/read-only-serializer-deserializer.h",
     "src/snapshot/read-only-serializer.h",
     "src/snapshot/references.h",
     "src/snapshot/roots-serializer.h",
@@ -3841,6 +3969,7 @@ v8_header_set("v8_internal_headers") {
       "src/maglev/maglev-ir-inl.h",
       "src/maglev/maglev-ir.h",
       "src/maglev/maglev-phi-representation-selector.h",
+      "src/maglev/maglev-pipeline-statistics.h",
       "src/maglev/maglev-regalloc-data.h",
       "src/maglev/maglev-regalloc.h",
       "src/maglev/maglev-register-frame-array.h",
@@ -4559,6 +4688,7 @@ v8_source_set("v8_compiler_for_mksnapshot_source_set") {
   public_deps = [
     ":generate_bytecode_builtins_list",
     ":run_torque",
+    ":v8_abseil",
     ":v8_maybe_icu",
     ":v8_tracing",
   ]
@@ -4596,6 +4726,7 @@ v8_source_set("v8_compiler") {
   public_deps = [
     ":generate_bytecode_builtins_list",
     ":run_torque",
+    ":v8_abseil",
     ":v8_internal_headers",
     ":v8_maybe_icu",
     ":v8_tracing",
@@ -4623,6 +4754,7 @@ v8_source_set("v8_turboshaft") {
     "src/compiler/turboshaft/graph-builder.cc",
     "src/compiler/turboshaft/graph-visualizer.cc",
     "src/compiler/turboshaft/graph.cc",
+    "src/compiler/turboshaft/instruction-selection-phase.cc",
     "src/compiler/turboshaft/late-escape-analysis-reducer.cc",
     "src/compiler/turboshaft/machine-lowering-phase.cc",
     "src/compiler/turboshaft/memory-optimization-reducer.cc",
@@ -4846,7 +4978,6 @@ v8_source_set("v8_base_without_compiler") {
     "src/heap/array-buffer-sweeper.cc",
     "src/heap/base-space.cc",
     "src/heap/basic-memory-chunk.cc",
-    "src/heap/code-object-registry.cc",
     "src/heap/code-range.cc",
     "src/heap/code-stats.cc",
     "src/heap/collection-barrier.cc",
@@ -4884,6 +5015,7 @@ v8_source_set("v8_base_without_compiler") {
     "src/heap/marking-worklist.cc",
     "src/heap/marking.cc",
     "src/heap/memory-allocator.cc",
+    "src/heap/memory-balancer.cc",
     "src/heap/memory-chunk-layout.cc",
     "src/heap/memory-chunk.cc",
     "src/heap/memory-measurement.cc",
@@ -5095,6 +5227,7 @@ v8_source_set("v8_base_without_compiler") {
     "src/runtime/runtime-typedarray.cc",
     "src/runtime/runtime-weak-refs.cc",
     "src/runtime/runtime.cc",
+    "src/sandbox/code-pointer-table.cc",
     "src/sandbox/external-pointer-table.cc",
     "src/sandbox/sandbox.cc",
     "src/sandbox/testing.cc",
@@ -5166,6 +5299,7 @@ v8_source_set("v8_base_without_compiler") {
       "src/maglev/maglev-interpreter-frame-state.cc",
       "src/maglev/maglev-ir.cc",
       "src/maglev/maglev-phi-representation-selector.cc",
+      "src/maglev/maglev-pipeline-statistics.cc",
       "src/maglev/maglev-regalloc.cc",
       "src/maglev/maglev.cc",
     ]
@@ -5532,6 +5666,7 @@ v8_source_set("v8_base_without_compiler") {
     ":cppgc_base",
     ":generate_bytecode_builtins_list",
     ":run_torque",
+    ":v8_abseil",
     ":v8_headers",
     ":v8_internal_headers",
     ":v8_maybe_icu",
@@ -7155,7 +7290,10 @@ if (v8_enable_webassembly) {
       ":v8_tracing",
     ]
 
-    public_deps = [ ":v8_maybe_icu" ]
+    public_deps = [
+      ":v8_abseil",
+      ":v8_maybe_icu",
+    ]
 
     configs = [
       ":external_config",
@@ -7235,7 +7373,10 @@ if (v8_enable_webassembly) {
       ":wasm_test_common",
     ]
 
-    public_deps = [ ":v8_maybe_icu" ]
+    public_deps = [
+      ":v8_abseil",
+      ":v8_maybe_icu",
+    ]
 
     configs = [
       ":external_config",

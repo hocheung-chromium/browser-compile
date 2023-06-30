@@ -10,8 +10,8 @@
 
 #include <memory>
 
-#include "base/command_line.h"
 #include "base/check.h"
+#include "base/command_line.h"
 
 MachineIdStatus GetDeterministicMachineSpecificId(std::string* machine_id) {
   DCHECK(machine_id);

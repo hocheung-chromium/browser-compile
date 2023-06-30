@@ -39,7 +39,7 @@ cd $HOME/chromium/src &&
 
 git stash &&
 
-git fetch https://chromium.googlesource.com/chromium/src refs/changes/56/4257656/86 && git cherry-pick FETCH_HEAD &&
+git fetch https://chromium.googlesource.com/chromium/src refs/changes/56/4257656/91 && git cherry-pick FETCH_HEAD &&
 
 gclient sync &&
 
@@ -59,9 +59,9 @@ git stash pop &&
 
 cd $HOME/chromium/src/third_party/devtools-frontend/src &&
 
-git fetch https://chromium.googlesource.com/devtools/devtools-frontend refs/changes/82/4257582/47 && git cherry-pick FETCH_HEAD &&
+git fetch https://chromium.googlesource.com/devtools/devtools-frontend refs/changes/82/4257582/48 && git cherry-pick FETCH_HEAD &&
 
-cd $HOME/chromium-compile &&
+cd $HOME/browser-compile &&
 
 cp -r -v libjxl/. $HOME/chromium/src/third_party/ &&
 

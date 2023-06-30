@@ -26,7 +26,7 @@ case $1 in
 	--help) displayHelp; exit 0;;
 esac
 
-COMMIT_ID="feaf9eb727472adb55fa78b06a734fbe48236ba2"
+COMMIT_ID="33d837031c6e3488ce9810f08c20a92ea4ba0023"
 
 export COMMIT_ID &&
 
@@ -63,7 +63,7 @@ vpython3 v8/tools/builtins-pgo/download_profiles.py --depot-tools=$HOME/depot_to
 
 printf "\n" &&
 
-cd $HOME/chromium-compile &&
+cd $HOME/browser-compile &&
 
 printf "${GRE}Done! ${YEL}You can now run ./setup.sh\n"
 tput sgr0 &&

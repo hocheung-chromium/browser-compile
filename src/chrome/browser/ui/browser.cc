@@ -849,8 +849,9 @@ Browser::WarnBeforeClosingResult Browser::MaybeWarnBeforeClosing(
   // true or there are no pending downloads we need to prompt about) then
   // there's no need to warn.
   if (force_skip_warning_user_on_close_ || CanCloseWithInProgressDownloads())
-   if (CanCloseWithMultipleTabs())
-    return WarnBeforeClosingResult::kOkToClose;
+    if (CanCloseWithMultipleTabs()) {
+      return WarnBeforeClosingResult::kOkToClose;
+    }
 
   DCHECK(!warn_before_closing_callback_)
       << "Tried to close window during close warning; dialog should be modal.";
@@ -2840,18 +2841,22 @@ bool Browser::CanCloseWithInProgressDownloads() {
 }
 
 bool Browser::CanCloseWithMultipleTabs() {
-  if (!base::CommandLine::ForCurrentProcess()->HasSwitch("close-confirmation"))
+  if (!base::CommandLine::ForCurrentProcess()->HasSwitch(
+          "close-confirmation")) {
     return true;
+  }
 
   // If we've prompted, we need to hear from the user before we
   // can close.
-  if (close_multitab_confirmation_state_ != NOT_PROMPTED)
+  if (close_multitab_confirmation_state_ != NOT_PROMPTED) {
     return close_multitab_confirmation_state_ != WAITING_FOR_RESPONSE;
+  }
 
   // If we're not running a full browser process with a profile manager
   // (testing), it's ok to close the browser.
-  if (!g_browser_process->profile_manager())
+  if (!g_browser_process->profile_manager()) {
     return true;
+  }
 
   // Figure out how many windows are open total
   int total_window_count = 0;
@@ -2859,22 +2864,28 @@ bool Browser::CanCloseWithMultipleTabs() {
     // Don't count this browser window or any other in the process of closing.
     // Window closing may be delayed, and windows that are in the process of
     // closing don't count against our totals.
-    if (browser == this || browser->IsAttemptingToCloseBrowser())
+    if (browser == this || browser->IsAttemptingToCloseBrowser()) {
       continue;
+    }
     total_window_count++;
   }
 
-  const auto flag_value = base::CommandLine::ForCurrentProcess()->GetSwitchValueASCII("close-confirmation");
+  const auto flag_value =
+      base::CommandLine::ForCurrentProcess()->GetSwitchValueASCII(
+          "close-confirmation");
   bool show_confirmation_last_window = flag_value == "last";
 
   if (show_confirmation_last_window) {
-    if (total_window_count >= 1 || this->tab_strip_model()->count() <= 1)
+    if (total_window_count >= 1 || this->tab_strip_model()->count() <= 1) {
       return true;
+    }
   } else {
-    if (total_window_count == 0)
+    if (total_window_count == 0) {
       return true;
-    if (this->tab_strip_model()->count() == 0)
+    }
+    if (this->tab_strip_model()->count() == 0) {
       tab_strip_model_delegate_->AddTabAt(GURL(), -1, true);
+    }
   }
 
   close_multitab_confirmation_state_ = WAITING_FOR_RESPONSE;
@@ -2883,8 +2894,8 @@ bool Browser::CanCloseWithMultipleTabs() {
   // getting stuck in the hover state. Reset the window controls to
   // prevent this.
   ((BrowserView*)window_)->frame()->non_client_view()->ResetWindowControls();
-  auto callback = base::BindOnce(&Browser::MultitabResponse,
-                                 weak_factory_.GetWeakPtr());
+  auto callback =
+      base::BindOnce(&Browser::MultitabResponse, weak_factory_.GetWeakPtr());
   MessageBoxDialog::Show(window_->GetNativeWindow(),
                          u"Do you want to close this window?", std::u16string(),
                          chrome::MESSAGE_BOX_TYPE_QUESTION, u"Close", u"Cancel",

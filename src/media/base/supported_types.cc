@@ -384,8 +384,9 @@ bool IsBuiltInVideoCodec(VideoCodec codec) {
   if (codec == VideoCodec::kVP8)
     return true;
 #if BUILDFLAG(USE_PROPRIETARY_CODECS)
-  if (codec == VideoCodec::kH264 || codec == VideoCodec::kHEVC)
+  if (codec == VideoCodec::kH264 || codec == VideoCodec::kHEVC) {
     return true;
+  }
 #endif  // BUILDFLAG(USE_PROPRIETARY_CODECS)
 #endif  // BUILDFLAG(ENABLE_FFMPEG_VIDEO_DECODERS)
 #if BUILDFLAG(ENABLE_LIBVPX)
