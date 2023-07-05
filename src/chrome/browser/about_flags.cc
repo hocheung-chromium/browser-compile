@@ -3713,6 +3713,11 @@ const FeatureEntry::FeatureParam kPasswordGenerationCrossDevice[] = {
          .name,
      password_manager::features::kPasswordGenerationExperimentVariationOption[4]
          .name}};
+const FeatureEntry::FeatureParam kPasswordGenerationEditPassword[] = {
+    {password_manager::features::kPasswordGenerationExperimentVariationParam
+         .name,
+     password_manager::features::kPasswordGenerationExperimentVariationOption[5]
+         .name}};
 
 const FeatureEntry::FeatureVariation kPasswordGenerationExperimentVariations[] =
     {
@@ -3726,6 +3731,8 @@ const FeatureEntry::FeatureVariation kPasswordGenerationExperimentVariations[] =
          std::size(kPasswordGenerationConvenience), nullptr},
         {"Cross device", kPasswordGenerationCrossDevice,
          std::size(kPasswordGenerationCrossDevice), nullptr},
+        {"Edit password", kPasswordGenerationEditPassword,
+         std::size(kPasswordGenerationEditPassword), nullptr},
 };
 #endif  // !BUILDFLAG(IS_ANDROID)
 
@@ -9577,7 +9584,7 @@ const FeatureEntry kFeatureEntries[] = {
 
     {"safety-hub", flag_descriptions::kSafetyHubName,
      flag_descriptions::kSafetyHubDescription, kOsDesktop,
-     FEATURE_VALUE_TYPE(features::kSafetyHub)},
+     FEATURE_VALUE_TYPE(content_settings::features::kSafetyHub)},
 #endif  // !BUILDFLAG(IS_ANDROID)
 
 #if BUILDFLAG(IS_ANDROID)
@@ -10525,6 +10532,11 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kPrivacySandboxEnrollmentOverridesDescription, kOsAll,
      ORIGIN_LIST_VALUE_TYPE(privacy_sandbox::kPrivacySandboxEnrollmentOverrides,
                             "")},
+#if !BUILDFLAG(IS_ANDROID)
+    {"enable-smart-card-web-api", flag_descriptions::kSmartCardWebApiName,
+     flag_descriptions::kSmartCardWebApiDescription, kOsDesktop,
+     FEATURE_VALUE_TYPE(blink::features::kSmartCard)},
+#endif
 
     // NOTE: Adding a new flag requires adding a corresponding entry to enum
     // "LoginCustomFlags" in tools/metrics/histograms/enums.xml. See "Flag
