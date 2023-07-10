@@ -26,7 +26,7 @@ case $1 in
 	--help) displayHelp; exit 0;;
 esac
 
-COMMIT_ID="145e0e289c329378102a2c28055538d8de05ec96"
+COMMIT_ID="311a42b01f2f317cd672caf29156e309e20af18d"
 
 export COMMIT_ID &&
 

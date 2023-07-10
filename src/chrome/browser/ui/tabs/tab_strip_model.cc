@@ -827,10 +827,6 @@ bool TabStripModel::IsTabBlocked(int index) const {
   return contents_data_[index]->blocked();
 }
 
-bool TabStripModel::IsTabClosable(int index) const {
-  return !web_app::IsPinnedHomeTab(this, index) || count() == 1;
-}
-
 absl::optional<tab_groups::TabGroupId> TabStripModel::GetTabGroupForTab(
     int index) const {
   return ContainsIndex(index) ? contents_data_[index]->group() : absl::nullopt;
@@ -1369,6 +1365,15 @@ bool TabStripModel::IsContextMenuCommandEnabled(
       DCHECK(delegate()->IsForWebApp());
       return true;
 
+    case CommandGoBack:
+      DCHECK(delegate()->IsForWebApp());
+      return delegate()->CanGoBack(GetWebContentsAt(context_index));
+
+    case CommandCloseAllTabs:
+      DCHECK(delegate()->IsForWebApp());
+      DCHECK(web_app::HasPinnedHomeTab(this));
+      return true;
+
     default:
       NOTREACHED();
   }
@@ -1576,6 +1581,27 @@ void TabStripModel::ExecuteContextMenuCommand(int context_index,
     case CommandCopyURL: {
       base::RecordAction(UserMetricsAction("TabContextMenu_CopyURL"));
       delegate()->CopyURL(GetWebContentsAt(context_index));
+      break;
+    }
+
+    case CommandGoBack: {
+      base::RecordAction(UserMetricsAction("TabContextMenu_Back"));
+      delegate()->GoBack(GetWebContentsAt(context_index));
+      break;
+    }
+
+    case CommandCloseAllTabs: {
+      // Closes all tabs except the pinned home tab.
+      base::RecordAction(UserMetricsAction("TabContextMenu_CloseAllTabs"));
+
+      std::vector<int> indices;
+      for (int i = count() - 1; i > 0; --i) {
+        indices.push_back(i);
+      }
+
+      CloseTabs(GetWebContentsesByIndices(indices),
+                TabCloseTypes::CLOSE_CREATE_HISTORICAL_TAB);
+
       break;
     }
 

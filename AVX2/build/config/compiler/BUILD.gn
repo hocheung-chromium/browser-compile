@@ -758,7 +758,7 @@ config("compiler") {
         import_instr_limit = 5
       }
 
-      ldflags += [ "-Wl,-mllvm,-import-instr-limit=5" ]
+      # ldflags += [ "-Wl,-mllvm,-import-instr-limit=5" ]
 
       if (!is_chromeos) {
         # TODO(https://crbug.com/972449): turn on for ChromeOS when that
@@ -1027,16 +1027,17 @@ config("compiler") {
 # building with ThinLTO, no optimization is performed in the link step.
 config("thinlto_optimize_default") {
   if (!is_debug && use_thin_lto && is_a_target_toolchain) {
-    lto_opt_level = 2
+    lto_opt_level = 3
 
     if (is_win) {
       ldflags = [ "/opt:lldlto=" + lto_opt_level ]
 
       # ldflags += [ "-opt:lldltocgo=" + lto_opt_level ]
-      ldflags += [ "-mllvm:-import-instr-limit=5" ]
+      ldflags += [ "-mllvm:-import-instr-limit=30" ]
     } else {
-      ldflags = [ "-Wl,--lto-O0" ]
+      ldflags = [ "-Wl,--lto-O0" + lto_opt_level ]
       ldflags += [ "-Wl,--lto-CGO" + lto_opt_level ]
+      ldflags += [ "-mllvm:-import-instr-limit=30" ]
     }
 
     # We always point Rust to a linker that performs LTO, so we don't want Rust
@@ -1059,24 +1060,18 @@ config("thinlto_optimize_max") {
     if (thin_lto_enable_optimizations) {
       lto_opt_level = 3
     } else {
-      lto_opt_level = 2
+      lto_opt_level = 3
     }
 
     if (is_win) {
       ldflags = [ "/opt:lldlto=" + lto_opt_level ]
 
       # ldflags += [ "-opt:lldltocgo=" + lto_opt_level ]
-      ldflags += [ "-mllvm:-import-instr-limit=30" ]
-      ldflags += [
-        "-mllvm:-aggressive-ext-opt",
-        "-mllvm:-enable-dfa-jump-thread",
-        "-mllvm:-enable-gvn-hoist",
-        "-mllvm:-loop-rotate-multi",
-        "-mllvm:-slp-vectorize-hor-store",
-      ]
+      ldflags += [ "-mllvm:-import-instr-limit=100" ]
     } else {
-      ldflags = [ "-Wl,--lto-O0" ]
+      ldflags = [ "-Wl,--lto-O0" + lto_opt_level ]
       ldflags += [ "-Wl,--lto-CGO" + lto_opt_level ]
+      ldflags += [ "-mllvm:-import-instr-limit=100" ]
     }
 
     # We always point Rust to a linker that performs LTO, so we don't want Rust
@@ -1787,11 +1782,6 @@ config("default_warnings") {
           # TODO(crbug.com/1412713) Evaluate and possibly enable.
           "-Wno-deprecated-this-capture",
         ]
-
-        if (llvm_force_head_revision) {
-          # TODO(https://crbug.com/1448905): Evaluate and possibly enable.
-          cflags += [ "-Wno-builtin-macro-redefined" ]
-        }
       }
     }
   }
@@ -2004,7 +1994,7 @@ config("no_chromium_code") {
 config("noshadowing") {
   # This flag has to be disabled for nacl because the nacl compiler is too
   # strict about shadowing.
-  if (is_clang && (!is_nacl || is_nacl_saigo) && !llvm_force_head_revision) {
+  if (is_clang && (!is_nacl || is_nacl_saigo)) {
     cflags = [ "-Wshadow" ]
   }
 }
@@ -2268,12 +2258,18 @@ config("optimize") {
     if (chrome_pgo_phase != 2) {
       # Favor size over speed, /O1 must be before the common flags.
       # /O1 implies /Os and /GF.
-      cflags = [ "/O1" ] + common_optimize_on_cflags + [ "/Oi" ]
+      cflags = [
+                 "-Xclang",
+                 "-O3",
+               ] + common_optimize_on_cflags + [ "/Oi" ]
       rustflags = [ "-Copt-level=3" ]
     } else {
       # PGO requires all translation units to be compiled with /O2. The actual
       # optimization level will be decided based on the profiling data.
-      cflags = [ "/O2" ] + common_optimize_on_cflags + [ "/Oi" ]
+      cflags = [
+                 "-Xclang",
+                 "-O3",
+               ] + common_optimize_on_cflags + [ "/Oi" ]
 
       # https://doc.rust-lang.org/rustc/profile-guided-optimization.html#usage
       # suggests not using an explicit `-Copt-level` at all, and the default is
@@ -2311,7 +2307,7 @@ config("optimize") {
     # vectorization while otherwise optimizing for size.
     rustflags = [ "-Copt-level=s" ]
   } else {
-    cflags = [ "-O2" ] + common_optimize_on_cflags
+    cflags = [ "-O3" ] + common_optimize_on_cflags
 
     # The `-O3` for clang turns on extra optimizations compared to the standard
     # `-O2`. But for rust, `-Copt-level=3` is the default and is thus reliable
@@ -2512,6 +2508,14 @@ config("afdo") {
       if (use_profi) {
         cflags += [ "-fsample-profile-use-profi" ]
       }
+
+      # crbug.com/1459429: ARM builds see failures due to -Wbackend-plugin.
+      # These seem to be false positives - the complaints are about functions
+      # marked with `__nodebug__` not having associated debuginfo. In the case
+      # where this was observed, the `__nodebug__` function was also marked
+      # `__always_inline__` and had no branches, so AFDO info is likely useless
+      # there.
+      cflags += [ "-Wno-backend-plugin" ]
       inputs = [ _clang_sample_profile ]
     }
   } else if (auto_profile_path != "" && is_a_target_toolchain) {
