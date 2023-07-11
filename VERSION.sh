@@ -13,28 +13,13 @@ yell() { echo "$0: $*" >&2; }
 die() { yell "$*"; exit 111; }
 try() { "$@" || die "${RED}Failed $*"; }
 
-# --help
-displayHelp () {
-	printf "\n" &&
-	printf "${bold}${YEL}Script to check out Chromium tag of current Chromium version.${c0}\n" &&
-	printf "\n"
-	printf "${RED}NOTE: You may need to run ${c0}${bold}./trunk.sh ${RED}before using this script!${c0}\n" &&
-	printf "\n"
-}
-
-case $1 in
-	--help) displayHelp; exit 0;;
-esac
-
 COMMIT_ID="311a42b01f2f317cd672caf29156e309e20af18d"
 
 export COMMIT_ID &&
 
 printf "\n"
-printf "${GRE}Current Chromium version is:${c0} ${underline}$COMMIT_ID${c0}\n"
-printf "\n"
-printf "${RED}NOTE: ${YEL}Checking out${CYA} $COMMIT_ID ${YEL}in $HOME/chromium/src...${c0}\n"
-printf "\n"
+printf "${bold}${GRE}Current Chromium version is:${c0} ${underline}$COMMIT_ID${c0}"
+printf "${bold}${RED}NOTE: ${bold}${YEL}Checking out${bold}${CYA} $COMMIT_ID ${bold}${YEL}in $HOME/chromium/src...${c0}\n"
 
 cd $HOME/chromium/src &&
 
@@ -50,11 +35,9 @@ gclient runhooks &&
 build/linux/sysroot_scripts/install-sysroot.py --all &&
 
 printf "\n"
-printf "${GRE}Chromium tree is checked out at: ${c0}$COMMIT_ID\n"
-printf "\n"
+printf "${bold}${GRE}Chromium tree is checked out at: $COMMIT_ID${c0}\n"
 
-printf "${YEL}Downloading PGO Profiles for Windows ...\n" &&
-printf "\n" &&
+printf "${YEL}Downloading PGO Profiles for Windows.\n" &&
 tput sgr0 &&
 
 vpython3 tools/update_pgo_profiles.py --target=win64 update --gs-url-base=chromium-optimization-profiles/pgo_profiles &&
@@ -65,7 +48,8 @@ printf "\n" &&
 
 cd $HOME/browser-compile &&
 
-printf "${GRE}Done! ${YEL}You can now run ./setup.sh\n"
+printf "${bold}${GRE}Done!${c0}" &&
+printf "${bold}${YEL}You can now run ./setup.sh.${c0}\n" &&
 tput sgr0 &&
 
 exit 0
