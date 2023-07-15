@@ -13,7 +13,7 @@ yell() { echo "$0: $*" >&2; }
 die() { yell "$*"; exit 111; }
 try() { "$@" || die "${RED}Failed $*"; }
 
-COMMIT_ID="311a42b01f2f317cd672caf29156e309e20af18d"
+COMMIT_ID="c338b0269e7bc44d67ff124b2b63f2481075a8cd"
 
 export COMMIT_ID &&
 

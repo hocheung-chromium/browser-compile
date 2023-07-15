@@ -533,6 +533,10 @@ BASE_FEATURE(kIgnoreUiGains,
 BASE_FEATURE(kShowForceRespectUiGainsToggle,
              "ShowForceRespectUiGainsToggle",
              base::FEATURE_DISABLED_BY_DEFAULT);
+
+BASE_FEATURE(kCrOSSystemVoiceIsolationOption,
+             "CrOSSystemVoiceIsolationOption",
+             base::FEATURE_DISABLED_BY_DEFAULT);
 #endif
 
 // Make MSE garbage collection algorithm more aggressive when we are under
@@ -950,6 +954,12 @@ BASE_FEATURE(kHardwareSecureDecryptionFallback,
              "HardwareSecureDecryptionFallback",
              base::FEATURE_ENABLED_BY_DEFAULT);
 
+// Whether disabling hardware secure Content Decryption Module
+// (CDM) after failures or crashes to fallback to software secure CDMs should
+// use per site logic.
+const base::FeatureParam<bool> kHardwareSecureDecryptionFallbackPerSite{
+    &kHardwareSecureDecryptionFallback, "per_site", false};
+
 // The minimum and maximum number of days to disable hardware secure Content
 // Decryption Module (CDM) as part of the fallback logic.
 const base::FeatureParam<int> kHardwareSecureDecryptionFallbackMinDisablingDays{
@@ -1023,7 +1033,12 @@ BASE_FEATURE(kAllowNonSecureOverlays,
              "AllowNonSecureOverlays",
              base::FEATURE_ENABLED_BY_DEFAULT);
 
-// Enable a gesture to make the media controls expaned into the display cutout.
+// Allow FrameInfoHelper to guess coded size information for MediaCodec frames.
+BASE_FEATURE(kMediaCodecCodedSizeGuessing,
+             "MediaCodecCodedSizeGuessing",
+             base::FEATURE_ENABLED_BY_DEFAULT);
+
+// Enable a gesture to make the media controls expanded into the display cutout.
 // TODO(beccahughes): Remove this.
 BASE_FEATURE(kMediaControlsExpandGesture,
              "MediaControlsExpandGesture",
@@ -1133,6 +1148,14 @@ BASE_FEATURE(kUSeSequencedTaskRunnerForVEA,
 // frames. This flag enables an experimental GL-based conversion method.
 BASE_FEATURE(kPreferGLImageProcessor,
              "PreferGLImageProcessor",
+             base::FEATURE_DISABLED_BY_DEFAULT);
+// Experimental support for software based MT21 conversion. On some (older)
+// architectures, the hardware video decoder outputs frames in a pixel format
+// known as MT21. Normally a hardware block performs to the conversion between
+// this pixel format and NV12, but this flag will use a software equivalent
+// instead.
+BASE_FEATURE(kPreferSoftwareMT21,
+             "PreferSoftwareMT21",
              base::FEATURE_DISABLED_BY_DEFAULT);
 #endif  // defined(ARCH_CPU_ARM_FAMILY)
 #if BUILDFLAG(IS_CHROMEOS)
@@ -1449,13 +1472,11 @@ BASE_FEATURE(kAudioFocusLossSuspendMediaSession,
              "AudioFocusMediaSession",
              base::FEATURE_ENABLED_BY_DEFAULT);
 
-#if !BUILDFLAG(IS_ANDROID)
 // Hides the media metadata from the OS' media player if running in an Incognito
 // session.
 BASE_FEATURE(kHideIncognitoMediaMetadata,
              "HideIncognitoMediaMetadata",
              base::FEATURE_DISABLED_BY_DEFAULT);
-#endif
 
 // Enables the internal Media Session logic without enabling the Media Session
 // service.
