@@ -189,6 +189,7 @@
 #include "chrome/common/google_url_loader_throttle.h"
 #include "chrome/common/logging_chrome.h"
 #include "chrome/common/pdf_util.h"
+#include "chrome/common/ppapi_utils.h"
 #include "chrome/common/pref_names.h"
 #include "chrome/common/profiler/thread_profiler_configuration.h"
 #include "chrome/common/renderer_configuration.mojom.h"
@@ -1931,8 +1932,10 @@ void ChromeContentBrowserClient::RenderProcessWillLaunch(
           audio_debug_recordings_handler));
 
 #if BUILDFLAG(ENABLE_NACL)
-  host->AddFilter(new nacl::NaClHostMessageFilter(
-      host->GetID(), profile->IsOffTheRecord(), profile->GetPath()));
+  if (IsNaclAllowed() && !profile->IsSystemProfile()) {
+    host->AddFilter(new nacl::NaClHostMessageFilter(
+        host->GetID(), profile->IsOffTheRecord(), profile->GetPath()));
+  }
 #endif
 
 #if BUILDFLAG(IS_ANDROID)
@@ -3361,15 +3364,8 @@ bool ChromeContentBrowserClient::IsInterestGroupAPIAllowed(
       PrivacySandboxSettingsFactory::GetForProfile(profile);
   DCHECK(privacy_sandbox_settings);
 
-  // Join operations are subject to an additional check.
-  bool join_blocked =
-      operation == InterestGroupApiOperation::kJoin
-          ? !privacy_sandbox_settings->IsFledgeJoiningAllowed(top_frame_origin)
-          : false;
-
-  bool allowed =
-      privacy_sandbox_settings->IsFledgeAllowed(top_frame_origin, api_origin) &&
-      !join_blocked;
+  bool allowed = privacy_sandbox_settings->IsFledgeAllowed(
+      top_frame_origin, api_origin, operation);
 
   if (operation == InterestGroupApiOperation::kJoin) {
     content_settings::PageSpecificContentSettings::InterestGroupJoined(
@@ -3759,21 +3755,23 @@ bool ShouldPromptOnMultipleMatchingCertificates(const Profile* profile) {
 }  // namespace
 
 base::OnceClosure ChromeContentBrowserClient::SelectClientCertificate(
+    content::BrowserContext* browser_context,
     content::WebContents* web_contents,
     net::SSLCertRequestInfo* cert_request_info,
     net::ClientCertIdentityList client_certs,
     std::unique_ptr<content::ClientCertificateDelegate> delegate) {
   prerender::NoStatePrefetchContents* no_state_prefetch_contents =
-      prerender::ChromeNoStatePrefetchContentsDelegate::FromWebContents(
-          web_contents);
+      web_contents
+          ? prerender::ChromeNoStatePrefetchContentsDelegate::FromWebContents(
+                web_contents)
+          : nullptr;
   if (no_state_prefetch_contents) {
     no_state_prefetch_contents->Destroy(
         prerender::FINAL_STATUS_SSL_CLIENT_CERTIFICATE_REQUESTED);
     return base::OnceClosure();
   }
 
-  Profile* profile =
-      Profile::FromBrowserContext(web_contents->GetBrowserContext());
+  Profile* profile = Profile::FromBrowserContext(browser_context);
 #if BUILDFLAG(IS_CHROMEOS_ASH)
   // On the sign-in or lock screen profile, only allow client certs in the
   // context of the sign-in frame.
@@ -3784,6 +3782,18 @@ base::OnceClosure ChromeContentBrowserClient::SelectClientCertificate(
     const char* profile_name = ash::ProfileHelper::IsSigninProfile(profile)
                                    ? "sign-in"
                                    : "lock screen";
+
+    // TODO(b/290262513): See also comment below -- if the continuation should
+    // be a cancelation, this check is unnecessary and we can just fall-through
+    // without treating signin profiles differently for service workers.
+    if (!web_contents) {
+      LOG(WARNING) << "Client cert requested in " << profile_name
+                   << " profile from service worker. This is not supported.";
+      // Return without calling anything on `delegate`. This results in the
+      // `delegate` being deleted, which implicitly calls to cancel the request.
+      return base::OnceClosure();
+    }
+
     content::StoragePartition* storage_partition =
         profile->GetStoragePartition(web_contents->GetSiteInstance());
     auto* signin_partition_manager =
@@ -3795,6 +3805,8 @@ base::OnceClosure ChromeContentBrowserClient::SelectClientCertificate(
                    << " profile in wrong context.";
       // Continue without client certificate. We do this to mimic the case of no
       // client certificate being present in the profile's certificate store.
+      // TODO(b/290262513): Should this be a cancel? Selecting "no certificate"
+      // is a sticky decision.
       delegate->ContinueWithCertificate(nullptr, nullptr);
       return base::OnceClosure();
     }
@@ -3832,6 +3844,19 @@ base::OnceClosure ChromeContentBrowserClient::SelectClientCertificate(
     return base::OnceClosure();
   }
 
+  // At this point, we're going to either a) continue without a valid
+  // certificate (if we're not allowed to prompt) or b) show the picker for the
+  // user to select a valid cert. Only do this if the requestor has a valid
+  // WebContents. In the case of a), we want to preserve consistency (so that
+  // requests always fail or succeed across different platforms and contexts),
+  // and for b), we don't want to pop up UI for background requests like
+  // service workers (where there's no visual context to the user).
+  if (!web_contents) {
+    // Return without calling anything on `delegate`. This results in the
+    // `delegate` being deleted, which implicitly calls to cancel the request.
+    return base::OnceClosure();
+  }
+
   if (matching_certificates.empty() &&
       !CanPromptWithNonmatchingCertificates(profile)) {
     LOG(WARNING) << "No client cert matched by policy and user selection is "
@@ -3849,6 +3874,7 @@ base::OnceClosure ChromeContentBrowserClient::SelectClientCertificate(
   net::ClientCertIdentityList client_cert_choices =
       !matching_certificates.empty() ? std::move(matching_certificates)
                                      : std::move(nonmatching_certificates);
+
   return chrome::ShowSSLClientCertificateSelector(
       web_contents, cert_request_info, std::move(client_cert_choices),
       std::move(delegate));
@@ -5012,14 +5038,20 @@ ChromeContentBrowserClient::CreateThrottlesForNavigation(
     throttles.push_back(std::move(url_to_apps_throttle));
 #endif
 
-#if BUILDFLAG(ENABLE_EXTENSIONS)
-  throttles.push_back(
-      std::make_unique<extensions::ExtensionNavigationThrottle>(handle));
+  Profile* profile = Profile::FromBrowserContext(
+      handle->GetWebContents()->GetBrowserContext());
 
-  MaybeAddThrottle(extensions::ExtensionsBrowserClient::Get()
-                       ->GetUserScriptListener()
-                       ->CreateNavigationThrottle(handle),
-                   &throttles);
+#if BUILDFLAG(ENABLE_EXTENSIONS)
+  if (!ChromeContentBrowserClientExtensionsPart::
+          AreExtensionsDisabledForProfile(profile)) {
+    throttles.push_back(
+        std::make_unique<extensions::ExtensionNavigationThrottle>(handle));
+
+    MaybeAddThrottle(extensions::ExtensionsBrowserClient::Get()
+                         ->GetUserScriptListener()
+                         ->CreateNavigationThrottle(handle),
+                     &throttles);
+  }
 #endif
 
 #if BUILDFLAG(ENABLE_SUPERVISED_USERS)
@@ -5151,9 +5183,6 @@ ChromeContentBrowserClient::CreateThrottlesForNavigation(
         performance_manager_registry->CreateThrottlesForNavigation(handle),
         &throttles);
   }
-
-  Profile* profile = Profile::FromBrowserContext(
-      handle->GetWebContents()->GetBrowserContext());
 
   if (profile && profile->GetPrefs()) {
     MaybeAddThrottle(
@@ -6759,8 +6788,8 @@ bool ChromeContentBrowserClient::HandleWebUI(
 
   if (!ChromeWebUIControllerFactory::GetInstance()->UseWebUIForURL(
           browser_context, *url) &&
-      !content::WebUIConfigMap::GetInstance().GetConfig(
-          browser_context, url::Origin::Create(*url))) {
+      !content::WebUIConfigMap::GetInstance().GetConfig(browser_context,
+                                                        *url)) {
     return false;
   }
 
@@ -6782,21 +6811,6 @@ bool ChromeContentBrowserClient::HandleWebUI(
   if (IsSystemFeatureURLDisabled(*url)) {
     *url = GURL(chrome::kChromeUIAppDisabledURL);
     return true;
-  }
-#endif
-
-#if !BUILDFLAG(IS_ANDROID)
-  // TODO(crbug.com/1420597): Remove this after feature is launched.
-  // Redirect from old Password Manager UI in settings to new UI.
-  if (base::FeatureList::IsEnabled(
-          password_manager::features::kPasswordManagerRedesign)) {
-    if (url->SchemeIs(content::kChromeUIScheme) &&
-        url->DomainIs(chrome::kChromeUISettingsHost) &&
-        base::StartsWith(
-            url->path(),
-            chrome::GetSettingsUrl(chrome::kPasswordManagerSubPage).path())) {
-      *url = GURL(chrome::kChromeUIPasswordManagerURL);
-    }
   }
 #endif
 
@@ -7260,7 +7274,8 @@ void ChromeContentBrowserClient::GetMediaDeviceIDSalt(
     return;
   }
 
-  salt_service->GetSalt(base::BindOnce(std::move(callback), allowed));
+  salt_service->GetSalt(rfh->storage_key(),
+                        base::BindOnce(std::move(callback), allowed));
 }
 
 #if !BUILDFLAG(IS_ANDROID)

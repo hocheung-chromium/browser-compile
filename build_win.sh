@@ -12,7 +12,7 @@ die() { yell "$*"; exit 111; }
 try() { "$@" || die "${RED}Failed $*"; }
 
 printf "\n" &&
-printf "${bold}${YEL}Building Chromium for Windows.${c0}\n" &&
+printf "${bold}${YEL}Building Chromium for Windows on Linux.${c0}\n" &&
 
 # Build Chromium and installer
 
@@ -20,7 +20,7 @@ cd $HOME/chromium/src &&
 
 export NINJA_SUMMARIZE_BUILD=1 &&
 
-autoninja -C ~/chromium/src/out/chromium chrome setup mini_installer -j$@ &&
+autoninja -C ~/chromium/src/out/chromium chrome chromedriver clear_key_cdm content_shell setup mini_installer -j$@ &&
 
 printf "${bold}${GRE}Build Completed!${c0}\n" &&
 tput sgr0 &&

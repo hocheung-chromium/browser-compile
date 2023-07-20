@@ -16,6 +16,7 @@ printf "${bold}${YEL}Copying files over the Chromium tree.${c0}\n" &&
 tput sgr0 &&
 
 # Copy files
+cp -r -v build/win/. $HOME/chromium/src/build &&
 cp -r -v src/. $HOME/chromium/src/ &&
 printf "\n" &&
 

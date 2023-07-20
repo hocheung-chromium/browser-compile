@@ -13,7 +13,7 @@ yell() { echo "$0: $*" >&2; }
 die() { yell "$*"; exit 111; }
 try() { "$@" || die "${RED}Failed $*"; }
 
-COMMIT_ID="c338b0269e7bc44d67ff124b2b63f2481075a8cd"
+COMMIT_ID="12db25bc9b0068b2cee920e37fb4aca487af194c"
 
 export COMMIT_ID &&
 
@@ -37,16 +37,18 @@ build/linux/sysroot_scripts/install-sysroot.py --all &&
 printf "\n"
 printf "${bold}${GRE}Chromium tree is checked out at: $COMMIT_ID${c0}\n"
 
-printf "${YEL}Downloading PGO Profiles for Windows.\n" &&
+printf "${YEL}Downloading PGO Profiles for Chromium.\n" &&
 tput sgr0 &&
 
 vpython3 tools/update_pgo_profiles.py --target=win64 update --gs-url-base=chromium-optimization-profiles/pgo_profiles &&
+
+vpython3 tools/update_pgo_profiles.py --target=linux update --gs-url-base=chromium-optimization-profiles/pgo_profiles &&
 
 vpython3 v8/tools/builtins-pgo/download_profiles.py --depot-tools=$HOME/depot_tools download &&
 
 printf "\n" &&
 
-cd $HOME/browser-compile &&
+cd $HOME/work/browser-compile &&
 
 printf "${bold}${GRE}Done!${c0}" &&
 printf "${bold}${YEL}You can now run ./setup.sh.${c0}\n" &&
