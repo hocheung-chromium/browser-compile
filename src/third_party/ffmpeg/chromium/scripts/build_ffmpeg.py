@@ -26,7 +26,7 @@ ROBO_CONFIGURATION = config.RoboConfiguration()
 FFMPEG_DIR = ROBO_CONFIGURATION.ffmpeg_home()
 CHROMIUM_ROOT_DIR = ROBO_CONFIGURATION.chrome_src()
 NDK_ROOT_DIR = os.path.abspath(
-    os.path.join(CHROMIUM_ROOT_DIR, 'third_party', 'android_ndk'))
+    os.path.join(CHROMIUM_ROOT_DIR, 'third_party', 'android_toolchain'))
 # Token to indicate that a build has completed successfully, so that we can
 # skip it with `--fast`.
 SUCCESS_TOKEN = 'THIS_BUILD_WORKED'
@@ -286,9 +286,9 @@ def SetupAndroidToolchain(target_arch):
 
   return [
       '--enable-pic',
-      '--cc=' + clang_toolchain_dir + 'bin/clang',
-      '--cxx=' + clang_toolchain_dir + 'bin/clang++',
-      '--ld=' + clang_toolchain_dir + 'bin/clang',
+      '--cc=clang',
+      '--cxx=clang++',
+      '--ld=clang',
       '--enable-cross-compile',
       '--sysroot=' + clang_toolchain_dir + 'sysroot',
       '--extra-cflags=-I' + clang_toolchain_dir + 'sysroot/usr/include',
@@ -574,7 +574,13 @@ def BuildFFmpeg(target_os, target_arch, host_os, host_arch, parallel_jobs,
   if target_arch in ('arm', 'arm-neon', 'arm64'):
     post_make_rewrites += [
         (r'(#define HAVE_VFP_ARGS [01])',
-         r'/* \1 -- softfp/hardfp selection is done by the chrome build */')
+         r'/* \1 -- softfp/hardfp selection is done by the chrome build */'),
+        (r'(#define HAVE_VFP_INLINE [01])',
+         r'#define HAVE_VFP_INLINE 1'),
+        (r'(#define HAVE_VFP_EXTERNAL [01])',
+         r'#define HAVE_VFP_EXTERNAL 1'),
+        (r'(#define HAVE_VFP [01])',
+         r'#define HAVE_VFP 1')
     ]
 
   RewriteFile(os.path.join(config_dir, 'config.h'), post_make_rewrites)
@@ -1006,9 +1012,9 @@ def ConfigureAndBuild(target_arch, target_os, host_os, host_arch, parallel_jobs,
 
   # Google Chrome & ChromeOS specific configuration.
   configure_flags['Chrome'].extend([
-      '--enable-decoder=aac,h264,hevc',
-      '--enable-demuxer=aac',
-      '--enable-parser=aac,h264,hevc',
+      '--enable-decoder=aac,h264,mp3,eac3,ac3,hevc,mpeg4,mpegvideo,mp2,mp1,flac',
+      '--enable-demuxer=aac,mp3,mov,dtshd,dts,avi,mpegvideo,m4v,h264,vc1,fla',
+      '--enable-parser=aac,h264,mpegaudio,mpeg4video,mpegvideo,ac3,h261,vc1,h263,flac',
   ])
 
   # Google ChromeOS specific configuration.

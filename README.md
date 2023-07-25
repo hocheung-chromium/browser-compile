@@ -12,8 +12,6 @@
 
 <https://github.com/RobRich999/Chromium_Clang/blob/main/Windows/win64-avx2.patch>
 
-<https://github.com/RobRich999/Chromium_Clang/blob/main/Linux/linux64-avx2.patch>
-
 <https://github.com/RobRich999/Chromium_Clang/blob/main/V8/v8.patch>
 
 <https://github.com/StaZhu/enable-chromium-hevc-hardware-decoding/blob/main/add-hevc-ffmpeg-decoder-parser.patch>
@@ -27,3 +25,9 @@
 <https://chromium-review.googlesource.com/c/chromium/src/+/4257656>
 
 <https://chromium-review.googlesource.com/c/devtools/devtools-frontend/+/4257582>
+
+<https://github.com/Muril-o/electron-chromium-codecs/blob/main/v25.1.0/look_chromium_hevc_ac3.patch>
+
+<https://github.com/Muril-o/electron-chromium-codecs/blob/main/v25.1.0/look_electron_hevc_ac3.patch>
+
+<https://github.com/Muril-o/electron-chromium-codecs/blob/main/v25.1.0/look_ffmpeg_hevc_ac3.patch>

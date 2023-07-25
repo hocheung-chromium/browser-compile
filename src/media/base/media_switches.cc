@@ -735,11 +735,11 @@ BASE_FEATURE(kVaapiVideoDecodeLinux,
 
 BASE_FEATURE(kVaapiVideoDecodeLinuxGL,
              "VaapiVideoDecodeLinuxGL",
-             base::FEATURE_ENABLED_BY_DEFAULT);
+             base::FEATURE_DISABLED_BY_DEFAULT);
 
 BASE_FEATURE(kVaapiVideoEncodeLinux,
              "VaapiVideoEncoder",
-             base::FEATURE_ENABLED_BY_DEFAULT);
+             base::FEATURE_DISABLED_BY_DEFAULT);
 
 // Ignore the non-intel driver blacklist for VaapiVideoDecoder implementations.
 // Intended for manual usage only in order to gague the status of newer driver
@@ -1129,7 +1129,7 @@ BASE_FEATURE(kChromeOSHWVBREncoding,
 // TODO(b/159825227): remove when the direct video decoder is fully launched.
 BASE_FEATURE(kUseChromeOSDirectVideoDecoder,
              "UseChromeOSDirectVideoDecoder",
-             base::FEATURE_DISABLED_BY_DEFAULT);
+             base::FEATURE_ENABLED_BY_DEFAULT);
 
 // Limit the number of concurrent hardware decoder instances on ChromeOS.
 BASE_FEATURE(kLimitConcurrentDecoderInstances,

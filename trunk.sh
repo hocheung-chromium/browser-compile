@@ -12,7 +12,7 @@ die() { yell "$*"; exit 111; }
 try() { "$@" || die "${RED}Failed $*"; }
 
 printf "\n" &&
-printf "${bold}${GRE}Script to Rebase/Sync Chromium repo on Linux.${c0}\n" &&
+printf "${bold}${GRE}Rebase/Sync Chromium repo.${c0}\n" &&
 tput sgr0 &&
 
 cd $HOME/chromium/src/v8/ &&
@@ -29,11 +29,11 @@ git checkout -f origin/master &&
 
 cd $HOME/chromium/src &&
 
-git clean -ffd &&
-
 rm -r -f -v $HOME/chromium/src/chrome/build/pgo_profiles/*.profdata &&
 
 rm -r -f -v $HOME/chromium/src/out/chromium &&
+
+git clean -ffd &&
 
 git checkout -f origin/main &&
 

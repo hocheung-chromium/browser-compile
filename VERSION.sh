@@ -13,7 +13,7 @@ yell() { echo "$0: $*" >&2; }
 die() { yell "$*"; exit 111; }
 try() { "$@" || die "${RED}Failed $*"; }
 
-COMMIT_ID="12db25bc9b0068b2cee920e37fb4aca487af194c"
+COMMIT_ID="553860bb80bff5e5ffb6d0cde26de1eae3f5fd33"
 
 export COMMIT_ID &&
 
@@ -42,13 +42,11 @@ tput sgr0 &&
 
 vpython3 tools/update_pgo_profiles.py --target=win64 update --gs-url-base=chromium-optimization-profiles/pgo_profiles &&
 
-vpython3 tools/update_pgo_profiles.py --target=linux update --gs-url-base=chromium-optimization-profiles/pgo_profiles &&
-
 vpython3 v8/tools/builtins-pgo/download_profiles.py --depot-tools=$HOME/depot_tools download &&
 
 printf "\n" &&
 
-cd $HOME/work/browser-compile &&
+cd $HOME/browser-compile &&
 
 printf "${bold}${GRE}Done!${c0}" &&
 printf "${bold}${YEL}You can now run ./setup.sh.${c0}\n" &&

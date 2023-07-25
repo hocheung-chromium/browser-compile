@@ -194,6 +194,10 @@ declare_args() {
   # the `--trace-turbo` .json file from `mksnapshot`.
   v8_log_builtins_block_count_input = ""
 
+  # This build flag is used to control whether reorder builtins acoording to
+  # the call graph with C3 algorithm based builtin PGO profiling.
+  v8_enable_builtins_reordering = false
+
   # Provides the given V8 log file as an input to mksnapshot, where it can be
   # used for profile-guided optimization of builtins.
   #
@@ -2341,6 +2345,10 @@ template("run_mksnapshot") {
         # list of builtins with incompatible profiles.
         "--warn-about-builtin-profile-data",
       ]
+
+      if (!v8_enable_builtins_profiling && v8_enable_builtins_reordering) {
+        args += [ "--reorder-builtins" ]
+      }
     }
 
     # This is needed to distinguish between generating code for the simulator
@@ -3318,6 +3326,7 @@ v8_header_set("v8_internal_headers") {
     "src/compiler/turboshaft/types.h",
     "src/compiler/turboshaft/undef-assembler-macros.inc",
     "src/compiler/turboshaft/uniform-reducer-adapter.h",
+    "src/compiler/turboshaft/use-map.h",
     "src/compiler/turboshaft/utils.h",
     "src/compiler/turboshaft/value-numbering-reducer.h",
     "src/compiler/turboshaft/variable-reducer.h",
@@ -3465,6 +3474,7 @@ v8_header_set("v8_internal_headers") {
     "src/heap/incremental-marking-job.h",
     "src/heap/incremental-marking.h",
     "src/heap/index-generator.h",
+    "src/heap/large-page.h",
     "src/heap/large-spaces.h",
     "src/heap/linear-allocation-area.h",
     "src/heap/list.h",
@@ -3503,6 +3513,7 @@ v8_header_set("v8_internal_headers") {
     "src/heap/object-stats.h",
     "src/heap/objects-visiting-inl.h",
     "src/heap/objects-visiting.h",
+    "src/heap/page.h",
     "src/heap/paged-spaces-inl.h",
     "src/heap/paged-spaces.h",
     "src/heap/parallel-work-item.h",
@@ -3902,6 +3913,7 @@ v8_header_set("v8_internal_headers") {
     "src/snapshot/snapshot-source-sink.h",
     "src/snapshot/snapshot-utils.h",
     "src/snapshot/snapshot.h",
+    "src/snapshot/sort-builtins.h",
     "src/snapshot/startup-deserializer.h",
     "src/snapshot/startup-serializer.h",
     "src/strings/char-predicates-inl.h",
@@ -4062,6 +4074,7 @@ v8_header_set("v8_internal_headers") {
       "src/wasm/names-provider.h",
       "src/wasm/object-access.h",
       "src/wasm/pgo.h",
+      "src/wasm/serialized-signature-inl.h",
       "src/wasm/simd-shuffle.h",
       "src/wasm/stacks.h",
       "src/wasm/streaming-decoder.h",
@@ -4804,6 +4817,7 @@ v8_source_set("v8_turboshaft") {
     "src/compiler/turboshaft/typed-optimizations-phase.cc",
     "src/compiler/turboshaft/typer.cc",
     "src/compiler/turboshaft/types.cc",
+    "src/compiler/turboshaft/use-map.cc",
     "src/compiler/turboshaft/utils.cc",
   ]
 
@@ -5037,6 +5051,7 @@ v8_source_set("v8_base_without_compiler") {
     "src/heap/incremental-marking-job.cc",
     "src/heap/incremental-marking.cc",
     "src/heap/index-generator.cc",
+    "src/heap/large-page.cc",
     "src/heap/large-spaces.cc",
     "src/heap/local-factory.cc",
     "src/heap/local-heap.cc",
@@ -5056,6 +5071,7 @@ v8_source_set("v8_base_without_compiler") {
     "src/heap/new-spaces.cc",
     "src/heap/object-stats.cc",
     "src/heap/objects-visiting.cc",
+    "src/heap/page.cc",
     "src/heap/paged-spaces.cc",
     "src/heap/pretenuring-handler.cc",
     "src/heap/read-only-heap.cc",
@@ -5281,6 +5297,7 @@ v8_source_set("v8_base_without_compiler") {
     "src/snapshot/snapshot-source-sink.cc",
     "src/snapshot/snapshot-utils.cc",
     "src/snapshot/snapshot.cc",
+    "src/snapshot/sort-builtins.cc",
     "src/snapshot/startup-deserializer.cc",
     "src/snapshot/startup-serializer.cc",
     "src/strings/char-predicates.cc",
@@ -6322,6 +6339,7 @@ v8_header_set("v8_heap_base_headers") {
   sources = [
     "src/heap/base/active-system-pages.h",
     "src/heap/base/basic-slot-set.h",
+    "src/heap/base/bytes.h",
     "src/heap/base/incremental-marking-schedule.h",
     "src/heap/base/stack.h",
     "src/heap/base/worklist.h",
