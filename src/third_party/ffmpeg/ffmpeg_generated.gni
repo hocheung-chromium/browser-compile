@@ -488,21 +488,21 @@ if ((is_apple) || (is_win) || (use_linux_config)) {
     "libavcodec/vpx_rac.c",
   ]
   ffmpeg_c_sources += [
-    "libavcodec/autorename_libavcodec_bswapdsp.c",
-    "libavcodec/dovi_rpu.c",
-    "libavcodec/dynamic_hdr_vivid.c",
-    "libavcodec/hevc_cabac.c",
-    "libavcodec/hevc_data.c",
-    "libavcodec/hevc_filter.c",
-    "libavcodec/hevc_mvs.c",
-    "libavcodec/hevc_parse.c",
-    "libavcodec/hevc_parser.c",
-    "libavcodec/hevc_ps.c",
-    "libavcodec/hevc_refs.c",
-    "libavcodec/hevc_sei.c",
-    "libavcodec/hevcdec.c",
-    "libavcodec/hevcdsp.c",
-    "libavcodec/hevcpred.c",
+    # "libavcodec/autorename_libavcodec_bswapdsp.c",
+    # "libavcodec/dovi_rpu.c",
+    # "libavcodec/dynamic_hdr_vivid.c",
+    # "libavcodec/hevc_cabac.c",
+    # "libavcodec/hevc_data.c",
+    # "libavcodec/hevc_filter.c",
+    # "libavcodec/hevc_mvs.c",
+    # "libavcodec/hevc_parse.c",
+    # "libavcodec/hevc_parser.c",
+    # "libavcodec/hevc_ps.c",
+    # "libavcodec/hevc_refs.c",
+    # "libavcodec/hevc_sei.c",
+    # "libavcodec/hevcdec.c",
+    # "libavcodec/hevcdsp.c",
+    # "libavcodec/hevcpred.c",
     "libavcodec/x86/ac3dsp_init.c",
     "libavcodec/ac3dsp.c",
     "libavcodec/fmtconvert.c",
@@ -516,20 +516,20 @@ if ((is_apple) || (is_win) || (use_linux_config)) {
     "libavcodec/ac3dec_fixed.c",
     "libavformat/ac3dec.c",
   ]
-  
-  ffmpeg_c_sources += [
-    "libavcodec/x86/bswapdsp_init.c",
-    "libavcodec/x86/hevcdsp_init.c"
-  ]
+
+  # ffmpeg_c_sources += [
+    # "libavcodec/x86/bswapdsp_init.c",
+    # "libavcodec/x86/hevcdsp_init.c"
+  # ]
 
   ffmpeg_asm_sources += [
-    "libavcodec/x86/bswapdsp.asm",
-    "libavcodec/x86/hevc_add_res.asm",
-    "libavcodec/x86/hevc_deblock.asm",
-    "libavcodec/x86/hevc_idct.asm",
-    "libavcodec/x86/hevc_mc.asm",
-    "libavcodec/x86/hevc_sao.asm",
-    "libavcodec/x86/hevc_sao_10bit.asm",
+    # "libavcodec/x86/bswapdsp.asm",
+    # "libavcodec/x86/hevc_add_res.asm",
+    # "libavcodec/x86/hevc_deblock.asm",
+    # "libavcodec/x86/hevc_idct.asm",
+    # "libavcodec/x86/hevc_mc.asm",
+    # "libavcodec/x86/hevc_sao.asm",
+    # "libavcodec/x86/hevc_sao_10bit.asm",
     "libavcodec/x86/ac3dsp.asm",
     "libavcodec/x86/ac3dsp_downmix.asm",
     "libavcodec/x86/fmtconvert.asm",
@@ -760,4 +760,3 @@ if (use_linux_config && current_cpu == "x64" && ffmpeg_branding == "ChromeOS") {
     "libavcodec/x86/simple_idct10.asm",
   ]
 }
-
