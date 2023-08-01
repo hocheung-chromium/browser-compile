@@ -415,6 +415,8 @@ declare_args() {
 
   # Enable jump table switch for built-in.
   v8_enable_builtin_jump_table_switch = v8_current_cpu == "x64"
+
+  v8_shortcut_strings_in_minor_ms = false
 }
 
 # Derived defaults.
@@ -897,7 +899,9 @@ if (v8_enable_conservative_stack_scanning) {
 if (v8_enable_direct_local) {
   enabled_external_v8_defines += [ "V8_ENABLE_DIRECT_LOCAL" ]
 }
-
+if (v8_shortcut_strings_in_minor_ms) {
+  enabled_external_v8_defines += [ "V8_MINORMS_STRING_SHORTCUTTING" ]
+}
 disabled_external_v8_defines = external_v8_defines - enabled_external_v8_defines
 
 # Put defines that are used in public headers here; public headers are
@@ -1877,12 +1881,13 @@ torque_files = [
   "src/builtins/promise-any.tq",
   "src/builtins/promise-constructor.tq",
   "src/builtins/promise-finally.tq",
+  "src/builtins/promise-jobs.tq",
   "src/builtins/promise-misc.tq",
   "src/builtins/promise-race.tq",
   "src/builtins/promise-reaction-job.tq",
   "src/builtins/promise-resolve.tq",
   "src/builtins/promise-then.tq",
-  "src/builtins/promise-jobs.tq",
+  "src/builtins/promise-withresolvers.tq",
   "src/builtins/proxy-constructor.tq",
   "src/builtins/proxy-delete-property.tq",
   "src/builtins/proxy-get-property.tq",
@@ -1907,6 +1912,8 @@ torque_files = [
   "src/builtins/regexp.tq",
   "src/builtins/set-difference.tq",
   "src/builtins/set-intersection.tq",
+  "src/builtins/set-is-subset-of.tq",
+  "src/builtins/set-is-superset-of.tq",
   "src/builtins/set-symmetric-difference.tq",
   "src/builtins/set-union.tq",
   "src/builtins/string-at.tq",
@@ -3491,7 +3498,6 @@ v8_header_set("v8_internal_headers") {
     "src/heap/marking-state-inl.h",
     "src/heap/marking-state.h",
     "src/heap/marking-visitor-inl.h",
-    "src/heap/marking-visitor-utility-inl.h",
     "src/heap/marking-visitor.h",
     "src/heap/marking-worklist-inl.h",
     "src/heap/marking-worklist.h",
@@ -3536,6 +3542,8 @@ v8_header_set("v8_internal_headers") {
     "src/heap/sweeper.h",
     "src/heap/traced-handles-marking-visitor.h",
     "src/heap/weak-object-worklists.h",
+    "src/heap/young-generation-marking-visitor-inl.h",
+    "src/heap/young-generation-marking-visitor.h",
     "src/heap/zapping.h",
     "src/ic/call-optimization.h",
     "src/ic/handler-configuration-inl.h",

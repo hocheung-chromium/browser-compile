@@ -858,6 +858,9 @@ def ConfigureAndBuild(target_arch, target_os, host_os, host_arch, parallel_jobs,
             '--target-os=linux',
             '--sysroot=' + os.path.join(CHROMIUM_ROOT_DIR,
                                         'build/linux/debian_bullseye_arm64-sysroot'),
+            # See crbug.com/1467681. These could be removed eventually
+            '--disable-dotprod',
+            '--disable-i8mm',
         ])
       configure_flags['Common'].extend([
           '--arch=aarch64',

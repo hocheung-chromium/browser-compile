@@ -549,11 +549,9 @@
 #endif  // BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_MAC) || BUILDFLAG(IS_WIN) ||
         // BUILDFLAG(IS_CHROMEOS_ASH)
 
-// TODO(crbug.com/939205):  Once the upcoming App Service is available, use a
-// single navigation throttle to display the intent picker on all platforms.
 #if !BUILDFLAG(IS_ANDROID)
 #if BUILDFLAG(IS_CHROMEOS)
-#include "chrome/browser/apps/intent_helper/common_apps_navigation_throttle.h"
+#include "chrome/browser/apps/intent_helper/chromeos_apps_navigation_throttle.h"
 #include "chrome/browser/policy/system_features_disable_list_policy_handler.h"
 #else
 #include "chrome/browser/apps/intent_helper/apps_navigation_throttle.h"
@@ -3366,7 +3364,7 @@ bool ChromeContentBrowserClient::IsInterestGroupAPIAllowed(
   DCHECK(privacy_sandbox_settings);
 
   bool allowed = privacy_sandbox_settings->IsFledgeAllowed(
-      top_frame_origin, api_origin, operation);
+      top_frame_origin, api_origin, operation, render_frame_host);
 
   if (operation == InterestGroupApiOperation::kJoin) {
     content_settings::PageSpecificContentSettings::InterestGroupJoined(
@@ -3435,7 +3433,7 @@ bool ChromeContentBrowserClient::IsAttributionReportingOperationAllowed(
       DCHECK(source_origin);
       DCHECK(reporting_origin);
       bool allowed = privacy_sandbox_settings->IsAttributionReportingAllowed(
-          *source_origin, *reporting_origin);
+          *source_origin, *reporting_origin, rfh);
       if (rfh) {
         content_settings::PageSpecificContentSettings::BrowsingDataAccessed(
             rfh, content::AttributionDataModel::DataKey(*reporting_origin),
@@ -3449,13 +3447,13 @@ bool ChromeContentBrowserClient::IsAttributionReportingOperationAllowed(
       DCHECK(source_origin);
       DCHECK(reporting_origin);
       return privacy_sandbox_settings->IsAttributionReportingAllowed(
-          *source_origin, *reporting_origin);
+          *source_origin, *reporting_origin, rfh);
     case AttributionReportingOperation::kTrigger:
     case AttributionReportingOperation::kOsTrigger: {
       DCHECK(destination_origin);
       DCHECK(reporting_origin);
       bool allowed = privacy_sandbox_settings->IsAttributionReportingAllowed(
-          *destination_origin, *reporting_origin);
+          *destination_origin, *reporting_origin, rfh);
       if (rfh) {
         content_settings::PageSpecificContentSettings::BrowsingDataAccessed(
             rfh, content::AttributionDataModel::DataKey(*reporting_origin),
@@ -3469,13 +3467,13 @@ bool ChromeContentBrowserClient::IsAttributionReportingOperationAllowed(
       DCHECK(destination_origin);
       DCHECK(reporting_origin);
       return privacy_sandbox_settings->IsAttributionReportingAllowed(
-          *destination_origin, *reporting_origin);
+          *destination_origin, *reporting_origin, rfh);
     case AttributionReportingOperation::kReport:
       DCHECK(source_origin);
       DCHECK(destination_origin);
       DCHECK(reporting_origin);
       return privacy_sandbox_settings->MaySendAttributionReport(
-          *source_origin, *destination_origin, *reporting_origin);
+          *source_origin, *destination_origin, *reporting_origin, rfh);
     case AttributionReportingOperation::kAny:
       return privacy_sandbox_settings->IsAttributionReportingEverAllowed();
   }
@@ -3491,7 +3489,7 @@ bool ChromeContentBrowserClient::IsSharedStorageAllowed(
       PrivacySandboxSettingsFactory::GetForProfile(profile);
   DCHECK(privacy_sandbox_settings);
   bool allowed = privacy_sandbox_settings->IsSharedStorageAllowed(
-      top_frame_origin, accessing_origin);
+      top_frame_origin, accessing_origin, rfh);
   if (rfh) {
     content_settings::PageSpecificContentSettings::BrowsingDataAccessed(
         rfh, blink::StorageKey::CreateFirstParty(accessing_origin),
@@ -5031,7 +5029,7 @@ ChromeContentBrowserClient::CreateThrottlesForNavigation(
 #if !BUILDFLAG(IS_ANDROID)
   auto url_to_apps_throttle =
 #if BUILDFLAG(IS_CHROMEOS)
-      apps::CommonAppsNavigationThrottle::MaybeCreate(handle);
+      apps::ChromeOsAppsNavigationThrottle::MaybeCreate(handle);
 #else
       apps::AppsNavigationThrottle::MaybeCreate(handle);
 #endif
@@ -7591,8 +7589,9 @@ bool ChromeContentBrowserClient::HasErrorPage(int http_status_code) {
 }
 
 std::unique_ptr<content::IdentityRequestDialogController>
-ChromeContentBrowserClient::CreateIdentityRequestDialogController() {
-  return std::make_unique<IdentityDialogController>();
+ChromeContentBrowserClient::CreateIdentityRequestDialogController(
+    content::WebContents* web_contents) {
+  return std::make_unique<IdentityDialogController>(web_contents);
 }
 
 bool ChromeContentBrowserClient::SuppressDifferentOriginSubframeJSDialogs(
