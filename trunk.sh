@@ -53,7 +53,7 @@ gclient sync --with_branch_heads --with_tags -f -R -D &&
 gclient runhooks &&
 
 printf "${bold}${GRE}Done!${c0}" &&
-printf "${bold}${YEL}You can now run ./VERSION.sh.${c0}\n" &&
+printf "${bold}${YEL}You can now run ./version.sh.${c0}\n" &&
 tput sgr0 &&
 
 exit 0

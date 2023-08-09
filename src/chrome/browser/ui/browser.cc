@@ -182,7 +182,6 @@
 #include "components/permissions/permission_request_manager.h"
 #include "components/prefs/pref_service.h"
 #include "components/search/search.h"
-#include "components/services/screen_ai/buildflags/buildflags.h"
 #include "components/sessions/content/session_tab_helper.h"
 #include "components/sessions/core/session_types.h"
 #include "components/sessions/core/tab_restore_service.h"
@@ -258,6 +257,7 @@
 #if BUILDFLAG(IS_CHROMEOS_ASH)
 #include "ash/constants/ash_features.h"
 #include "chrome/browser/ash/guest_os/guest_os_terminal.h"
+#include "chrome/browser/ash/url_handler.h"
 #include "chrome/browser/ui/settings_window_manager_chromeos.h"
 #include "components/session_manager/core/session_manager.h"
 #endif
@@ -284,11 +284,6 @@
 #include "ui/display/screen.h"
 #include "ui/display/types/display_constants.h"
 #endif  // BUILDFLAG(IS_MAC)
-
-#if BUILDFLAG(ENABLE_SCREEN_AI_SERVICE)
-#include "chrome/browser/accessibility/ax_screen_ai_annotator.h"
-#include "chrome/browser/accessibility/ax_screen_ai_annotator_factory.h"
-#endif
 
 using base::UserMetricsAction;
 using content::NativeWebKeyboardEvent;
@@ -773,8 +768,10 @@ std::u16string Browser::GetWindowTitleFromWebContents(
   // |contents| can be NULL because GetWindowTitleForCurrentTab is called by the
   // window during the window's creation (before tabs have been added).
   if (title.empty() && contents) {
-    title = FormatTitleForDisplay(app_controller_ ? app_controller_->GetTitle()
-                                                  : contents->GetTitle());
+    title = FormatTitleForDisplay(app_controller_ &&
+                                          !app_controller_->has_tab_strip()
+                                      ? app_controller_->GetTitle()
+                                      : contents->GetTitle());
 #if BUILDFLAG(ENABLE_CAPTIVE_PORTAL_DETECTION)
     // If the app name is requested and this is a captive portal window, the
     // title should indicate that this is a captive portal window. Captive
@@ -974,8 +971,15 @@ void Browser::OnWindowClosing() {
 
   BrowserList::NotifyBrowserCloseStarted(this);
 
-  if (!tab_strip_model_->empty())
+  if (!tab_strip_model_->empty()) {
+    // Closing all the tabs results in eventually calling back to
+    // OnWindowClosing() again.
     tab_strip_model_->CloseAllTabs();
+  } else {
+    // If there are no tabs, then a task will be scheduled (by views) to delete
+    // this Browser.
+    is_delete_scheduled_ = true;
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1309,14 +1313,10 @@ void Browser::TabGroupedStateChanged(
 }
 
 void Browser::TabStripEmpty() {
-  // This function is often called with various Browser related classes on the
-  // stack. Calling code can't handle Browser being deleted here (because it
-  // may delete the classes on the stack calling into this function). Because of
-  // this, BrowserWindow::Close() is used, instead of CloseNow(). CloseNow()
-  // immediately deletes, where was Close() is a hide, and then delete after
-  // posting a task.
+  // Note: even though the tab strip is empty, the call to Close() may not
+  // result in closing this Browser. This can happen in the case of closing
+  // the last Browser with ongoing downloads.
   window_->Close();
-  is_delete_scheduled_ = true;
 
   // Instant may have visible WebContents that need to be detached before the
   // window system closes.
@@ -1490,7 +1490,7 @@ content::PreloadingEligibility Browser::IsPrerender2Supported(
     content::WebContents& web_contents) {
   Profile* profile =
       Profile::FromBrowserContext(web_contents.GetBrowserContext());
-  return prefetch::IsSomePreloadingEnabled(*profile->GetPrefs(), &web_contents);
+  return prefetch::IsSomePreloadingEnabled(*profile->GetPrefs());
 }
 
 std::unique_ptr<content::WebContents> Browser::ActivatePortalWebContents(
@@ -1598,6 +1598,13 @@ WebContents* Browser::OpenURLFromTab(WebContents* source,
     DCHECK(window);
     return window->OpenURLFromTab(source, params);
   }
+
+#if BUILDFLAG(IS_CHROMEOS_ASH)
+  // Try to intercept the request and open the URL with Lacros.
+  if (ash::TryOpenUrl(params.url, params.disposition)) {
+    return nullptr;
+  }
+#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
 
   NavigateParams nav_params(this, params.url, params.transition);
   nav_params.FillNavigateParamsFromOpenURLParams(params);
@@ -1972,6 +1979,12 @@ std::unique_ptr<content::EyeDropper> Browser::OpenEyeDropper(
     content::RenderFrameHost* frame,
     content::EyeDropperListener* listener) {
   return window()->OpenEyeDropper(frame, listener);
+}
+
+void Browser::InitiatePreview(content::WebContents& web_contents,
+                              const GURL& url) {
+  // TODO(b/292184832): Implement PreviewManager and communicate with it here.
+  NOTIMPLEMENTED();
 }
 
 void Browser::DidFinishNavigation(
@@ -3318,12 +3331,3 @@ BackgroundContents* Browser::CreateBackgroundContents(
 
   return contents;
 }
-
-#if BUILDFLAG(ENABLE_SCREEN_AI_SERVICE)
-// TODO(crbug.com/1443349): Update function name (and trigger chain) when usage
-// is finalized.
-void Browser::RunScreenAIAnnotator() {
-  screen_ai::AXScreenAIAnnotatorFactory::GetForBrowserContext(profile())
-      ->AnnotateScreenshot(this);
-}
-#endif

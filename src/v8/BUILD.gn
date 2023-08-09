@@ -386,10 +386,6 @@ declare_args() {
   # This is only used by nodejs.
   v8_scriptormodule_legacy_lifetime = false
 
-  # Change code emission and runtime features to be CET shadow-stack compliant
-  # (incomplete and experimental).
-  v8_enable_cet_shadow_stack = false
-
   # Enables pointer compression for 8GB heaps.
   # Sets -DV8_COMPRESS_POINTERS_8GB.
   v8_enable_pointer_compression_8gb = ""
@@ -500,9 +496,8 @@ if (v8_enable_external_code_space == "") {
 }
 if (v8_enable_maglev == "") {
   v8_enable_maglev = v8_enable_turbofan &&
-                     (v8_current_cpu == "arm" ||
-                      ((v8_current_cpu == "x64" || v8_current_cpu == "arm64") &&
-                       v8_enable_pointer_compression))
+                     (v8_current_cpu == "arm" || v8_current_cpu == "x64" ||
+                      v8_current_cpu == "arm64")
 }
 assert(v8_enable_turbofan || !v8_enable_maglev,
        "Maglev is not available when Turbofan is disabled.")
@@ -683,8 +678,9 @@ assert(
 assert(
     !v8_enable_pointer_compression_shared_cage || v8_current_cpu == "x64" ||
         v8_current_cpu == "arm64" || v8_current_cpu == "riscv64" ||
-        v8_current_cpu == "ppc64" || v8_current_cpu == "loong64",
-    "Sharing a pointer compression cage is only supported on x64, arm64, ppc64, riscv64 and loong64")
+        v8_current_cpu == "ppc64" || v8_current_cpu == "s390x" ||
+        v8_current_cpu == "loong64",
+    "Sharing a pointer compression cage is only supported on x64, arm64, ppc64, s390x, riscv64 and loong64")
 
 assert(!v8_enable_unconditional_write_barriers || !v8_disable_write_barriers,
        "Write barriers can't be both enabled and disabled")
@@ -1912,6 +1908,7 @@ torque_files = [
   "src/builtins/regexp.tq",
   "src/builtins/set-difference.tq",
   "src/builtins/set-intersection.tq",
+  "src/builtins/set-is-disjoint-from.tq",
   "src/builtins/set-is-subset-of.tq",
   "src/builtins/set-is-superset-of.tq",
   "src/builtins/set-symmetric-difference.tq",
@@ -3116,6 +3113,7 @@ v8_header_set("v8_internal_headers") {
     "src/codegen/interface-descriptors-inl.h",
     "src/codegen/interface-descriptors.h",
     "src/codegen/label.h",
+    "src/codegen/linkage-location.h",
     "src/codegen/machine-type.h",
     "src/codegen/macro-assembler-base.h",
     "src/codegen/macro-assembler-inl.h",
@@ -3289,6 +3287,7 @@ v8_header_set("v8_internal_headers") {
     "src/compiler/turboshaft/define-assembler-macros.inc",
     "src/compiler/turboshaft/deopt-data.h",
     "src/compiler/turboshaft/doubly-threaded-list.h",
+    "src/compiler/turboshaft/explicit-truncation-reducer.h",
     "src/compiler/turboshaft/fast-api-call-reducer.h",
     "src/compiler/turboshaft/fast-hash.h",
     "src/compiler/turboshaft/graph-builder.h",
@@ -3311,6 +3310,7 @@ v8_header_set("v8_internal_headers") {
     "src/compiler/turboshaft/pretenuring-propagation-reducer.h",
     "src/compiler/turboshaft/recreate-schedule-phase.h",
     "src/compiler/turboshaft/recreate-schedule.h",
+    "src/compiler/turboshaft/reduce-args-helper.h",
     "src/compiler/turboshaft/reducer-traits.h",
     "src/compiler/turboshaft/representations.h",
     "src/compiler/turboshaft/required-optimization-reducer.h",
@@ -3530,6 +3530,7 @@ v8_header_set("v8_internal_headers") {
     "src/heap/progress-bar.h",
     "src/heap/read-only-heap-inl.h",
     "src/heap/read-only-heap.h",
+    "src/heap/read-only-promotion.h",
     "src/heap/read-only-spaces.h",
     "src/heap/remembered-set-inl.h",
     "src/heap/remembered-set.h",
@@ -3895,6 +3896,8 @@ v8_header_set("v8_internal_headers") {
     "src/sandbox/external-pointer-table-inl.h",
     "src/sandbox/external-pointer-table.h",
     "src/sandbox/external-pointer.h",
+    "src/sandbox/indirect-pointer-inl.h",
+    "src/sandbox/indirect-pointer.h",
     "src/sandbox/sandbox.h",
     "src/sandbox/sandboxed-pointer-inl.h",
     "src/sandbox/sandboxed-pointer.h",
@@ -4085,6 +4088,7 @@ v8_header_set("v8_internal_headers") {
       "src/wasm/serialized-signature-inl.h",
       "src/wasm/simd-shuffle.h",
       "src/wasm/stacks.h",
+      "src/wasm/std-object-sizes.h",
       "src/wasm/streaming-decoder.h",
       "src/wasm/string-builder-multiline.h",
       "src/wasm/string-builder.h",
@@ -5083,6 +5087,7 @@ v8_source_set("v8_base_without_compiler") {
     "src/heap/paged-spaces.cc",
     "src/heap/pretenuring-handler.cc",
     "src/heap/read-only-heap.cc",
+    "src/heap/read-only-promotion.cc",
     "src/heap/read-only-spaces.cc",
     "src/heap/safepoint.cc",
     "src/heap/scavenger.cc",
@@ -7207,10 +7212,6 @@ if (want_v8_shell) {
       # you can't have both applied to the same target.
       ":internal_config_base",
     ]
-
-    if (is_win && !v8_enable_cet_shadow_stack) {
-      v8_remove_configs += [ "//build/config/compiler:cet_shadow_stack" ]
-    }
 
     deps = [
       ":v8",
