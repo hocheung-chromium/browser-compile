@@ -24,6 +24,7 @@
 #include "chrome/browser/companion/core/features.h"
 #include "chrome/browser/download/bubble/download_bubble_prefs.h"
 #include "chrome/browser/media/router/media_router_feature.h"
+#include "chrome/browser/performance_manager/public/user_tuning/user_tuning_utils.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/profiles/profiles_state.h"
 #include "chrome/browser/share/share_features.h"
@@ -180,8 +181,8 @@ class TabstripLikeBackground : public views::Background {
  private:
   // views::Background:
   void Paint(gfx::Canvas* canvas, views::View* view) const override {
-    bool painted = TopContainerBackground::PaintThemeCustomImage(
-        canvas, view, browser_view_, /*translate_view_coordinates=*/false);
+    bool painted = TopContainerBackground::PaintThemeCustomImage(canvas, view,
+                                                                 browser_view_);
     if (!painted) {
       SkColor frame_color =
           browser_view_->frame()->GetFrameView()->GetFrameColor(
@@ -192,7 +193,6 @@ class TabstripLikeBackground : public views::Background {
 
   const raw_ptr<BrowserView> browser_view_;
 };
-
 }  // namespace
 
 class ToolbarView::ContainerView : public views::View {
@@ -418,8 +418,12 @@ void ToolbarView::Init() {
     }
   }
 
-  battery_saver_button_ = container_view_->AddChildView(
-      std::make_unique<BatterySaverButton>(browser_view_));
+  // Only show the Battery Saver button when it is not controlled by the OS. On
+  // ChromeOS the battery icon in the shelf shows the same information.
+  if (!performance_manager::user_tuning::IsBatterySaverModeManagedByOS()) {
+    battery_saver_button_ = container_view_->AddChildView(
+        std::make_unique<BatterySaverButton>(browser_view_));
+  }
 
   if (cast)
     cast_ = container_view_->AddChildView(std::move(cast));

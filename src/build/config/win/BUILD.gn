@@ -167,8 +167,6 @@ config("compiler") {
 
     # Don't look for libpaths in %LIB%, similar to /X in cflags above.
     ldflags += [ "/lldignoreenv" ]
-
-    ldflags += [ "/threads:8" ]
   }
 
   # Some binaries create PDBs larger than 4 GiB. Increasing the PDB page size
@@ -192,7 +190,9 @@ config("compiler") {
     ]
 
     if (use_lld) {
-      ldflags += [ "/OPT:LLDTAILMERGE" ]
+      # String tail merging leads to smaller binaries, but they don't compress
+      # as well, leading to increased mini_installer size (crbug.com/838449).
+      ldflags += [ "/OPT:NOLLDTAILMERGE" ]
     }
 
     # TODO(siggi): Is this of any use anymore?

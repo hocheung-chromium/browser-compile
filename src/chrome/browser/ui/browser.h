@@ -28,7 +28,7 @@
 #include "chrome/browser/ui/bookmarks/bookmark_tab_helper_observer.h"
 #include "chrome/browser/ui/browser_navigator_params.h"
 #include "chrome/browser/ui/chrome_web_modal_dialog_manager_delegate.h"
-#include "chrome/browser/ui/signin_view_controller.h"
+#include "chrome/browser/ui/signin/signin_view_controller.h"
 #include "chrome/browser/ui/simple_message_box.h"
 #include "chrome/browser/ui/tabs/tab_strip_model_observer.h"
 #include "chrome/browser/ui/unload_controller.h"
@@ -64,6 +64,7 @@ class BrowserWindow;
 class ExclusiveAccessManager;
 class FindBarController;
 class LocationBarModel;
+class OverscrollPrefManager;
 class Profile;
 class ScopedKeepAlive;
 class ScopedProfileKeepAlive;
@@ -1367,6 +1368,10 @@ class Browser : public TabStripModelObserver,
   // If true, the Browser window has been closed and this will be deleted
   // shortly (after a PostTask).
   bool is_delete_scheduled_ = false;
+
+#if defined(USE_AURA)
+  std::unique_ptr<OverscrollPrefManager> overscroll_pref_manager_;
+#endif
 
   // The following factory is used for chrome update coalescing.
   base::WeakPtrFactory<Browser> chrome_updater_factory_{this};

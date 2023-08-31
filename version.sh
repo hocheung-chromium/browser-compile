@@ -13,12 +13,11 @@ yell() { echo "$0: $*" >&2; }
 die() { yell "$*"; exit 111; }
 try() { "$@" || die "${RED}Failed $*"; }
 
-COMMIT_ID="715fef3576bf46d22e722c746ecdab1c53d8bba4"
+COMMIT_ID="dfd386717b06cc8fd3500c4be6ad24bd9def105f"
 
 export COMMIT_ID &&
 
 printf "\n"
-printf "${bold}${GRE}Current Chromium version is:${c0} ${underline}$COMMIT_ID${c0}"
 printf "${bold}${RED}NOTE: ${bold}${YEL}Checking out${bold}${CYA} $COMMIT_ID ${bold}${YEL}in $HOME/chromium/src...${c0}\n"
 
 cd $HOME/chromium/src &&

@@ -1,4 +1,4 @@
-# PATCHES
+# PATCHES (Only for Windows)
 
 <https://github.com/ungoogled-software/ungoogled-chromium/blob/master/patches/extra/ungoogled-chromium/add-flag-for-close-confirmation.patch>
 
