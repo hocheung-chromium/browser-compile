@@ -33,6 +33,7 @@
 #include "chrome/browser/ui/browser_command_controller.h"
 #include "chrome/browser/ui/browser_commands.h"
 #include "chrome/browser/ui/browser_content_setting_bubble_model_delegate.h"
+#include "chrome/browser/ui/browser_element_identifiers.h"
 #include "chrome/browser/ui/browser_tabstrip.h"
 #include "chrome/browser/ui/browser_window.h"
 #include "chrome/browser/ui/color/chrome_color_id.h"
@@ -75,10 +76,11 @@
 #include "chrome/browser/ui/views/toolbar/reload_button.h"
 #include "chrome/browser/ui/views/toolbar/side_panel_toolbar_button.h"
 #include "chrome/browser/ui/views/toolbar/toolbar_button.h"
+#include "chrome/browser/ui/views/toolbar/toolbar_controller.h"
 #include "chrome/browser/ui/web_applications/app_browser_controller.h"
 #include "chrome/common/chrome_features.h"
 #include "chrome/common/pref_names.h"
-#include "chrome/grit/chromium_strings.h"
+#include "chrome/grit/branded_strings.h"
 #include "chrome/grit/generated_resources.h"
 #include "chrome/grit/theme_resources.h"
 #include "components/autofill/core/common/autofill_payments_features.h"
@@ -93,6 +95,7 @@
 #include "content/public/browser/web_contents.h"
 #include "media/base/media_switches.h"
 #include "ui/accessibility/ax_node_data.h"
+#include "ui/base/interaction/element_identifier.h"
 #include "ui/base/l10n/l10n_util.h"
 #include "ui/base/metadata/metadata_impl_macros.h"
 #include "ui/base/theme_provider.h"
@@ -341,8 +344,10 @@ void ToolbarView::Init() {
   // Do not create the extensions or browser actions container if it is a guest
   // profile (only regular and incognito profiles host extensions).
   if (!browser_->profile()->IsGuestSession()) {
-    extensions_container =
-        std::make_unique<ExtensionsToolbarContainer>(browser_);
+    extensions_container = std::make_unique<ExtensionsToolbarContainer>(
+        browser_, base::FeatureList::IsEnabled(features::kResponsiveToolbar)
+                      ? ExtensionsToolbarContainer::DisplayMode::kCompact
+                      : ExtensionsToolbarContainer::DisplayMode::kNormal);
 
     if (features::IsChromeRefresh2023()) {
       toolbar_divider = std::make_unique<views::View>();
@@ -371,7 +376,10 @@ void ToolbarView::Init() {
   if (browser_view_->unified_side_panel() &&
       !base::CommandLine::ForCurrentProcess()->HasSwitch(
           "hide-sidepanel-button")) {
-    if (companion::IsCompanionFeatureEnabled()) {
+    if (base::FeatureList::IsEnabled(features::kSidePanelPinning)) {
+      // TODO(b:299463334): Use the new SidePanelContainer which supports
+      // ActionItems
+    } else if (companion::IsCompanionFeatureEnabled()) {
       side_panel_toolbar_container =
           std::make_unique<SidePanelToolbarContainer>(browser_view_);
     } else {
@@ -462,6 +470,12 @@ void ToolbarView::Init() {
   show_avatar_toolbar_button = !profiles::IsManagedGuestSession();
 #endif
   avatar_->SetVisible(show_avatar_toolbar_button);
+
+  if (base::FeatureList::IsEnabled(features::kResponsiveToolbar)) {
+    overflow_button_ =
+        container_view_->AddChildView(std::make_unique<OverflowButton>());
+    overflow_button_->SetVisible(false);
+  }
 
   auto app_menu_button = std::make_unique<BrowserAppMenuButton>(this);
   app_menu_button->SetFlipCanvasOnPaintForRTLUI(true);
@@ -773,6 +787,10 @@ void ToolbarView::Layout() {
     }
   }
 
+  if (base::FeatureList::IsEnabled(features::kResponsiveToolbar)) {
+    toolbar_controller_->UpdateOverflowButtonVisibility();
+  }
+
   // Call super implementation to ensure layout manager and child layouts
   // happen.
   AccessiblePaneView::Layout();
@@ -886,6 +904,19 @@ void ToolbarView::InitLayout() {
   if (toolbar_divider_) {
     toolbar_divider_->SetProperty(views::kMarginsKey,
                                   gfx::Insets::VH(0, kToolbarDividerSpacing));
+  }
+
+  if (base::FeatureList::IsEnabled(features::kResponsiveToolbar)) {
+    // Order 1 is reserved for omnibox and transient buttons.
+    constexpr int kToolbarFlexOrderStart = 2;
+
+    toolbar_controller_ = std::make_unique<ToolbarController>(
+        std::vector<ui::ElementIdentifier>{
+            kToolbarForwardButtonElementId, kToolbarAvatarButtonElementId,
+            kToolbarExtensionsContainerElementId,
+            kToolbarSidePanelContainerElementId, kToolbarHomeButtonElementId,
+            kToolbarChromeLabsButtonElementId},
+        kToolbarFlexOrderStart, container_view_, overflow_button_);
   }
 
   LayoutCommon();

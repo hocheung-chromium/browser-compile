@@ -555,11 +555,23 @@ BASE_FEATURE(kMemoryPressureBasedSourceBufferGC,
              "MemoryPressureBasedSourceBufferGC",
              base::FEATURE_DISABLED_BY_DEFAULT);
 
+// Enables writing pixels together for all planes to a multi-planar shared
+// image.
+BASE_FEATURE(kUseWritePixelsYUV,
+             "UseWritePixelsYUV",
+// Windows requires d3d11 write pixel support in angle.
+#if BUILDFLAG(IS_WIN)
+             base::FEATURE_DISABLED_BY_DEFAULT
+#else
+             base::FEATURE_ENABLED_BY_DEFAULT
+#endif
+);
+
 // Enables creating single shared image and mailbox for multi-planar formats for
 // hardware video decoders.
 BASE_FEATURE(kUseMultiPlaneFormatForHardwareVideo,
              "UseMultiPlaneFormatForHardwareVideo",
-#if BUILDFLAG(IS_ANDROID)
+#if BUILDFLAG(IS_ANDROID) || BUILDFLAG(IS_IOS)
              base::FEATURE_ENABLED_BY_DEFAULT
 #else
              base::FEATURE_DISABLED_BY_DEFAULT
@@ -576,6 +588,11 @@ BASE_FEATURE(kUseMultiPlaneFormatForSoftwareVideo,
              base::FEATURE_DISABLED_BY_DEFAULT
 #endif
 );
+
+// Enables using RasterInterface in VideoResourceUpdater.
+BASE_FEATURE(kRasterInterfaceInVideoResourceUpdater,
+             "RasterInterfaceInVideoResourceUpdater",
+             base::FEATURE_ENABLED_BY_DEFAULT);
 
 // Enables binding software video NV12/P010 GMBs as separate shared images.
 BASE_FEATURE(kMultiPlaneSoftwareVideoSharedImages,
@@ -614,7 +631,7 @@ BASE_FEATURE(kOpenscreenVideoBitrateFactorInFrameDrops,
 // information on the quality of the session using RTCP logs.
 BASE_FEATURE(kEnableRtcpReporting,
              "EnableRtcpReporting",
-             base::FEATURE_DISABLED_BY_DEFAULT);
+             base::FEATURE_ENABLED_BY_DEFAULT);
 
 // Approach original pre-REC MSE object URL autorevoking behavior, though await
 // actual attempt to use the object URL for attachment to perform revocation.
@@ -819,6 +836,10 @@ BASE_FEATURE(kVaapiVp8TemporalLayerHWEncoding,
 BASE_FEATURE(kVaapiVp9kSVCHWEncoding,
              "VaapiVp9kSVCHWEncoding",
              base::FEATURE_ENABLED_BY_DEFAULT);
+// Enable VP9 S-mode encoding with HW encoder for webrtc use case on ChromeOS.
+BASE_FEATURE(kVaapiVp9SModeHWEncoding,
+             "VaapiVp9SModeHWEncoding",
+             base::FEATURE_DISABLED_BY_DEFAULT);
 #endif  // defined(ARCH_CPU_X86_FAMILY) && BUILDFLAG(IS_CHROMEOS)
 #if BUILDFLAG(IS_CHROMEOS) || BUILDFLAG(IS_LINUX)
 // Enables the new V4L2StatefulVideoDecoder instead of V4L2VideoDecoder.
@@ -906,6 +927,16 @@ BASE_FEATURE(kShareThisTabInsteadButtonGetDisplayMediaAudio,
 // the Speech On-Device API (SODA) detects a speaker change.
 BASE_FEATURE(kSpeakerChangeDetection,
              "SpeakerChangeDetection",
+             base::FEATURE_DISABLED_BY_DEFAULT);
+
+// Log the amount of flickering between partial results. This measures how often
+// the system revises earlier outputs, to quantify the system's output
+// instability or flicker. Intuitively, it measures how many tokens must be
+// truncated from the previous text before appending any new text. The erasure
+// of the current timestep can be calculated from its longest common prefix with
+// the previous timestep.
+BASE_FEATURE(kLiveCaptionLogFlickerRate,
+             "LiveCaptionLogFlickerRate",
              base::FEATURE_DISABLED_BY_DEFAULT);
 
 // Live Caption can be used in multiple languages, as opposed to just English.
@@ -1026,6 +1057,13 @@ BASE_FEATURE(kForceHardwareAudioDecoders,
 BASE_FEATURE(kLowDelayVideoRenderingOnLiveStream,
              "low-delay-video-rendering-on-live-stream",
              base::FEATURE_ENABLED_BY_DEFAULT);
+
+// Allows the AutoPictureInPictureTabHelper to automatically enter
+// picture-in-picture for websites with video playback (instead of only websites
+// using camera or microphone).
+BASE_FEATURE(kAutoPictureInPictureForVideoPlayback,
+             "AutoPictureInPictureForVideoPlayback",
+             base::FEATURE_DISABLED_BY_DEFAULT);
 
 // Whether the autoplay policy should ignore Web Audio. When ignored, the
 // autoplay policy will be hardcoded to be the legacy one on based on the
@@ -1555,6 +1593,13 @@ BASE_FEATURE(kVideoDecodeBatching,
              "VideoDecodeBatching",
              base::FEATURE_DISABLED_BY_DEFAULT);
 
+// Safety switch to allow us to revert to the previous behavior of using the
+// restored bounds for PiP windows, rather than the window bounds.  If this
+// feature is enabled (the default), then we'll use the window bounds.
+BASE_FEATURE(kUseWindowBoundsForPip,
+             "UseWindowBoundsForPip",
+             base::FEATURE_ENABLED_BY_DEFAULT);
+
 bool IsChromeWideEchoCancellationEnabled() {
 #if BUILDFLAG(CHROME_WIDE_ECHO_CANCELLATION)
   return base::FeatureList::IsEnabled(kChromeWideEchoCancellation);
@@ -1606,6 +1651,11 @@ bool IsMultiPlaneFormatForHardwareVideoEnabled() {
 #endif
       base::FeatureList::IsEnabled(features::kPassthroughYuvRgbConversion) &&
       base::FeatureList::IsEnabled(kUseMultiPlaneFormatForHardwareVideo);
+}
+
+bool IsWritePixelsYUVEnabled() {
+  return IsMultiPlaneFormatForHardwareVideoEnabled() &&
+         base::FeatureList::IsEnabled(kUseWritePixelsYUV);
 }
 
 #if BUILDFLAG(IS_WIN)

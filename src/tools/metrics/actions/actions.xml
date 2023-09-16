@@ -10225,6 +10225,109 @@ should be able to be added at any place in this file.
   <description>Please enter the description of this user action.</description>
 </action>
 
+<action name="Glanceables_Classroom_AssignmentPressed">
+  <owner>mmourgos@chromium.org</owner>
+  <owner>tbarzic@chromium.org</owner>
+  <owner>chromeos-launcher@google.com</owner>
+  <description>
+    User clicked on an assignment in the classroom glanceable.
+  </description>
+</action>
+
+<action name="Glanceables_Classroom_AssignmentPressed_DefaultList">
+  <owner>mmourgos@chromium.org</owner>
+  <owner>tbarzic@chromium.org</owner>
+  <owner>chromeos-launcher@google.com</owner>
+  <description>
+    User clicked on an assignment in the classroom glanceable, while the default
+    assignment list is shown.
+  </description>
+</action>
+
+<action name="Glanceables_Classroom_HeaderIconPressed">
+  <owner>mmourgos@chromium.org</owner>
+  <owner>tbarzic@chromium.org</owner>
+  <owner>chromeos-launcher@google.com</owner>
+  <description>
+    User clicked on the header icon button in the classroom glanceable.
+  </description>
+</action>
+
+<action name="Glanceables_Classroom_SeeAllPressed">
+  <owner>mmourgos@chromium.org</owner>
+  <owner>tbarzic@chromium.org</owner>
+  <owner>chromeos-launcher@google.com</owner>
+  <description>
+    User clicked on the see all button in the footer of the classroom
+    glanceable.
+  </description>
+</action>
+
+<action name="Glanceables_Classroom_SelectedListChanged">
+  <owner>mmourgos@chromium.org</owner>
+  <owner>tbarzic@chromium.org</owner>
+  <owner>chromeos-launcher@google.com</owner>
+  <description>
+    User changed the selected assignment list in the classroom glanceable.
+  </description>
+</action>
+
+<action name="Glanceables_Tasks_ActiveTaskListChanged">
+  <owner>yulunwu@chromium.org</owner>
+  <owner>chromeos-launcher@google.com</owner>
+  <description>
+    User changes the active task list for the tasks glanceable.
+  </description>
+</action>
+
+<action name="Glanceables_Tasks_AddTaskButtonShown">
+  <owner>yulunwu@chromium.org</owner>
+  <owner>chromeos-launcher@google.com</owner>
+  <description>
+    The add task button is shown for an empty tasks list.
+  </description>
+</action>
+
+<action name="Glanceables_Tasks_LaunchTasksApp_AddNewTaskButton">
+  <owner>yulunwu@chromium.org</owner>
+  <owner>chromeos-launcher@google.com</owner>
+  <description>
+    User clicked on the add new task button on the tasks glanceable.
+  </description>
+</action>
+
+<action name="Glanceables_Tasks_LaunchTasksApp_FooterButton">
+  <owner>yulunwu@chromium.org</owner>
+  <owner>chromeos-launcher@google.com</owner>
+  <description>
+    User clicked on the see all button in the footer of the tasks glanceable.
+  </description>
+</action>
+
+<action name="Glanceables_Tasks_LaunchTasksApp_HeaderButton">
+  <owner>yulunwu@chromium.org</owner>
+  <owner>chromeos-launcher@google.com</owner>
+  <description>
+    User clicked on the tasks icon in the header of the tasks glanceable.
+  </description>
+</action>
+
+<action name="Glanceables_Tasks_TaskMarkedAsCompleted">
+  <owner>yulunwu@chromium.org</owner>
+  <owner>chromeos-launcher@google.com</owner>
+  <description>
+    User marks a task in the tasks glanceable as completed.
+  </description>
+</action>
+
+<action name="Glanceables_Tasks_TaskMarkedAsIncomplete">
+  <owner>yulunwu@chromium.org</owner>
+  <owner>chromeos-launcher@google.com</owner>
+  <description>
+    User marks a task in the tasks glanceable as incomplete.
+  </description>
+</action>
+
 <action name="Go">
   <owner>Please list the metric's owners. Add more owner tags as needed.</owner>
   <description>Please enter the description of this user action.</description>
@@ -12851,6 +12954,14 @@ should be able to be added at any place in this file.
   <description>
     Recorded when a valid user action related to Reading List, Bookmarks, Recent
     Tabs, or History occurs.
+  </description>
+</action>
+
+<action name="IOSMagicStackTabResumptionFreshSignal" not_user_triggered="true">
+  <owner>thegreenfrog@google.com</owner>
+  <owner>bling-team@google.com</owner>
+  <description>
+    Recorded when the Tab Resumption module has a new relevant tab.
   </description>
 </action>
 
@@ -18612,6 +18723,35 @@ should be able to be added at any place in this file.
   </description>
 </action>
 
+<action name="Mobile.PasswordsSettings.BulkSavePasswordsToAccountButtonClicked">
+  <owner>nicolasmacbeth@google.com</owner>
+  <owner>tmartino@chromium.org</owner>
+  <description>
+    Reported when the user clicks on the entrypoint button of the &quot;save
+    passwords in account&quot; section. iOS only.
+  </description>
+</action>
+
+<action
+    name="Mobile.PasswordsSettings.BulkSavePasswordsToAccountDialog.Accepted">
+  <owner>nicolasmacbeth@google.com</owner>
+  <owner>tmartino@chromium.org</owner>
+  <description>
+    Reported when the user accepts the confirmation dialog to move their local
+    passwords to their account. iOS only.
+  </description>
+</action>
+
+<action
+    name="Mobile.PasswordsSettings.BulkSavePasswordsToAccountDialog.Cancelled">
+  <owner>nicolasmacbeth@google.com</owner>
+  <owner>tmartino@chromium.org</owner>
+  <description>
+    Reported when the user denies the confirmation dialog to move their local
+    passwords to their account. iOS only.
+  </description>
+</action>
+
 <action name="Mobile.Signin.SnackbarUndoTapped">
   <owner>triploblastic@chromium.org</owner>
   <owner>chrome-signin-team@google.org</owner>
@@ -19939,6 +20079,14 @@ should be able to be added at any place in this file.
   </description>
 </action>
 
+<action name="MobileKeyboardAccessoryOpenPasswordManager">
+  <owner>noemies@google.com</owner>
+  <description>
+    Reported when user opens the Password Manager page from keyboard accessory.
+    iOS only.
+  </description>
+</action>
+
 <action name="MobileKeyCommandAddToBookmarks">
   <owner>lpromero@google.com</owner>
   <owner>alionadangla@google.com</owner>
@@ -20338,6 +20486,14 @@ should be able to be added at any place in this file.
   <description>
     Reported when Safe Browsing Standard Protection Settings UI was dismissed.
     iOS only.
+  </description>
+</action>
+
+<action name="MobileMagicStackOpenPasswordCheckup">
+  <owner>noemies@google.com</owner>
+  <description>
+    Reported when user opens the Password Checkup page from the Magic Stack. iOS
+    only.
   </description>
 </action>
 
@@ -21275,10 +21431,11 @@ should be able to be added at any place in this file.
   <description>Please enter the description of this user action.</description>
 </action>
 
-<action name="MobilePasswordCheckupOpen">
+<action name="MobilePasswordBreachOpenPasswordManager">
   <owner>noemies@google.com</owner>
   <description>
-    Reported when user opens the Password Checkup page. iOS only.
+    Reported when user opens the Password Manager page from the password breach
+    view. iOS only.
   </description>
 </action>
 
@@ -21305,10 +21462,18 @@ should be able to be added at any place in this file.
   </description>
 </action>
 
-<action name="MobilePasswordDetailsOpen">
+<action name="MobilePasswordDetailsSettingsBack">
   <owner>noemies@google.com</owner>
   <description>
-    Reported when user opens a password details page. iOS only.
+    Reported when user goes back from Password Details Settings UI to root
+    Settings screen. iOS only.
+  </description>
+</action>
+
+<action name="MobilePasswordDetailsSettingsClose">
+  <owner>noemies@google.com</owner>
+  <description>
+    Reported when Password Details Settings UI was dismissed. iOS only.
   </description>
 </action>
 
@@ -21320,6 +21485,58 @@ should be able to be added at any place in this file.
   </description>
 </action>
 
+<action name="MobilePasswordInfobarModalOpenPasswordManager">
+  <owner>noemies@google.com</owner>
+  <description>
+    Reported when user opens the Password Manager page from a password infobar
+    modal. iOS only.
+  </description>
+</action>
+
+<action name="MobilePasswordIssuesCompromisedOpen">
+  <owner>noemies@google.com</owner>
+  <description>
+    Reported when user opens the compromised password issues page. iOS only.
+  </description>
+</action>
+
+<action name="MobilePasswordIssuesOpenPasswordDetails">
+  <owner>noemies@google.com</owner>
+  <description>
+    Reported when user opens the password details page from the password issues
+    page. iOS only.
+  </description>
+</action>
+
+<action name="MobilePasswordIssuesReusedOpen">
+  <owner>noemies@google.com</owner>
+  <description>
+    Reported when user opens the reused password issues page. iOS only.
+  </description>
+</action>
+
+<action name="MobilePasswordIssuesSettingsBack">
+  <owner>noemies@google.com</owner>
+  <description>
+    Reported when user goes back from Password Issues Settings UI to root
+    Settings screen. iOS only.
+  </description>
+</action>
+
+<action name="MobilePasswordIssuesSettingsClose">
+  <owner>noemies@google.com</owner>
+  <description>
+    Reported when Password Issues Settings UI was dismissed. iOS only.
+  </description>
+</action>
+
+<action name="MobilePasswordIssuesWeakOpen">
+  <owner>noemies@google.com</owner>
+  <description>
+    Reported when user opens the weak password issues page. iOS only.
+  </description>
+</action>
+
 <action name="MobilePasswordManagerAddPassword">
   <owner>noemies@google.com</owner>
   <description>
@@ -21327,10 +21544,19 @@ should be able to be added at any place in this file.
   </description>
 </action>
 
-<action name="MobilePasswordManagerOpen">
+<action name="MobilePasswordManagerOpenPasswordCheckup">
   <owner>noemies@google.com</owner>
   <description>
-    Reported when user opens the Password Manager. iOS only.
+    Reported when user opens the Password Checkup page from the Password
+    Manager. iOS only.
+  </description>
+</action>
+
+<action name="MobilePasswordManagerOpenPasswordDetails">
+  <owner>noemies@google.com</owner>
+  <description>
+    Reported when user opens the password details page from the Password
+    Manager. iOS only.
   </description>
 </action>
 
@@ -21806,6 +22032,14 @@ should be able to be added at any place in this file.
   <owner>sczs@chromium.org</owner>
   <description>
     Reported when Search Engine Settings UI was dismissed. iOS only.
+  </description>
+</action>
+
+<action name="MobileSearchPasswordsWidgetOpenPasswordManager">
+  <owner>noemies@google.com</owner>
+  <description>
+    Reported when user opens the Password Manager page from the Search Passwords
+    widget. iOS only.
   </description>
 </action>
 
@@ -23298,6 +23532,14 @@ should be able to be added at any place in this file.
   <owner>michaeldo@chromium.org</owner>
   <description>
     Reported when Web Inspector Settings UI was dismissed. iOS only.
+  </description>
+</action>
+
+<action name="MobileWebsiteOpenPasswordManager">
+  <owner>noemies@google.com</owner>
+  <description>
+    Reported when user opens the Password Manager page when navigating to a
+    website. iOS only.
   </description>
 </action>
 
@@ -32323,6 +32565,57 @@ should be able to be added at any place in this file.
   </description>
 </action>
 
+<action name="Signin_BulkUpload_Close">
+  <owner>arthurmilchior@chromium.org</owner>
+  <owner>chrome-signin-team@google.com</owner>
+  <description>
+    Recorded when the Bulk Upload Settings is dismissed. iOS only.
+  </description>
+</action>
+
+<action name="Signin_BulkUpload_FaceID_CannotBeStarted">
+  <owner>arthurmilchior@chromium.org</owner>
+  <owner>chrome-signin-team@google.com</owner>
+  <description>
+    Recorded when the face id auth cannot be started in the Bulk Upload
+    Settings. iOS only.
+  </description>
+</action>
+
+<action name="Signin_BulkUpload_FaceID_Failed">
+  <owner>arthurmilchior@chromium.org</owner>
+  <owner>chrome-signin-team@google.com</owner>
+  <description>
+    Recorded when the face id auth fails in the Bulk Upload Settings. iOS only.
+  </description>
+</action>
+
+<action name="Signin_BulkUpload_FaceID_Success">
+  <owner>arthurmilchior@chromium.org</owner>
+  <owner>chrome-signin-team@google.com</owner>
+  <description>
+    Recorded when the face id auth is successful in the Bulk Upload Settings.
+    iOS only.
+  </description>
+</action>
+
+<action name="Signin_BulkUpload_Open">
+  <owner>arthurmilchior@chromium.org</owner>
+  <owner>chrome-signin-team@google.com</owner>
+  <description>
+    Recorded when the Bulk Upload Settings is opened. iOS only.
+  </description>
+</action>
+
+<action name="Signin_BulkUpload_Save">
+  <owner>arthurmilchior@chromium.org</owner>
+  <owner>chrome-signin-team@google.com</owner>
+  <description>
+    Recorded when the user presses the save button in the Bulk Upload Settings.
+    iOS only.
+  </description>
+</action>
+
 <action name="Signin_EnterpriseAccountPrompt_Cancel">
   <owner>gogerald@chromium.org</owner>
   <description>
@@ -37757,6 +38050,74 @@ should be able to be added at any place in this file.
   <description>Please enter the description of this user action.</description>
 </action>
 
+<action name="UserEducation.MessageAction.Abort.IPH">
+  <owner>mickeyburks@chromium.org</owner>
+  <description>
+    The In-Product Help Bubble was aborted due to leaving the flow of the
+    feature promotion. This is specific to the IPH implementation and could mean
+    navigation or hiding a surface.
+  </description>
+</action>
+
+<action name="UserEducation.MessageAction.Action.IPH">
+  <owner>mickeyburks@chromium.org</owner>
+  <description>
+    The In-Product Help Bubble was closed after the user selected the action in
+    the IPH. For a Custom Action IPH, this means the custom action was
+    activated. For a Tutorial IPH, this means the tutorial was started.
+  </description>
+</action>
+
+<action name="UserEducation.MessageAction.Cancel.IPH">
+  <owner>mickeyburks@chromium.org</owner>
+  <description>
+    The In-Product Help Bubble was closed after the user pressed Escape or
+    clicked &quot;X&quot; in the IPH.
+  </description>
+</action>
+
+<action name="UserEducation.MessageAction.Dismiss.IPH">
+  <owner>mickeyburks@chromium.org</owner>
+  <description>The user dismissed the In-Product Help Bubble.</description>
+</action>
+
+<action name="UserEducation.MessageAction.FeatureEngaged.IPH">
+  <owner>mickeyburks@chromium.org</owner>
+  <description>
+    The user engaged with the promoted feature outside the In-Product Help
+    Bubble in a way that obviated the need for this IPH.
+  </description>
+</action>
+
+<action name="UserEducation.MessageAction.OverrideForPrecedence.IPH"
+    not_user_triggered="true">
+  <owner>mickeyburks@chromium.org</owner>
+  <description>
+    The In-Product Help Bubble was closed to allow showing a message with higher
+    priority.
+  </description>
+</action>
+
+<action name="UserEducation.MessageAction.OverrideForUIRegionConflict.IPH">
+  <owner>mickeyburks@chromium.org</owner>
+  <description>
+    The In-Product Help Bubble was closed to avoid overlap with an important UI
+    element.
+  </description>
+</action>
+
+<action name="UserEducation.MessageAction.Snooze.IPH">
+  <owner>mickeyburks@chromium.org</owner>
+  <description>The user snoozed the In-Product Help Bubble.</description>
+</action>
+
+<action name="UserEducation.MessageAction.Timeout.IPH">
+  <owner>mickeyburks@chromium.org</owner>
+  <description>
+    The In-Product Help Bubble spontaneously timed out after some time interval.
+  </description>
+</action>
+
 <action name="UserManager_Cleared_Legacy_User_Prefs">
   <owner>mahmadi@chromium.org</owner>
   <description>
@@ -38910,6 +39271,8 @@ should be able to be added at any place in this file.
 </action-suffix>
 
 <action-suffix separator="_" ordering="suffix">
+  <suffix name="3pcdUserBypass"
+      label="For third party cookie deprecation user bypass feature."/>
   <suffix name="AdaptiveButtonInTopToolbarCustomization_AddToBookmarks"
       label="For AdaptiveButtonInTopToolbarCustomization add to bookmarks
              feature."/>
@@ -39076,6 +39439,7 @@ should be able to be added at any place in this file.
   <suffix name="IntentChip"
       label="In product help for opening a webpage in an app using the intent
              chip."/>
+  <suffix name="iOSChoiceScreen" label="For iOSChoiceScreen feature"/>
   <suffix name="iOSDefaultBrowserBadgeEligibility"
       label="For iOSDefaultBrowserBadgeEligibility feature"/>
   <suffix name="iOSDefaultBrowserOverflowMenuBadge"
@@ -39263,6 +39627,8 @@ should be able to be added at any place in this file.
       label="For Sharing Hub link toggle feature."/>
   <suffix name="SharingHubWebnotesStylize"
       label="For SharingHubWebnotesStylize feature."/>
+  <suffix name="ShoppingCollectionFeature"
+      label="For the explanation of what the shopping collection is."/>
   <suffix name="ShoppingListMenuItem"
       label="For ShoppingListMenuItem feature."/>
   <suffix name="ShoppingListSaveFlow"
@@ -39311,6 +39677,17 @@ should be able to be added at any place in this file.
       name="InProductHelp.ShouldTriggerHelpUIResult.Triggered.IPH"/>
   <affected-action
       name="InProductHelp.ShouldTriggerHelpUIResult.WouldHaveTriggered.IPH"/>
+  <affected-action name="UserEducation.MessageAction.Abort.IPH"/>
+  <affected-action name="UserEducation.MessageAction.Action.IPH"/>
+  <affected-action name="UserEducation.MessageAction.Cancel.IPH"/>
+  <affected-action name="UserEducation.MessageAction.Dismiss.IPH"/>
+  <affected-action name="UserEducation.MessageAction.FeatureEngaged.IPH"/>
+  <affected-action
+      name="UserEducation.MessageAction.OverrideForPrecedence.IPH"/>
+  <affected-action
+      name="UserEducation.MessageAction.OverrideForUIRegionConflict.IPH"/>
+  <affected-action name="UserEducation.MessageAction.Snooze.IPH"/>
+  <affected-action name="UserEducation.MessageAction.Timeout.IPH"/>
 </action-suffix>
 
 <action-suffix separator="." ordering="suffix">
