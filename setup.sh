@@ -36,7 +36,6 @@ copyAVX2 () {
 	printf "\n" &&
 	printf "${YEL}Copying AVX2 files${c0}\n" &&
 	cp -r -v AVX2/. $HOME/chromium/src/ &&
-    cp -r -v src/. $HOME/chromium/src/ &&
 	printf "\n"
 }
 case $1 in
