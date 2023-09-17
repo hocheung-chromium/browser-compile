@@ -49,7 +49,7 @@ cd $HOME/chromium/src/third_party/devtools-frontend/src &&
 
 git fetch https://chromium.googlesource.com/devtools/devtools-frontend refs/changes/82/4257582/64 && git cherry-pick FETCH_HEAD &&
 
-cd $HOME/browser-compile &&
+cd $HOME/chromium_compile &&
 
 cp -r -v libjxl/src/lib/lib.gni $HOME/chromium/src/third_party/libjxl/src/lib/ &&
 

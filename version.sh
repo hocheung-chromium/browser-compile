@@ -45,7 +45,7 @@ vpython3 v8/tools/builtins-pgo/download_profiles.py --depot-tools=$HOME/depot_to
 
 printf "\n" &&
 
-cd $HOME/browser-compile &&
+cd $HOME/chromium_compile &&
 
 printf "${bold}${GRE}Done!${c0}" &&
 printf "${bold}${YEL}You can now run ./setup.sh.${c0}\n" &&
