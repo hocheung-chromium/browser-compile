@@ -55,6 +55,8 @@ cp -r -v libjxl/src/lib/lib.gni $HOME/chromium/src/third_party/libjxl/src/lib/ &
 
 cp -r -v libjxl/src/lib/jxl_lists.bzl $HOME/chromium/src/third_party/libjxl/src/lib/ &&
 
+cp -r -v libjxl/src/lib/include/jxl/. $HOME/chromium/src/third_party/libjxl/src/lib/include/jxl/ &&
+
 printf "${bold}${GRE}Done!${c0}\n" &&
 printf "\n" &&
 tput sgr0
