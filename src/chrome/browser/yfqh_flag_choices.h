@@ -22,4 +22,14 @@ const FeatureEntry::Choice kCloseWindowWithLastTab[] = {
      "never"},
 };
 
+const FeatureEntry::Choice kScrollEventChangesTab[] = {
+    {flags_ui::kGenericExperimentChoiceDefault, "", ""},
+    {"Always",
+     "scroll-tabs",
+     "always"},
+    {"Never",
+     "scroll-tabs",
+     "never"}
+};
+
 #endif  // CHROME_BROWSER_YFQH_FLAG_CHOICES_H_

@@ -20,6 +20,7 @@
 #include "parallel_runner.h"
 #include "stats.h"
 #include "version.h"
+#include <stdint.h>
 
 #if defined(__cplusplus) || defined(c_plusplus)
 extern "C" {

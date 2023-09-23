@@ -24,6 +24,8 @@
 
 <https://github.com/ungoogled-software/ungoogled-chromium/blob/master/patches/extra/ungoogled-chromium/add-flag-to-hide-side-panel-button.patch>
 
+<https://github.com/ungoogled-software/ungoogled-chromium/blob/master/patches/extra/ungoogled-chromium/add-flag-to-scroll-tabs.patch>
+
 <https://chromium-review.googlesource.com/c/chromium/src/+/4257656>
 
 <https://chromium-review.googlesource.com/c/devtools/devtools-frontend/+/4257582>
