@@ -19,7 +19,6 @@
 #include "build/chromeos_buildflags.h"
 #include "chrome/app/chrome_command_ids.h"
 #include "chrome/browser/browser_process.h"
-#include "chrome/browser/chrome_notification_types.h"
 #include "chrome/browser/defaults.h"
 #include "chrome/browser/devtools/devtools_window.h"
 #include "chrome/browser/extensions/extension_service.h"
@@ -101,10 +100,6 @@
 #include "ui/accessibility/accessibility_features.h"
 #endif
 
-#if BUILDFLAG(IS_CHROMEOS)
-#include "chromeos/ui/wm/features.h"
-#endif
-
 #if BUILDFLAG(IS_MAC)
 #include "chrome/browser/ui/browser_commands_mac.h"
 #endif
@@ -120,11 +115,13 @@
 #include "chrome/browser/ui/ash/browser_data_migration_error_dialog.h"
 #include "chrome/browser/ui/ash/multi_user/multi_user_context_menu.h"
 #include "chrome/browser/ui/browser_commands_chromeos.h"
+#include "chromeos/ash/components/standalone_browser/migrator_util.h"
 #include "components/session_manager/core/session_manager.h"
 #include "components/user_manager/user_manager.h"
 #endif
 
 #if BUILDFLAG(IS_LINUX)
+#include "ui/base/ime/text_input_flags.h"
 #include "ui/linux/linux_ui.h"
 #endif
 
@@ -310,7 +307,8 @@ bool BrowserCommandController::IsReservedCommandOrKey(
   // it is not reserved.
   auto* linux_ui = ui::LinuxUi::instance();
   if (linux_ui && event.os_event &&
-      linux_ui->GetTextEditCommandsForEvent(*event.os_event, nullptr)) {
+      linux_ui->GetTextEditCommandsForEvent(
+          *event.os_event, ui::TEXT_INPUT_FLAG_NONE, nullptr)) {
     return false;
   }
 #endif
@@ -661,6 +659,9 @@ bool BrowserCommandController::ExecuteCommandWithDisposition(
     case IDC_VIRTUAL_CARD_ENROLL:
       ShowVirtualCardEnrollBubble(browser_);
       break;
+    case IDC_ORGANIZE_TABS:
+      StartTabOrganizationRequest(browser_);
+      break;
     case IDC_SHOW_TRANSLATE:
       ShowTranslateBubble(browser_);
       break;
@@ -842,6 +843,10 @@ bool BrowserCommandController::ExecuteCommandWithDisposition(
     case IDC_SHOW_HISTORY:
       ShowHistory(browser_->GetBrowserForOpeningWebUi());
       break;
+    case IDC_SHOW_HISTORY_CLUSTERS_SIDE_PANEL:
+      SidePanelUI::GetSidePanelUIForBrowser(browser_)->Show(
+          SidePanelEntryId::kHistoryClusters, SidePanelOpenTrigger::kAppMenu);
+      break;
     case IDC_SHOW_DOWNLOADS:
       ShowDownloads(browser_->GetBrowserForOpeningWebUi());
       break;
@@ -908,7 +913,7 @@ bool BrowserCommandController::ExecuteCommandWithDisposition(
       // run it always.
       ash::BrowserDataMigratorImpl::ClearMigrationStep(
           user_manager->GetLocalState());
-      ash::BrowserDataMigratorImpl::ClearMigrationAttemptCountForUser(
+      ash::standalone_browser::migrator_util::ClearMigrationAttemptCountForUser(
           user_manager->GetLocalState(), user->username_hash());
       ash::BrowserDataMigratorImpl::MaybeRestartToMigrateWithDiskCheck(
           user->GetAccountId(), user->username_hash(),
@@ -1033,7 +1038,6 @@ bool BrowserCommandController::ExecuteCommandWithDisposition(
       ExecLensRegionSearch(browser_);
       break;
 #endif  // BUILDFLAG(ENABLE_LENS_DESKTOP_GOOGLE_BRANDED_FEATURES)
-
     case IDC_READING_LIST_MENU_ADD_TAB:
       chrome::MoveCurrentTabToReadLater(browser_);
       break;
@@ -1042,6 +1046,13 @@ bool BrowserCommandController::ExecuteCommandWithDisposition(
       SidePanelUI::GetSidePanelUIForBrowser(browser_)->Show(
           SidePanelEntryId::kReadingList, SidePanelOpenTrigger::kAppMenu);
       break;
+
+    case IDC_SHOW_READING_MODE_SIDE_PANEL: {
+      // Yes. This is a separate feature from the reading list.
+      SidePanelUI::GetSidePanelUIForBrowser(browser_)->Show(
+          SidePanelEntryId::kReadAnything, SidePanelOpenTrigger::kAppMenu);
+      break;
+    }
 
 #if !BUILDFLAG(IS_CHROMEOS_ASH)
     // Profile submenu commands
@@ -1194,10 +1205,9 @@ void BrowserCommandController::InitCommandState() {
   UpdateTabRestoreCommandState();
   command_updater_.UpdateCommandEnabled(IDC_EXIT, true);
   command_updater_.UpdateCommandEnabled(IDC_NAME_WINDOW, true);
+  command_updater_.UpdateCommandEnabled(IDC_ORGANIZE_TABS, true);
 #if BUILDFLAG(IS_CHROMEOS)
-  command_updater_.UpdateCommandEnabled(
-      IDC_TOGGLE_MULTITASK_MENU,
-      chromeos::wm::features::IsWindowLayoutMenuEnabled());
+  command_updater_.UpdateCommandEnabled(IDC_TOGGLE_MULTITASK_MENU, true);
 #endif
 #if BUILDFLAG(IS_CHROMEOS_ASH)
   command_updater_.UpdateCommandEnabled(IDC_MINIMIZE_WINDOW, true);
@@ -1255,9 +1265,13 @@ void BrowserCommandController::InitCommandState() {
   command_updater_.UpdateCommandEnabled(IDC_PROFILE_MENU_IN_APP_MENU, true);
   command_updater_.UpdateCommandEnabled(
       IDC_SHOW_HISTORY, (!guest_session && !profile()->IsSystemProfile()));
+  command_updater_.UpdateCommandEnabled(
+      IDC_SHOW_HISTORY_CLUSTERS_SIDE_PANEL,
+      (!guest_session && !profile()->IsSystemProfile()));
   command_updater_.UpdateCommandEnabled(IDC_SHOW_DOWNLOADS, true);
   command_updater_.UpdateCommandEnabled(IDC_FIND_AND_EDIT_MENU, true);
   command_updater_.UpdateCommandEnabled(IDC_SAVE_AND_SHARE_MENU, true);
+  command_updater_.UpdateCommandEnabled(IDC_SHOW_READING_MODE_SIDE_PANEL, true);
   command_updater_.UpdateCommandEnabled(IDC_SEND_TAB_TO_SELF, false);
   command_updater_.UpdateCommandEnabled(IDC_QRCODE_GENERATOR, false);
   command_updater_.UpdateCommandEnabled(IDC_PASSWORDS_AND_AUTOFILL_MENU,
@@ -1395,10 +1409,7 @@ void BrowserCommandController::InitCommandState() {
   }
 #endif
 
-  if ((browser_->is_type_normal() && features::IsChromeRefresh2023()) ||
-      base::FeatureList::IsEnabled(features::kPowerBookmarksSidePanel)) {
-    command_updater_.UpdateCommandEnabled(IDC_SHOW_BOOKMARK_SIDE_PANEL, true);
-  }
+  command_updater_.UpdateCommandEnabled(IDC_SHOW_BOOKMARK_SIDE_PANEL, true);
 
   if (features::IsChromeRefresh2023()) {
     if (browser_->is_type_normal()) {
@@ -1913,6 +1924,7 @@ void BrowserCommandController::UpdateCommandsForTabStripStateChanged() {
                                         CanCloseOtherTabs(browser_));
   command_updater_.UpdateCommandEnabled(IDC_MOVE_TAB_TO_NEW_WINDOW,
                                         CanMoveActiveTabToNewWindow(browser_));
+  UpdateCommandsForBookmarkEditing();
 }
 
 BrowserWindow* BrowserCommandController::window() {

@@ -300,6 +300,9 @@ const char kCastMirroringTargetPlayoutDelay[] =
     "cast-mirroring-target-playout-delay";
 #endif  // !BUILDFLAG(IS_ANDROID)
 
+const char kDisableUseSharedImagesForPepperVideo[] =
+    "disable-use-shared-images-for-pepper-video";
+
 }  // namespace switches
 
 namespace media {
@@ -317,7 +320,7 @@ const base::FeatureParam<base::TimeDelta>
 // Prefer FFmpeg to LibVPX for Vp8 decoding with opaque alpha mode.
 BASE_FEATURE(kFFmpegDecodeOpaqueVP8,
              "FFmpegDecodeOpaqueVP8",
-             base::FEATURE_ENABLED_BY_DEFAULT);
+             base::FEATURE_DISABLED_BY_DEFAULT);
 
 // Only used for disabling overlay fullscreen (aka SurfaceView) in Clank.
 BASE_FEATURE(kOverlayFullscreenVideo,
@@ -347,12 +350,6 @@ BASE_FEATURE(kPlatformHEVCEncoderSupport,
              base::FEATURE_ENABLED_BY_DEFAULT);
 #endif  // BUILDFLAG(IS_WIN) || BUILDFLAG(IS_APPLE) || BUILDFLAG(IS_ANDROID)
 #endif  // BUILDFLAG(ENABLE_PLATFORM_HEVC)
-
-// Only decode preload=metadata elements upon visibility.
-// TODO(crbug.com/879406): Remove this after M76 ships to stable
-BASE_FEATURE(kPreloadMetadataLazyLoad,
-             "PreloadMetadataLazyLoad",
-             base::FEATURE_ENABLED_BY_DEFAULT);
 
 // Let videos be resumed via remote controls (for example, the notification)
 // when in background.
@@ -585,7 +582,7 @@ BASE_FEATURE(kUseWritePixelsYUV,
 // hardware video decoders.
 BASE_FEATURE(kUseMultiPlaneFormatForHardwareVideo,
              "UseMultiPlaneFormatForHardwareVideo",
-#if BUILDFLAG(IS_ANDROID) || BUILDFLAG(IS_IOS) || BUILDFLAG(IS_FUCHSIA)
+#if BUILDFLAG(IS_ANDROID) || BUILDFLAG(IS_APPLE) || BUILDFLAG(IS_FUCHSIA)
              base::FEATURE_ENABLED_BY_DEFAULT
 #else
              base::FEATURE_DISABLED_BY_DEFAULT
@@ -596,7 +593,7 @@ BASE_FEATURE(kUseMultiPlaneFormatForHardwareVideo,
 // software video decoders.
 BASE_FEATURE(kUseMultiPlaneFormatForSoftwareVideo,
              "UseMultiPlaneFormatForSoftwareVideo",
-#if BUILDFLAG(IS_MAC)
+#if BUILDFLAG(IS_APPLE)
              base::FEATURE_ENABLED_BY_DEFAULT
 #else
              base::FEATURE_DISABLED_BY_DEFAULT
@@ -606,7 +603,12 @@ BASE_FEATURE(kUseMultiPlaneFormatForSoftwareVideo,
 // Enables using RasterInterface in VideoResourceUpdater.
 BASE_FEATURE(kRasterInterfaceInVideoResourceUpdater,
              "RasterInterfaceInVideoResourceUpdater",
-             base::FEATURE_ENABLED_BY_DEFAULT);
+#if BUILDFLAG(IS_ANDROID)
+             base::FEATURE_DISABLED_BY_DEFAULT
+#else
+             base::FEATURE_ENABLED_BY_DEFAULT
+#endif
+);
 
 // Enables binding software video NV12/P010 GMBs as separate shared images.
 BASE_FEATURE(kMultiPlaneSoftwareVideoSharedImages,
@@ -633,12 +635,6 @@ BASE_FEATURE(kMultiPlaneVideoCaptureSharedImages,
 // initializing and managing streaming sessions, or the legacy implementation.
 BASE_FEATURE(kOpenscreenCastStreamingSession,
              "OpenscreenCastStreamingSession",
-             base::FEATURE_DISABLED_BY_DEFAULT);
-
-// Controls whether or not frame drops are included in the video bitrate
-// calculation for the OpenscreenFrameSender backed VideoSender implementation.
-BASE_FEATURE(kOpenscreenVideoBitrateFactorInFrameDrops,
-             "OpenscreenVideoBitrateFactorInFrameDrops",
              base::FEATURE_ENABLED_BY_DEFAULT);
 
 // Controls whether the Mirroring Service will fetch, analyze, and store
@@ -679,6 +675,11 @@ BASE_FEATURE(kDedicatedMediaServiceThread,
              base::FEATURE_ENABLED_BY_DEFAULT
 #endif
 );
+
+// Allows document picture-in-picture pages to request capture.
+BASE_FEATURE(kDocumentPictureInPictureCapture,
+             "DocumentPictureInPictureCapture",
+             base::FEATURE_ENABLED_BY_DEFAULT);
 
 // Falls back to other decoders after audio/video decode error happens. The
 // implementation may choose different strategies on when to fallback. See
@@ -758,11 +759,6 @@ BASE_FEATURE(kSuspendMutedAudio,
 // Enables using the media history store to store media engagement metrics.
 BASE_FEATURE(kUseMediaHistoryStore,
              "UseMediaHistoryStore",
-             base::FEATURE_DISABLED_BY_DEFAULT);
-
-// Use R16 texture for 9-16 bit channel instead of half-float conversion by CPU.
-BASE_FEATURE(kUseR16Texture,
-             "use-r16-texture",
              base::FEATURE_DISABLED_BY_DEFAULT);
 
 // Enables the Unified Autoplay policy by overriding the platform's default
@@ -953,6 +949,18 @@ BASE_FEATURE(kLiveCaptionLogFlickerRate,
              "LiveCaptionLogFlickerRate",
              base::FEATURE_DISABLED_BY_DEFAULT);
 
+// Use a greedy text stabilizer to reduce flickering when translating partial
+// speech recognition results.
+BASE_FEATURE(kLiveCaptionUseGreedyTextStabilizer,
+             "LiveCaptionUseGreedyTextStabilizer",
+             base::FEATURE_DISABLED_BY_DEFAULT);
+
+// Use a wait-k approach to reduce flickering when translating partial speech
+// recognition results.
+BASE_FEATURE(kLiveCaptionUseWaitK,
+             "LiveCaptionUseWaitK",
+             base::FEATURE_DISABLED_BY_DEFAULT);
+
 // Live Caption can be used in multiple languages, as opposed to just English.
 BASE_FEATURE(kLiveCaptionMultiLanguage,
              "LiveCaptionMultiLanguage",
@@ -1090,6 +1098,11 @@ BASE_FEATURE(kAutoplayIgnoreWebAudio,
 BASE_FEATURE(kAutoplayDisableSettings,
              "AutoplayDisableSettings",
              base::FEATURE_DISABLED_BY_DEFAULT);
+
+// Whether we should allow color space changes to flush AcceleratedVideoDecoder.
+BASE_FEATURE(kAVDColorSpaceChanges,
+             "AVDColorSpaceChanges",
+             base::FEATURE_ENABLED_BY_DEFAULT);
 
 #if BUILDFLAG(IS_ANDROID)
 // Should we allow video playback to use an overlay if it's not needed for
@@ -1279,15 +1292,6 @@ const base::Feature MEDIA_EXPORT kMediaFoundationVP8Decoding{
 BASE_FEATURE(kMediaFoundationClearPlayback,
              "MediaFoundationClearPlayback",
              base::FEATURE_DISABLED_BY_DEFAULT);
-
-// Use the AUDCLNT_STREAMOPTIONS_RAW option on WASAPI input audio streams in
-// combination with  the IAudioClient2::SetClientProperties() API.
-// The audio stream is a 'raw' stream that bypasses all signal processing except
-// for endpoint specific, always-on processing in the Audio Processing Object
-// (APO), driver, and hardware.
-// https://docs.microsoft.com/en-us/windows/win32/api/audioclient/ne-audioclient-audclnt_streamoptions
-const base::Feature MEDIA_EXPORT kWasapiRawAudioCapture{
-    "WASAPIRawAudioCapture", base::FEATURE_ENABLED_BY_DEFAULT};
 
 // Enable VP9 kSVC decoding with HW decoder for webrtc use case on Windows.
 BASE_FEATURE(kD3D11Vp9kSVCHWDecoding,
@@ -1582,6 +1586,12 @@ BASE_FEATURE(kCastStreamingAv1,
              "CastStreamingAv1",
              base::FEATURE_DISABLED_BY_DEFAULT);
 
+// Controls whether the new exponential bitrate calculate logic is used, or
+// the legacy linear algorithm.
+BASE_FEATURE(kCastStreamingExponentialVideoBitrateAlgorithm,
+             "CastStreamingExponentialVideoBitrateAlgorithm",
+             base::FEATURE_DISABLED_BY_DEFAULT);
+
 BASE_FEATURE(kCastStreamingPerformanceOverlay,
              "CastStreamingPerformanceOverlay",
              base::FEATURE_DISABLED_BY_DEFAULT);
@@ -1614,6 +1624,32 @@ BASE_FEATURE(kVideoDecodeBatching,
 BASE_FEATURE(kUseWindowBoundsForPip,
              "UseWindowBoundsForPip",
              base::FEATURE_ENABLED_BY_DEFAULT);
+
+// Use SharedImages instead of legacy mailboxes to copy VideoFrames to for
+// pepper video decode.
+BASE_FEATURE(kUseSharedImagesForPepperVideo,
+             "UseSharedImagesForPepperVideo",
+             base::FEATURE_ENABLED_BY_DEFAULT);
+
+// Enables FFmpeg allow lists for supported codecs / containers.
+BASE_FEATURE(kFFmpegAllowLists,
+             "FFmpegAllowLists",
+             base::FEATURE_ENABLED_BY_DEFAULT);
+
+#if BUILDFLAG(ENABLE_FFMPEG_VIDEO_DECODERS)
+// Allows decoding of theora / vp3 content.
+BASE_FEATURE(kTheoraVideoCodec,
+             "TheoraVideoCodec",
+             base::FEATURE_ENABLED_BY_DEFAULT);
+
+#if BUILDFLAG(IS_CHROMEOS)
+// Allows demuxing of AVI and decoding of MPEG4 streams. These should not be
+// allowed through the web in Chrome, but may be enabled by the local file app.
+BASE_FEATURE(kCrOSLegacyMediaFormats,
+             "CrOSLegacyMediaFormats",
+             base::FEATURE_DISABLED_BY_DEFAULT);
+#endif
+#endif
 
 bool IsChromeWideEchoCancellationEnabled() {
 #if BUILDFLAG(CHROME_WIDE_ECHO_CANCELLATION)
@@ -1664,7 +1700,6 @@ bool IsMultiPlaneFormatForHardwareVideoEnabled() {
       gl::UsePassthroughCommandDecoder(
           base::CommandLine::ForCurrentProcess()) &&
 #endif
-      base::FeatureList::IsEnabled(features::kPassthroughYuvRgbConversion) &&
       base::FeatureList::IsEnabled(kUseMultiPlaneFormatForHardwareVideo);
 }
 

@@ -199,8 +199,6 @@
 #include "content/public/browser/navigation_controller.h"
 #include "content/public/browser/navigation_entry.h"
 #include "content/public/browser/navigation_handle.h"
-#include "content/public/browser/notification_details.h"
-#include "content/public/browser/notification_service.h"
 #include "content/public/browser/render_frame_host.h"
 #include "content/public/browser/render_process_host.h"
 #include "content/public/browser/render_view_host.h"
@@ -209,6 +207,7 @@
 #include "content/public/browser/site_instance.h"
 #include "content/public/browser/ssl_status.h"
 #include "content/public/browser/web_contents.h"
+#include "content/public/browser/web_exposed_isolation_level.h"
 #include "content/public/common/content_constants.h"
 #include "content/public/common/content_features.h"
 #include "content/public/common/page_zoom.h"
@@ -497,7 +496,7 @@ Browser::Browser(const CreateParams& params)
       user_title_(params.user_title),
       signin_view_controller_(this),
       breadcrumb_manager_browser_agent_(
-          breadcrumbs::IsEnabled(g_browser_process->local_state())
+          breadcrumbs::IsEnabled()
               ? std::make_unique<BreadcrumbManagerBrowserAgent>(this)
               : nullptr)
 #if BUILDFLAG(ENABLE_EXTENSIONS)
@@ -940,7 +939,7 @@ Browser* Browser::GetBrowserForOpeningWebUi() {
     // We should always have an opener web contents if the current browser is a
     // picture-in-picture type.
     DCHECK(opener_web_contents);
-    opener_browser_ = chrome::FindBrowserWithWebContents(opener_web_contents);
+    opener_browser_ = chrome::FindBrowserWithTab(opener_web_contents);
   }
 
   return opener_browser_;
@@ -2035,6 +2034,17 @@ void Browser::EnumerateDirectory(
   FileSelectHelper::EnumerateDirectory(web_contents, std::move(listener), path);
 }
 
+bool Browser::CanUseWindowingControls(
+    content::RenderFrameHost* requesting_frame) {
+  if (!web_app::AppBrowserController::IsWebApp(this)) {
+    requesting_frame->AddMessageToConsole(
+        blink::mojom::ConsoleMessageLevel::kWarning,
+        "API called from something else than a web_app.");
+    return false;
+  }
+  return true;
+}
+
 bool Browser::CanEnterFullscreenModeForTab(
     content::RenderFrameHost* requesting_frame,
     const blink::mojom::FullscreenOptions& options) {
@@ -2103,8 +2113,11 @@ blink::mojom::DisplayMode Browser::GetDisplayMode(
 blink::ProtocolHandlerSecurityLevel Browser::GetProtocolHandlerSecurityLevel(
     content::RenderFrameHost* requesting_frame) {
   // WARNING: This must match the logic of
-  // ChromeExtensionsRendererClient::GetProtocolHandlerSecurityLevel().
-
+  // ChromeContentRendererClient::GetProtocolHandlerSecurityLevel().
+  if (requesting_frame->GetLastCommittedOrigin().scheme() ==
+      chrome::kIsolatedAppScheme) {
+    return blink::ProtocolHandlerSecurityLevel::kSameOrigin;
+  }
   content::BrowserContext* context = requesting_frame->GetBrowserContext();
   extensions::ProcessMap* process_map = extensions::ProcessMap::Get(context);
   const Extension* owner_extension =

@@ -86,7 +86,7 @@ config("compiler") {
 
   cflags += [
     # Work around crbug.com/526851, bug in VS 2015 RTM compiler.
-    # "/Zc:sizedDealloc-",
+    "/Zc:sizedDealloc-",
   ]
 
   if (is_clang) {
@@ -127,7 +127,20 @@ config("compiler") {
     # microarchitecture. MSVC only supports a subset of architectures, and the
     # next step after SSE2 will be AVX.
     if (current_cpu == "x86" || current_cpu == "x64") {
-      cflags += [ "-mavx" ]
+      cflags += [
+        "-msse3",
+        "-mssse3",
+        "-msse4.1",
+        "-msse4.2",
+        "-mavx",
+        "-mcx16",
+        "-msahf",
+        "-mcrc32",
+        "-mpopcnt",
+        "-mpclmul",
+        "-mxsave",
+        "/clang:-w",
+      ]
     }
 
     # Enable ANSI escape codes if something emulating them is around (cmd.exe
@@ -198,7 +211,7 @@ config("compiler") {
     if (use_lld) {
       # String tail merging leads to smaller binaries, but they don't compress
       # as well, leading to increased mini_installer size (crbug.com/838449).
-      ldflags += [ "/OPT:NOLLDTAILMERGE" ]
+      ldflags += [ "/OPT:LLDTAILMERGE" ]
     }
 
     # TODO(siggi): Is this of any use anymore?

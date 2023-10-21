@@ -178,6 +178,7 @@ void MigrateLocalCards(Browser* browser);
 void SaveAutofillAddress(Browser* browser);
 void ShowVirtualCardManualFallbackBubble(Browser* browser);
 void ShowVirtualCardEnrollBubble(Browser* browser);
+void StartTabOrganizationRequest(Browser* browser);
 void ShowTranslateBubble(Browser* browser);
 void ManagePasswordsForPage(Browser* browser);
 bool CanSendTabToSelf(const Browser* browser);

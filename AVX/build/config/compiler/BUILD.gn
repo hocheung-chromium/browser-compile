@@ -14,11 +14,12 @@ import("//build/config/coverage/coverage.gni")
 import("//build/config/dcheck_always_on.gni")
 import("//build/config/gclient_args.gni")
 import("//build/config/host_byteorder.gni")
+import("//build/config/pch.gni")
 import("//build/config/rust.gni")
-import("//build/config/sanitizers/sanitizers.gni")
 import("//build/config/ui.gni")
 import("//build/config/unwind.gni")
 import("//build/toolchain/cc_wrapper.gni")
+import("//build/toolchain/cros/cros_config.gni")
 import("//build/toolchain/goma.gni")
 import("//build/toolchain/rbe.gni")
 import("//build/toolchain/toolchain.gni")
@@ -86,6 +87,10 @@ declare_args() {
   # the needed gcov profiling data.
   auto_profile_path = ""
 
+  # Optimize for coverage guided fuzzing (balance between speed and number of
+  # branches)
+  optimize_for_fuzzing = false
+
   # Path to an AFDO profile to use while building with clang, if any. Empty
   # implies none.
   clang_sample_profile_path = ""
@@ -127,6 +132,11 @@ declare_args() {
   thin_lto_enable_optimizations =
       (is_chromeos || is_android || is_win || is_linux || is_mac ||
        (is_ios && use_lld)) && is_official_build
+
+  # Whether to enable thin lto incremental builds.
+  # See: https://clang.llvm.org/docs/ThinLTO.html#incremental
+  # The cache can lead to non-determinism: https://crbug.com/1486045
+  thin_lto_enable_cache = true
 
   # Initialize all local variables with a pattern. This flag will fill
   # uninitialized floating-point types (and 32-bit pointers) with 0xFF and the
@@ -477,14 +487,25 @@ config("compiler") {
       asmflags += [ "-femit-dwarf-unwind=no-compact-unwind" ]
       cflags += [ "-femit-dwarf-unwind=no-compact-unwind" ]
     }
+
+    # dsymutil is not available in the system, on bots, for rustc to call. Our
+    # linker_driver.py script runs dsymutil itself, which is set to be the
+    # linker for Rust targets as well.
+    rustflags += [ "-Csplit-debuginfo=unpacked" ]
   }
 
   # Linux/Android/Fuchsia common flags setup.
   # ---------------------------------
   if (is_linux || is_chromeos || is_android || is_fuchsia) {
     asmflags += [ "-fPIC" ]
-    cflags += [ "-fPIC" ]
-    ldflags += [ "-fPIC" ]
+    cflags += [
+      "-fPIC",
+      "-w",
+    ]
+    ldflags += [
+      "-fPIC",
+      "-w",
+    ]
     rustflags += [ "-Crelocation-model=pic" ]
 
     if (!is_clang) {
@@ -601,9 +622,27 @@ config("compiler") {
       }
     }
 
+    # TODO(crbug.com/1488374): This causes binary size growth and potentially
+    # other problems.
+    # TODO(crbug.com/1491036): This isn't supported by Cronet's mainline llvm version.
+    if (default_toolchain != "//build/toolchain/cros:target" &&
+        !llvm_android_mainline) {
+      cflags += [
+        "-mllvm",
+        "-split-threshold-for-reg-with-hint=0",
+      ]
+      if (use_thin_lto && is_a_target_toolchain) {
+        if (is_win) {
+          ldflags += [ "-mllvm:-split-threshold-for-reg-with-hint=0" ]
+        } else {
+          ldflags += [ "-Wl,-mllvm,-split-threshold-for-reg-with-hint=0" ]
+        }
+      }
+    }
+
     # TODO(crbug.com/1235145): Investigate why/if this should be needed.
     if (is_win) {
-      cflags += [ "/clang:-ffp-contract=off" ]
+      cflags += [ "/clang:-ffp-contract=fast" ]
     } else {
       cflags += [ "-ffp-contract=off" ]
     }
@@ -705,9 +744,26 @@ config("compiler") {
       "-fsplit-lto-unit",
     ]
 
-    # Limit the size of the ThinLTO cache to the lesser of 10% of
-    # available disk space, 40GB and 100000 files.
-    # cache_policy = "cache_size=10%:cache_size_bytes=40g:cache_size_files=100000"
+    if (thin_lto_enable_cache) {
+      # Limit the size of the ThinLTO cache to the lesser of 10% of
+      # available disk space, 40GB and 100000 files.
+      cache_policy =
+          "cache_size=10%:cache_size_bytes=40g:cache_size_files=100000"
+      cache_dir = rebase_path("$root_out_dir/thinlto-cache", root_build_dir)
+      if (is_win) {
+        ldflags += [
+          "/lldltocache:$cache_dir",
+          "/lldltocachepolicy:$cache_policy",
+        ]
+      } else {
+        if (is_apple) {
+          ldflags += [ "-Wl,-cache_path_lto,$cache_dir" ]
+        } else {
+          ldflags += [ "-Wl,--thinlto-cache-dir=$cache_dir" ]
+        }
+        ldflags += [ "-Wl,--thinlto-cache-policy=$cache_policy" ]
+      }
+    }
 
     # An import limit of 30 has better performance (per speedometer) and lower
     # binary size than the default setting of 100.
@@ -719,16 +775,8 @@ config("compiler") {
       ldflags += [
         "/opt:lldltojobs=all",
         "-mllvm:-import-instr-limit=$import_instr_limit",
-
-        # "/lldltocache:" +
-        #     rebase_path("$root_out_dir/thinlto-cache", root_build_dir),
-        # "/lldltocachepolicy:$cache_policy",
         "-mllvm:-disable-auto-upgrade-debug-info",
       ]
-      ldflags += [ "-mllvm:-enable-gvn-hoist" ]
-      ldflags += [ "-mllvm:-loop-rotate-multi" ]
-      ldflags += [ "-mllvm:-polly" ]
-      ldflags += [ "-mllvm:-polly-invariant-load-hoisting" ]
     } else {
       ldflags += [ "-flto=thin" ]
 
@@ -741,19 +789,6 @@ config("compiler") {
       # TODO(thakis): Check if '=0' (that is, number of cores, instead
       # of "all" which means number of hardware threads) is faster.
       ldflags += [ "-Wl,--thinlto-jobs=all" ]
-      if (is_apple) {
-        ldflags += [
-          "-Wl,-cache_path_lto," +
-              rebase_path("$root_out_dir/thinlto-cache", root_build_dir),
-          "-Wcrl,object_path_lto",
-        ]
-      } else {
-        # ldflags +=
-        #     [ "-Wl,--thinlto-cache-dir=" +
-        #       rebase_path("$root_out_dir/thinlto-cache", root_build_dir) ]
-      }
-
-      # ldflags += [ "-Wl,--thinlto-cache-policy=$cache_policy" ]
 
       if (is_chromeos) {
         # ARM was originally set lower than x86 to keep the size
@@ -769,6 +804,9 @@ config("compiler") {
 
       ldflags += [ "-Wl,-mllvm,-import-instr-limit=$import_instr_limit" ]
 
+      if (is_apple) {
+        ldflags += [ "-Wcrl,object_path_lto" ]
+      }
       if (!is_chromeos) {
         # TODO(https://crbug.com/972449): turn on for ChromeOS when that
         # toolchain has this flag.
@@ -989,7 +1027,8 @@ config("compiler") {
     # directory from appearing in build outputs.
     "-Zremap-cwd-prefix=.",
 
-    "-Ctarget-feature=+avx",
+    "-Ctarget-cpu=x86-64-v2",
+    "-Ctarget-feature=+sse3,+ssse3,+sse4.1,+sse4.2,+avx,+xsave,",
   ]
 
   if (!is_win || force_rustc_color_output) {
@@ -1043,12 +1082,10 @@ config("compiler") {
 config("thinlto_optimize_default") {
   if (!is_debug && use_thin_lto && is_a_target_toolchain) {
     lto_opt_level = 3
-
     if (is_win) {
       ldflags = [ "/opt:lldlto=" + lto_opt_level ]
     } else {
       ldflags = [ "-Wl,--lto-O" + lto_opt_level ]
-      ldflags += [ "-Wl,--lto-CGO" + lto_opt_level ]
     }
 
     if (toolchain_supports_rust_thin_lto) {
@@ -1083,7 +1120,6 @@ config("thinlto_optimize_max") {
       ldflags = [ "/opt:lldlto=" + lto_opt_level ]
     } else {
       ldflags = [ "-Wl,--lto-O" + lto_opt_level ]
-      ldflags += [ "-Wl,--lto-CGO" + lto_opt_level ]
     }
 
     if (toolchain_supports_rust_thin_lto) {
@@ -1111,12 +1147,6 @@ config("compiler_cpu_abi") {
   configs = []
   if (is_chromeos) {
     configs += [ "//build/config/chromeos:compiler_cpu_abi" ]
-  }
-
-  # TODO(https://crbug.com/1383873): Remove this once figured out.
-  if (is_apple && current_cpu == "arm64") {
-    cflags += [ "-fno-global-isel" ]
-    ldflags += [ "-fno-global-isel" ]
   }
 
   if ((is_posix && !is_apple) || is_fuchsia) {
@@ -1835,7 +1865,22 @@ config("default_warnings") {
 
           # TODO(crbug.com/1412713) Evaluate and possibly enable.
           "-Wno-deprecated-this-capture",
+
+          # TODO(https://crbug.com/1491833): Fix and re-enable.
+          "-Wno-invalid-offsetof",
         ]
+
+        if (llvm_force_head_revision) {
+          # TODO(https://crbug.com/1490607): Fix and re-enable.
+          cflags += [ "-Wno-thread-safety-reference" ]
+        }
+
+        if (enable_precompiled_headers && !is_win) {
+          cflags += [
+            # TODO(crbug.com/1486799) Find a long-term solution.
+            "-Wno-deprecated-include-gch",
+          ]
+        }
       }
     }
 
@@ -1935,9 +1980,10 @@ config("chromium_code") {
       # disabled, so only do that for Release build.
       fortify_level = "2"
 
-      # ChromeOS supports a high-quality _FORTIFY_SOURCE=3 implementation
-      # with a few custom glibc patches. Use that if it's available.
-      if (is_chromeos_ash) {
+      # ChromeOS's toolchain supports a high-quality _FORTIFY_SOURCE=3
+      # implementation with a few custom glibc patches. Use that if it's
+      # available.
+      if (is_chromeos_device && !lacros_use_chromium_toolchain) {
         fortify_level = "3"
       }
       defines += [ "_FORTIFY_SOURCE=" + fortify_level ]
@@ -2231,6 +2277,11 @@ if (is_win) {
     common_optimize_on_ldflags += [ "/OPT:REF" ]  # Remove unreferenced data.
     # TODO(thakis): Add LTO/PGO clang flags eventually, https://crbug.com/598772
   }
+
+  if (is_clang) {
+    # See below.
+    common_optimize_on_cflags += [ "/clang:-fno-math-errno" ]
+  }
 } else {
   common_optimize_on_cflags = []
   common_optimize_on_ldflags = []
@@ -2279,6 +2330,14 @@ if (is_win) {
       "-Wl,--gc-sections",
     ]
   }
+
+  # We cannot rely on errno being set after math functions,
+  # especially since glibc does not set it. Thus, use -fno-math-errno
+  # so that the compiler knows it can inline math functions.
+  # Note that this is different from -ffast-math (even though -ffast-math
+  # implies -fno-math-errno), which also allows a number of unsafe
+  # optimizations.
+  common_optimize_on_cflags += [ "-fno-math-errno" ]
 }
 
 config("default_stack_frames") {
@@ -2313,18 +2372,12 @@ config("optimize") {
     if (chrome_pgo_phase != 2) {
       # Favor size over speed, /O1 must be before the common flags.
       # /O1 implies /Os and /GF.
-      cflags = [
-                 "-Xclang",
-                 "-O3",
-               ] + common_optimize_on_cflags + [ "/Oi" ]
+      cflags = [ "/clang:-O3" ] + common_optimize_on_cflags + [ "/Oi" ]
       rustflags = [ "-Copt-level=3" ]
     } else {
       # PGO requires all translation units to be compiled with /O2. The actual
       # optimization level will be decided based on the profiling data.
-      cflags = [
-                 "-Xclang",
-                 "-O3",
-               ] + common_optimize_on_cflags + [ "/Oi" ]
+      cflags = [ "/clang:-O3" ] + common_optimize_on_cflags + [ "/Oi" ]
 
       # https://doc.rust-lang.org/rustc/profile-guided-optimization.html#usage
       # suggests not using an explicit `-Copt-level` at all, and the default is
@@ -2429,10 +2482,7 @@ config("optimize_max") {
     if (is_win) {
       # Favor speed over size, /O2 must be before the common flags.
       # /O2 implies /Ot, /Oi, and /GF.
-      cflags = [
-                 "-Xclang",
-                 "-O3",
-               ] + common_optimize_on_cflags + [ "/Oi" ]
+      cflags = [ "/clang:-O3" ] + common_optimize_on_cflags + [ "/Oi" ]
     } else if (optimize_for_fuzzing) {
       cflags = [ "-O1" ] + common_optimize_on_cflags
     } else {
@@ -2465,10 +2515,7 @@ config("optimize_speed") {
     if (is_win) {
       # Favor speed over size, /O2 must be before the common flags.
       # /O2 implies /Ot, /Oi, and /GF.
-      cflags = [
-                 "-Xclang",
-                 "-O3",
-               ] + common_optimize_on_cflags + [ "/Oi" ]
+      cflags = [ "/clang:-O3" ] + common_optimize_on_cflags + [ "/Oi" ]
     } else if (optimize_for_fuzzing) {
       cflags = [ "-O1" ] + common_optimize_on_cflags
     } else {
