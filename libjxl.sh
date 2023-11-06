@@ -27,7 +27,7 @@ cd $HOME/chromium/src &&
 
 git stash &&
 
-git fetch https://chromium.googlesource.com/chromium/src refs/changes/56/4257656/128 && git cherry-pick FETCH_HEAD &&
+git fetch https://chromium.googlesource.com/chromium/src refs/changes/56/4257656/132 && git cherry-pick FETCH_HEAD &&
 
 gclient sync &&
 
@@ -47,7 +47,7 @@ git stash pop &&
 
 cd $HOME/chromium/src/third_party/devtools-frontend/src &&
 
-git fetch https://chromium.googlesource.com/devtools/devtools-frontend refs/changes/82/4257582/66 && git cherry-pick FETCH_HEAD &&
+git fetch https://chromium.googlesource.com/devtools/devtools-frontend refs/changes/82/4257582/68 && git cherry-pick FETCH_HEAD &&
 
 cd $HOME/chromium_compile &&
 

@@ -40,6 +40,11 @@
      "Enables double clicking a tab to close it.",
      kOsDesktop, SINGLE_VALUE_TYPE("double-click-close-tab")},
 
+    {"hide-sidepanel-button",
+     "Hide SidePanel Button",
+     "Hides the SidePanel Button.",
+     kOsDesktop, SINGLE_VALUE_TYPE("hide-sidepanel-button")},
+
     {"scroll-tabs",
      "Scroll switches tab",
      "Switch to the left/right tab if the wheel-scroll happens over the tabstrip, or the empty space beside the tabstrip.",

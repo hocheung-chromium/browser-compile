@@ -38,6 +38,9 @@
 #include "chrome/browser/ui/browser_finder.h"
 #include "chrome/browser/ui/browser_window.h"
 #include "chrome/browser/ui/send_tab_to_self/send_tab_to_self_bubble.h"
+#include "chrome/browser/ui/tabs/organization/tab_organization_service.h"
+#include "chrome/browser/ui/tabs/organization/tab_organization_service_factory.h"
+#include "chrome/browser/ui/tabs/organization/tab_organization_session.h"
 #include "chrome/browser/ui/tabs/saved_tab_groups/saved_tab_group_keyed_service.h"
 #include "chrome/browser/ui/tabs/saved_tab_groups/saved_tab_group_service_factory.h"
 #include "chrome/browser/ui/tabs/tab_enums.h"
@@ -1278,7 +1281,6 @@ bool TabStripModel::IsContextMenuCommandEnabled(
 
     case CommandCloseOtherTabs:
     case CommandCloseTabsToRight:
-    case CommandCloseTabsToLeft:
       return !GetIndicesClosedByCommand(context_index, command_id).empty();
 
     case CommandDuplicate: {
@@ -1341,6 +1343,9 @@ bool TabStripModel::IsContextMenuCommandEnabled(
       return !would_leave_strip_empty &&
              delegate()->CanMoveTabsToWindow(indices);
     }
+
+    case CommandOrganizeTabs:
+      return true;
 
     case CommandFollowSite:
     case CommandUnfollowSite: {
@@ -1456,20 +1461,6 @@ void TabStripModel::ExecuteContextMenuCommand(int context_index,
       break;
     }
 
-    case CommandCloseTabsToLeft: {
-      ReentrancyCheck reentrancy_check(&reentrancy_guard_);
-
-      const std::vector<int> indices =
-          GetIndicesClosedByCommand(context_index, command_id);
-
-      DisconnectSavedTabGroups(indices);
-
-      base::RecordAction(UserMetricsAction("TabContextMenu_CloseTabsToLeft"));
-      CloseTabs(GetWebContentsesByIndices(indices),
-                TabCloseTypes::CLOSE_CREATE_HISTORICAL_TAB);
-      break;
-    }
-
     case CommandSendTabToSelf: {
       send_tab_to_self::ShowBubble(GetWebContentsAt(context_index));
       break;
@@ -1569,6 +1560,16 @@ void TabStripModel::ExecuteContextMenuCommand(int context_index,
       base::RecordAction(
           UserMetricsAction("TabContextMenu_MoveTabToNewWindow"));
       delegate()->MoveTabsToNewWindow(GetIndicesForCommand(context_index));
+      break;
+    }
+
+    case CommandOrganizeTabs: {
+      base::RecordAction(UserMetricsAction("TabContextMenu_OrganizeTabs"));
+      const Browser* const browser =
+          chrome::FindBrowserWithTab(GetWebContentsAt(context_index));
+      TabOrganizationService* const service =
+          TabOrganizationServiceFactory::GetForProfile(profile_);
+      service->StartRequest(browser);
       break;
     }
 
@@ -1687,6 +1688,9 @@ bool TabStripModel::ContextMenuCommandToBrowserCommand(int cmd_id,
     case CommandCloseTab:
       *browser_cmd = IDC_CLOSE_TAB;
       break;
+    case CommandOrganizeTabs:
+      *browser_cmd = IDC_ORGANIZE_TABS;
+      break;
     default:
       *browser_cmd = 0;
       return false;
@@ -1791,31 +1795,20 @@ std::vector<int> TabStripModel::GetIndicesClosedByCommand(
     int index,
     ContextMenuCommand id) const {
   CHECK(ContainsIndex(index));
-  DCHECK(id == CommandCloseTabsToRight || id == CommandCloseOtherTabs ||
-         id == CommandCloseTabsToLeft);
+  DCHECK(id == CommandCloseTabsToRight || id == CommandCloseOtherTabs);
   bool is_selected = IsTabSelected(index);
   int last_unclosed_tab = -1;
   if (id == CommandCloseTabsToRight) {
     last_unclosed_tab =
         is_selected ? *selection_model_.selected_indices().rbegin() : index;
-  } else if (id == CommandCloseTabsToLeft) {
-    last_unclosed_tab =
-        is_selected ? *selection_model_.selected_indices().begin() : index;
   }
 
+  // NOTE: callers expect the vector to be sorted in descending order.
   std::vector<int> indices;
-  for (int i = 0; i < count(); ++i) {
-    if (i != index && !IsTabPinned(i) && (!is_selected || !IsTabSelected(i))) {
-      if ((id == CommandCloseTabsToRight && i > last_unclosed_tab) ||
-          (id == CommandCloseTabsToLeft && i < last_unclosed_tab)) {
-        indices.push_back(i);
-      }
-    }
+  for (int i = count() - 1; i > last_unclosed_tab; --i) {
+    if (i != index && !IsTabPinned(i) && (!is_selected || !IsTabSelected(i)))
+      indices.push_back(i);
   }
-
-  // Sort the vector in descending order
-  std::sort(indices.begin(), indices.end(), std::greater<int>());
-
   return indices;
 }
 

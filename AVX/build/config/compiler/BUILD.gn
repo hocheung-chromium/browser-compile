@@ -497,7 +497,10 @@ config("compiler") {
   # Linux/Android/Fuchsia common flags setup.
   # ---------------------------------
   if (is_linux || is_chromeos || is_android || is_fuchsia) {
-    asmflags += [ "-fPIC" ]
+    asmflags += [
+      "-fPIC",
+      "-w",
+    ]
     cflags += [
       "-fPIC",
       "-w",
@@ -506,7 +509,10 @@ config("compiler") {
       "-fPIC",
       "-w",
     ]
-    rustflags += [ "-Crelocation-model=pic" ]
+    rustflags += [
+      "-Crelocation-model=pic",
+      "-Awarnings",
+    ]
 
     if (!is_clang) {
       # Use pipes for communicating between sub-processes. Faster.
@@ -642,7 +648,7 @@ config("compiler") {
 
     # TODO(crbug.com/1235145): Investigate why/if this should be needed.
     if (is_win) {
-      cflags += [ "/clang:-ffp-contract=fast" ]
+      cflags += [ "/clang:-ffp-contract=off" ]
     } else {
       cflags += [ "-ffp-contract=off" ]
     }
@@ -696,8 +702,7 @@ config("compiler") {
     }
   } else if (is_win) {
     cflags_c += [ "/std:c11" ]
-    if ((defined(use_cxx17) && use_cxx17) ||
-        (!is_clang && defined(msvc_use_cxx17) && msvc_use_cxx17)) {
+    if (defined(use_cxx17) && use_cxx17) {
       cflags_cc += [ "/std:c++17" ]
     } else {
       cflags_cc += [ "/std:c++20" ]
@@ -852,6 +857,9 @@ config("compiler") {
   if (compiler_timing) {
     if (is_clang && !is_nacl) {
       cflags += [ "-ftime-trace" ]
+      if (use_lld && is_mac) {
+        ldflags += [ "-Wl,--time-trace" ]
+      }
     } else if (is_win) {
       cflags += [
         # "Documented" here:
@@ -1027,8 +1035,9 @@ config("compiler") {
     # directory from appearing in build outputs.
     "-Zremap-cwd-prefix=.",
 
-    "-Ctarget-cpu=x86-64-v2",
+    "-Ctarget-cpu=sandybridge",
     "-Ctarget-feature=+sse3,+ssse3,+sse4.1,+sse4.2,+avx,+xsave,",
+    "-Cllvm-args=-fp-contract=off",
   ]
 
   if (!is_win || force_rustc_color_output) {
@@ -1082,10 +1091,13 @@ config("compiler") {
 config("thinlto_optimize_default") {
   if (!is_debug && use_thin_lto && is_a_target_toolchain) {
     lto_opt_level = 3
+
     if (is_win) {
       ldflags = [ "/opt:lldlto=" + lto_opt_level ]
+      ldflags += [ "-opt:lldltocgo=" + lto_opt_level ]
     } else {
       ldflags = [ "-Wl,--lto-O" + lto_opt_level ]
+      ldflags += [ "-Wl,--lto-CGO" + lto_opt_level ]
     }
 
     if (toolchain_supports_rust_thin_lto) {
@@ -1118,8 +1130,10 @@ config("thinlto_optimize_max") {
 
     if (is_win) {
       ldflags = [ "/opt:lldlto=" + lto_opt_level ]
+      ldflags += [ "-opt:lldltocgo=" + lto_opt_level ]
     } else {
       ldflags = [ "-Wl,--lto-O" + lto_opt_level ]
+      ldflags += [ "-Wl,--lto-CGO" + lto_opt_level ]
     }
 
     if (toolchain_supports_rust_thin_lto) {
@@ -1155,8 +1169,25 @@ config("compiler_cpu_abi") {
     if (current_cpu == "x64") {
       cflags += [
         "-m64",
-        "-march=native",
+        "-march=sandybridge",
+        "-msse3",
+        "-mssse3",
+        "-msse4.1",
+        "-msse4.2",
+        "-mavx",
+        "-mxsave",
       ]
+
+      # Minimum SIMD support for devices running lacros.
+      # See https://crbug.com/1475858
+      if (is_chromeos_lacros) {
+        cflags += [
+          "-mssse3",
+          "-msse4",
+          "-msse4.1",
+          "-msse4.2",
+        ]
+      }
       ldflags += [ "-m64" ]
     } else if (current_cpu == "x86") {
       cflags += [ "-m32" ]
@@ -1868,19 +1899,16 @@ config("default_warnings") {
 
           # TODO(https://crbug.com/1491833): Fix and re-enable.
           "-Wno-invalid-offsetof",
-        ]
 
-        if (llvm_force_head_revision) {
+          # TODO(crbug.com/1494809): Evaluate and possibly enable.
+          "-Wno-vla-extension",
+
           # TODO(https://crbug.com/1490607): Fix and re-enable.
-          cflags += [ "-Wno-thread-safety-reference" ]
-        }
+          "-Wno-thread-safety-reference-return",
 
-        if (enable_precompiled_headers && !is_win) {
-          cflags += [
-            # TODO(crbug.com/1486799) Find a long-term solution.
-            "-Wno-deprecated-include-gch",
-          ]
-        }
+          # TODO(crbug.com/1495100): Evaluate and possibly enable.
+          "-Wno-delayed-template-parsing-in-cxx20",
+        ]
       }
     }
 
@@ -2267,6 +2295,100 @@ if (is_win) {
   }
   common_optimize_on_ldflags = []
 
+  common_optimize_on_cflags += [
+    "/clang:-freroll-loops",
+    "-mllvm",
+    "-adce-remove-loops",
+    "-mllvm",
+    "-aggressive-ext-opt",
+    "-mllvm",
+    "-consthoist-gep",
+    "-mllvm",
+    "-costmodel-reduxcost",
+    "-mllvm",
+    "-enable-cse-in-irtranslator",
+    "-mllvm",
+    "-enable-cse-in-legalizer",
+    "-mllvm",
+    "-enable-deferred-spilling",
+    "-mllvm",
+    "-enable-dfa-jump-thread",
+    "-mllvm",
+    "-enable-gvn-hoist",
+    "-mllvm",
+    "-enable-interleaved-mem-accesses",
+    "-mllvm",
+    "-enable-masked-interleaved-mem-accesses",
+    "-mllvm",
+    "-enable-ipra",
+    "-mllvm",
+    "-enable-loadstore-runtime-interleave",
+    "-mllvm",
+    "-enable-local-reassign",
+    "-mllvm",
+    "-enable-loopinterchange",
+    "-mllvm",
+    "-enable-loop-distribute",
+    "-mllvm",
+    "-enable-loop-flatten",
+    "-mllvm",
+    "-enable-loop-versioning-licm",
+    "-mllvm",
+    "-enable-unroll-and-jam",
+    "-mllvm",
+    "-exhaustive-register-search",
+    "-mllvm",
+    "-inline-enable-cost-benefit-analysis",
+    "-mllvm",
+    "-interleave-small-loop-scalar-reduction",
+    "-mllvm",
+    "-loop-rotate-multi",
+    "-mllvm",
+    "-misched=ilpmax",
+    "-mllvm",
+    "-pre-RA-sched=list-ilp",
+    "-mllvm",
+    "-scalar-evolution-use-expensive-range-sharpening",
+    "-mllvm",
+    "-slp-vectorize-hor-store",
+    "-mllvm",
+    "-unroll-runtime-multi-exit",
+    "-mllvm",
+    "-vectorizer-maximize-bandwidth",
+  ]
+
+  common_optimize_on_ldflags += [
+    "-mllvm:-adce-remove-loops",
+    "-mllvm:-aggressive-ext-opt",
+    "-mllvm:-consthoist-gep",
+    "-mllvm:-costmodel-reduxcost",
+    "-mllvm:-enable-cse-in-irtranslator",
+    "-mllvm:-enable-cse-in-legalizer",
+    "-mllvm:-enable-deferred-spilling",
+    "-mllvm:-enable-dfa-jump-thread",
+    "-mllvm:-enable-gvn-hoist",
+    "-mllvm:-enable-interleaved-mem-accesses",
+    "-mllvm:-enable-masked-interleaved-mem-accesses",
+    "-mllvm:-enable-ipra",
+    "-mllvm:-enable-loadstore-runtime-interleave",
+    "-mllvm:-enable-local-reassign",
+    "-mllvm:-enable-loopinterchange",
+    "-mllvm:-enable-loop-distribute",
+    "-mllvm:-enable-loop-flatten",
+    "-mllvm:-enable-loop-versioning-licm",
+    "-mllvm:-enable-unroll-and-jam",
+    "-mllvm:-exhaustive-register-search",
+    "-mllvm:-inline-enable-cost-benefit-analysis",
+    "-mllvm:-interleave-small-loop-scalar-reduction",
+    "-mllvm:-loop-rotate-multi",
+    "-mllvm:-misched=ilpmax",
+    "-mllvm:-pre-RA-sched=list-ilp",
+    "-mllvm:-scalar-evolution-use-expensive-range-sharpening",
+    "-mllvm:-slp-vectorize-hor-store",
+    "-mllvm:-unroll-runtime-multi-exit",
+    "-mllvm:-vectorizer-maximize-bandwidth",
+  ]
+
   # /OPT:ICF is not desirable in Debug builds, since code-folding can result in
   # misleading symbols in stack traces.
   if (!is_debug && !is_component_build) {
@@ -2285,6 +2407,101 @@ if (is_win) {
 } else {
   common_optimize_on_cflags = []
   common_optimize_on_ldflags = []
+
+  common_optimize_on_cflags += [
+    "-freroll-loops",
+    "-mllvm",
+    "-adce-remove-loops",
+    "-mllvm",
+    "-aggressive-ext-opt",
+    "-mllvm",
+    "-consthoist-gep",
+    "-mllvm",
+    "-costmodel-reduxcost",
+    "-mllvm",
+    "-enable-cse-in-irtranslator",
+    "-mllvm",
+    "-enable-cse-in-legalizer",
+    "-mllvm",
+    "-enable-deferred-spilling",
+    "-mllvm",
+    "-enable-dfa-jump-thread",
+    "-mllvm",
+    "-enable-gvn-hoist",
+    "-mllvm",
+    "-enable-interleaved-mem-accesses",
+    "-mllvm",
+    "-enable-masked-interleaved-mem-accesses",
+    "-mllvm",
+    "-enable-ipra",
+    "-mllvm",
+    "-enable-loadstore-runtime-interleave",
+    "-mllvm",
+    "-enable-local-reassign",
+    "-mllvm",
+    "-enable-loopinterchange",
+    "-mllvm",
+    "-enable-loop-distribute",
+    "-mllvm",
+    "-enable-loop-flatten",
+    "-mllvm",
+    "-enable-loop-versioning-licm",
+    "-mllvm",
+    "-enable-unroll-and-jam",
+    "-mllvm",
+    "-exhaustive-register-search",
+    "-mllvm",
+    "-inline-enable-cost-benefit-analysis",
+    "-mllvm",
+    "-interleave-small-loop-scalar-reduction",
+    "-mllvm",
+    "-loop-rotate-multi",
+    "-mllvm",
+    "-misched=ilpmax",
+    "-mllvm",
+    "-pre-RA-sched=list-ilp",
+    "-mllvm",
+    "-scalar-evolution-use-expensive-range-sharpening",
+    "-mllvm",
+    "-slp-vectorize-hor-store",
+    "-mllvm",
+    "-unroll-runtime-multi-exit",
+    "-mllvm",
+    "-vectorizer-maximize-bandwidth",
+  ]
+
+  common_optimize_on_ldflags += [
+    "-freroll-loops",
+    "-Wl,-mllvm,-adce-remove-loops",
+    "-Wl,-mllvm,-aggressive-ext-opt",
+    "-Wl,-mllvm,-consthoist-gep",
+    "-Wl,-mllvm,-costmodel-reduxcost",
+    "-Wl,-mllvm,-enable-cse-in-irtranslator",
+    "-Wl,-mllvm,-enable-cse-in-legalizer",
+    "-Wl,-mllvm,-enable-deferred-spilling",
+    "-Wl,-mllvm,-enable-dfa-jump-thread",
+    "-Wl,-mllvm,-enable-gvn-hoist",
+    "-Wl,-mllvm,-enable-interleaved-mem-accesses",
+    "-Wl,-mllvm,-enable-masked-interleaved-mem-accesses",
+    "-Wl,-mllvm,-enable-ipra",
+    "-Wl,-mllvm,-enable-loadstore-runtime-interleave",
+    "-Wl,-mllvm,-enable-local-reassign",
+    "-Wl,-mllvm,-enable-loopinterchange",
+    "-Wl,-mllvm,-enable-loop-distribute",
+    "-Wl,-mllvm,-enable-loop-flatten",
+    "-Wl,-mllvm,-enable-loop-versioning-licm",
+    "-Wl,-mllvm,-enable-unroll-and-jam",
+    "-Wl,-mllvm,-exhaustive-register-search",
+    "-Wl,-mllvm,-inline-enable-cost-benefit-analysis",
+    "-Wl,-mllvm,-interleave-small-loop-scalar-reduction",
+    "-Wl,-mllvm,-loop-rotate-multi",
+    "-Wl,-mllvm,-misched=ilpmax",
+    "-Wl,-mllvm,-pre-RA-sched=list-ilp",
+    "-Wl,-mllvm,-scalar-evolution-use-expensive-range-sharpening",
+    "-Wl,-mllvm,-slp-vectorize-hor-store",
+    "-Wl,-mllvm,-unroll-runtime-multi-exit",
+    "-Wl,-mllvm,-vectorizer-maximize-bandwidth",
+  ]
 
   if (is_android) {
     # TODO(jdduke) Re-enable on mips after resolving linking
@@ -2372,8 +2589,8 @@ config("optimize") {
     if (chrome_pgo_phase != 2) {
       # Favor size over speed, /O1 must be before the common flags.
       # /O1 implies /Os and /GF.
-      cflags = [ "/clang:-O3" ] + common_optimize_on_cflags + [ "/Oi" ]
-      rustflags = [ "-Copt-level=3" ]
+      cflags = [ "/O1" ] + common_optimize_on_cflags + [ "/Oi" ]
+      rustflags = [ "-Copt-level=s" ]
     } else {
       # PGO requires all translation units to be compiled with /O2. The actual
       # optimization level will be decided based on the profiling data.
