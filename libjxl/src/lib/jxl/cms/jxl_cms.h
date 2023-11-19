@@ -12,9 +12,8 @@
 #include <jxl/color_encoding.h>
 #include <jxl/jxl_cms_export.h>
 #include <jxl/types.h>
-
-#include <cstddef>
-#include <cstdint>
+#include <stddef.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {

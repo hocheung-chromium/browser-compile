@@ -1354,10 +1354,10 @@ JXL_BOOL JxlCmsCIEXYZFromWhiteCIExy(double wx, double wy, float XYZ[3]) {
 
 // Returns a representation of the ColorEncoding fields (not icc).
 // Example description: "RGB_D65_SRG_Rel_Lin"
-size_t JxlCmsColorEncodingDescription(const JxlColorEncoding& c,
+size_t JxlCmsColorEncodingDescription(const JxlColorEncoding* c,
                                       char out[320]) {
   out[0] = 0;
-  std::string d = ColorEncodingDescription(c);
+  std::string d = ColorEncodingDescription(*c);
   size_t len = d.size();
   if (len >= 320) {  // Impossible
     return 0;

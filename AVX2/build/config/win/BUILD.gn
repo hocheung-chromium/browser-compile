@@ -128,7 +128,13 @@ config("compiler") {
     # next step after SSE2 will be AVX.
     if (current_cpu == "x86" || current_cpu == "x64") {
       cflags += [
-        "/arch:AVX2",
+        "-mtune=haswell",
+        "-mavx",
+        "-mavx2",
+        "-mfma",
+        "-mf16c",
+        "-mlzcnt",
+        "-mbmi2",
         "/clang:-w",
       ]
     }

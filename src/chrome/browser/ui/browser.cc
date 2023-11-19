@@ -666,6 +666,10 @@ base::WeakPtr<Browser> Browser::AsWeakPtr() {
   return weak_factory_.GetWeakPtr();
 }
 
+base::WeakPtr<const Browser> Browser::AsWeakPtr() const {
+  return weak_factory_.GetWeakPtr();
+}
+
 FindBarController* Browser::GetFindBarController() {
   if (!find_bar_controller_.get()) {
     find_bar_controller_ =
@@ -2056,8 +2060,8 @@ bool Browser::CanUseWindowingControls(
   return true;
 }
 
-void Browser::SetCanResizeFromWebAPI(absl::optional<bool> can_resize) {
-  window_->SetCanResizeFromWebAPI(can_resize);
+void Browser::OnCanResizeFromWebAPIChanged() {
+  window_->OnCanResizeFromWebAPIChanged();
 }
 
 bool Browser::GetCanResize() {
@@ -2377,7 +2381,7 @@ void Browser::SetWebContentsBlocked(content::WebContents* web_contents,
     // class-level comments for further details.
     if (!exclusive_access_manager_->fullscreen_controller()
              ->IsFullscreenWithinTab(web_contents)) {
-      web_contents->ExitFullscreen(true);
+      web_contents->ExitFullscreen();
     }
   }
 

@@ -485,6 +485,7 @@ class Browser : public TabStripModelObserver,
   }
 
   base::WeakPtr<Browser> AsWeakPtr();
+  base::WeakPtr<const Browser> AsWeakPtr() const;
 
   // Get the FindBarController for this browser, creating it if it does not
   // yet exist.
@@ -939,7 +940,7 @@ class Browser : public TabStripModelObserver,
                           const base::FilePath& path) override;
   bool CanUseWindowingControls(
       content::RenderFrameHost* requesting_frame) override;
-  void SetCanResizeFromWebAPI(absl::optional<bool> can_resize) override;
+  void OnCanResizeFromWebAPIChanged() override;
   bool GetCanResize() override;
   void MinimizeFromWebAPI() override;
   void MaximizeFromWebAPI() override;

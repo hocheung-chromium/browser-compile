@@ -1035,8 +1035,8 @@ config("compiler") {
     # directory from appearing in build outputs.
     "-Zremap-cwd-prefix=.",
 
-    "-Ctarget-cpu=haswell",
-    "-Ctarget-feature=+sse3,+ssse3,+sse4.1,+sse4.2,+avx,+avx2,+fma",
+    "-Ztune-cpu=haswell",
+    "-Ctarget-feature=+avx,+avx2,+fma,+f16c,+lzcnt,+bmi2",
     "-Cllvm-args=-fp-contract=fast",
   ]
 
@@ -1081,8 +1081,10 @@ config("compiler") {
     if (is_nacl_saigo) {
       defines += [ "_LIBCPP_ENABLE_ASSERTIONS=1" ]
     } else {
-      defines += [ "_LIBCPP_ENABLE_SAFE_MODE=1" ]
+      defines += [ "_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_EXTENSIVE" ]
     }
+  } else {
+    defines += [ "_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_NONE" ]
   }
 }
 
@@ -1090,14 +1092,12 @@ config("compiler") {
 # building with ThinLTO, no optimization is performed in the link step.
 config("thinlto_optimize_default") {
   if (!is_debug && use_thin_lto && is_a_target_toolchain) {
-    lto_opt_level = 3
+    lto_opt_level = 0
 
     if (is_win) {
       ldflags = [ "/opt:lldlto=" + lto_opt_level ]
-      ldflags += [ "-opt:lldltocgo=" + lto_opt_level ]
     } else {
       ldflags = [ "-Wl,--lto-O" + lto_opt_level ]
-      ldflags += [ "-Wl,--lto-CGO" + lto_opt_level ]
     }
 
     if (toolchain_supports_rust_thin_lto) {
@@ -1125,15 +1125,13 @@ config("thinlto_optimize_max") {
     if (thin_lto_enable_optimizations) {
       lto_opt_level = 3
     } else {
-      lto_opt_level = 3
+      lto_opt_level = 0
     }
 
     if (is_win) {
       ldflags = [ "/opt:lldlto=" + lto_opt_level ]
-      ldflags += [ "-opt:lldltocgo=" + lto_opt_level ]
     } else {
       ldflags = [ "-Wl,--lto-O" + lto_opt_level ]
-      ldflags += [ "-Wl,--lto-CGO" + lto_opt_level ]
     }
 
     if (toolchain_supports_rust_thin_lto) {
@@ -1169,14 +1167,13 @@ config("compiler_cpu_abi") {
     if (current_cpu == "x64") {
       cflags += [
         "-m64",
-        "-march=haswell",
-        "-msse3",
-        "-mssse3",
-        "-msse4.1",
-        "-msse4.2",
+        "-mtune=haswell",
         "-mavx",
         "-mavx2",
         "-mfma",
+        "-mf16c",
+        "-mlzcnt",
+        "-mbmi2",
       ]
 
       # Minimum SIMD support for devices running lacros.
@@ -1906,9 +1903,6 @@ config("default_warnings") {
 
           # TODO(https://crbug.com/1490607): Fix and re-enable.
           "-Wno-thread-safety-reference-return",
-
-          # TODO(crbug.com/1495100): Evaluate and possibly enable.
-          "-Wno-delayed-template-parsing-in-cxx20",
         ]
       }
     }
@@ -2296,100 +2290,6 @@ if (is_win) {
   }
   common_optimize_on_ldflags = []
 
-  common_optimize_on_cflags += [
-    "/clang:-freroll-loops",
-    "-mllvm",
-    "-adce-remove-loops",
-    "-mllvm",
-    "-aggressive-ext-opt",
-    "-mllvm",
-    "-consthoist-gep",
-    "-mllvm",
-    "-costmodel-reduxcost",
-    "-mllvm",
-    "-enable-cse-in-irtranslator",
-    "-mllvm",
-    "-enable-cse-in-legalizer",
-    "-mllvm",
-    "-enable-deferred-spilling",
-    "-mllvm",
-    "-enable-dfa-jump-thread",
-    "-mllvm",
-    "-enable-gvn-hoist",
-    "-mllvm",
-    "-enable-interleaved-mem-accesses",
-    "-mllvm",
-    "-enable-masked-interleaved-mem-accesses",
-    "-mllvm",
-    "-enable-ipra",
-    "-mllvm",
-    "-enable-loadstore-runtime-interleave",
-    "-mllvm",
-    "-enable-local-reassign",
-    "-mllvm",
-    "-enable-loopinterchange",
-    "-mllvm",
-    "-enable-loop-distribute",
-    "-mllvm",
-    "-enable-loop-flatten",
-    "-mllvm",
-    "-enable-loop-versioning-licm",
-    "-mllvm",
-    "-enable-unroll-and-jam",
-    "-mllvm",
-    "-exhaustive-register-search",
-    "-mllvm",
-    "-inline-enable-cost-benefit-analysis",
-    "-mllvm",
-    "-interleave-small-loop-scalar-reduction",
-    "-mllvm",
-    "-loop-rotate-multi",
-    "-mllvm",
-    "-misched=ilpmax",
-    "-mllvm",
-    "-pre-RA-sched=list-ilp",
-    "-mllvm",
-    "-scalar-evolution-use-expensive-range-sharpening",
-    "-mllvm",
-    "-slp-vectorize-hor-store",
-    "-mllvm",
-    "-unroll-runtime-multi-exit",
-    "-mllvm",
-    "-vectorizer-maximize-bandwidth",
-  ]
-
-  common_optimize_on_ldflags += [
-    "-mllvm:-adce-remove-loops",
-    "-mllvm:-aggressive-ext-opt",
-    "-mllvm:-consthoist-gep",
-    "-mllvm:-costmodel-reduxcost",
-    "-mllvm:-enable-cse-in-irtranslator",
-    "-mllvm:-enable-cse-in-legalizer",
-    "-mllvm:-enable-deferred-spilling",
-    "-mllvm:-enable-dfa-jump-thread",
-    "-mllvm:-enable-gvn-hoist",
-    "-mllvm:-enable-interleaved-mem-accesses",
-    "-mllvm:-enable-masked-interleaved-mem-accesses",
-    "-mllvm:-enable-ipra",
-    "-mllvm:-enable-loadstore-runtime-interleave",
-    "-mllvm:-enable-local-reassign",
-    "-mllvm:-enable-loopinterchange",
-    "-mllvm:-enable-loop-distribute",
-    "-mllvm:-enable-loop-flatten",
-    "-mllvm:-enable-loop-versioning-licm",
-    "-mllvm:-enable-unroll-and-jam",
-    "-mllvm:-exhaustive-register-search",
-    "-mllvm:-inline-enable-cost-benefit-analysis",
-    "-mllvm:-interleave-small-loop-scalar-reduction",
-    "-mllvm:-loop-rotate-multi",
-    "-mllvm:-misched=ilpmax",
-    "-mllvm:-pre-RA-sched=list-ilp",
-    "-mllvm:-scalar-evolution-use-expensive-range-sharpening",
-    "-mllvm:-slp-vectorize-hor-store",
-    "-mllvm:-unroll-runtime-multi-exit",
-    "-mllvm:-vectorizer-maximize-bandwidth",
-  ]
-
   # /OPT:ICF is not desirable in Debug builds, since code-folding can result in
   # misleading symbols in stack traces.
   if (!is_debug && !is_component_build) {
@@ -2408,101 +2308,6 @@ if (is_win) {
 } else {
   common_optimize_on_cflags = []
   common_optimize_on_ldflags = []
-
-  common_optimize_on_cflags += [
-    "-freroll-loops",
-    "-mllvm",
-    "-adce-remove-loops",
-    "-mllvm",
-    "-aggressive-ext-opt",
-    "-mllvm",
-    "-consthoist-gep",
-    "-mllvm",
-    "-costmodel-reduxcost",
-    "-mllvm",
-    "-enable-cse-in-irtranslator",
-    "-mllvm",
-    "-enable-cse-in-legalizer",
-    "-mllvm",
-    "-enable-deferred-spilling",
-    "-mllvm",
-    "-enable-dfa-jump-thread",
-    "-mllvm",
-    "-enable-gvn-hoist",
-    "-mllvm",
-    "-enable-interleaved-mem-accesses",
-    "-mllvm",
-    "-enable-masked-interleaved-mem-accesses",
-    "-mllvm",
-    "-enable-ipra",
-    "-mllvm",
-    "-enable-loadstore-runtime-interleave",
-    "-mllvm",
-    "-enable-local-reassign",
-    "-mllvm",
-    "-enable-loopinterchange",
-    "-mllvm",
-    "-enable-loop-distribute",
-    "-mllvm",
-    "-enable-loop-flatten",
-    "-mllvm",
-    "-enable-loop-versioning-licm",
-    "-mllvm",
-    "-enable-unroll-and-jam",
-    "-mllvm",
-    "-exhaustive-register-search",
-    "-mllvm",
-    "-inline-enable-cost-benefit-analysis",
-    "-mllvm",
-    "-interleave-small-loop-scalar-reduction",
-    "-mllvm",
-    "-loop-rotate-multi",
-    "-mllvm",
-    "-misched=ilpmax",
-    "-mllvm",
-    "-pre-RA-sched=list-ilp",
-    "-mllvm",
-    "-scalar-evolution-use-expensive-range-sharpening",
-    "-mllvm",
-    "-slp-vectorize-hor-store",
-    "-mllvm",
-    "-unroll-runtime-multi-exit",
-    "-mllvm",
-    "-vectorizer-maximize-bandwidth",
-  ]
-
-  common_optimize_on_ldflags += [
-    "-freroll-loops",
-    "-Wl,-mllvm,-adce-remove-loops",
-    "-Wl,-mllvm,-aggressive-ext-opt",
-    "-Wl,-mllvm,-consthoist-gep",
-    "-Wl,-mllvm,-costmodel-reduxcost",
-    "-Wl,-mllvm,-enable-cse-in-irtranslator",
-    "-Wl,-mllvm,-enable-cse-in-legalizer",
-    "-Wl,-mllvm,-enable-deferred-spilling",
-    "-Wl,-mllvm,-enable-dfa-jump-thread",
-    "-Wl,-mllvm,-enable-gvn-hoist",
-    "-Wl,-mllvm,-enable-interleaved-mem-accesses",
-    "-Wl,-mllvm,-enable-masked-interleaved-mem-accesses",
-    "-Wl,-mllvm,-enable-ipra",
-    "-Wl,-mllvm,-enable-loadstore-runtime-interleave",
-    "-Wl,-mllvm,-enable-local-reassign",
-    "-Wl,-mllvm,-enable-loopinterchange",
-    "-Wl,-mllvm,-enable-loop-distribute",
-    "-Wl,-mllvm,-enable-loop-flatten",
-    "-Wl,-mllvm,-enable-loop-versioning-licm",
-    "-Wl,-mllvm,-enable-unroll-and-jam",
-    "-Wl,-mllvm,-exhaustive-register-search",
-    "-Wl,-mllvm,-inline-enable-cost-benefit-analysis",
-    "-Wl,-mllvm,-interleave-small-loop-scalar-reduction",
-    "-Wl,-mllvm,-loop-rotate-multi",
-    "-Wl,-mllvm,-misched=ilpmax",
-    "-Wl,-mllvm,-pre-RA-sched=list-ilp",
-    "-Wl,-mllvm,-scalar-evolution-use-expensive-range-sharpening",
-    "-Wl,-mllvm,-slp-vectorize-hor-store",
-    "-Wl,-mllvm,-unroll-runtime-multi-exit",
-    "-Wl,-mllvm,-vectorizer-maximize-bandwidth",
-  ]
 
   if (is_android) {
     # TODO(jdduke) Re-enable on mips after resolving linking
@@ -2595,12 +2400,12 @@ config("optimize") {
     } else {
       # PGO requires all translation units to be compiled with /O2. The actual
       # optimization level will be decided based on the profiling data.
-      cflags = [ "/clang:-O3" ] + common_optimize_on_cflags + [ "/Oi" ]
+      cflags = [ "/O2" ] + common_optimize_on_cflags + [ "/Oi" ]
 
       # https://doc.rust-lang.org/rustc/profile-guided-optimization.html#usage
       # suggests not using an explicit `-Copt-level` at all, and the default is
       # to optimize for performance like `/O2` for clang.
-      rustflags = [ "-Copt-level=3" ]
+      rustflags = []
     }
   } else if (optimize_for_size) {
     # Favor size over speed.
@@ -2633,7 +2438,7 @@ config("optimize") {
     # vectorization while otherwise optimizing for size.
     rustflags = [ "-Copt-level=s" ]
   } else {
-    cflags = [ "-O3" ] + common_optimize_on_cflags
+    cflags = [ "-O2" ] + common_optimize_on_cflags
 
     # The `-O3` for clang turns on extra optimizations compared to the standard
     # `-O2`. But for rust, `-Copt-level=3` is the default and is thus reliable

@@ -293,7 +293,8 @@ struct ColorEncoding : public Fields {
 
 static inline std::string Description(const ColorEncoding& c) {
   char data[320];
-  JxlCmsColorEncodingDescription(c.View().ToExternal(), data);
+  const JxlColorEncoding external = c.View().ToExternal();
+  JxlCmsColorEncodingDescription(&external, data);
   return data;
 }
 static inline std::ostream& operator<<(std::ostream& os,
