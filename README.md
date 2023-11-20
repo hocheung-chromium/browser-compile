@@ -28,10 +28,6 @@
 
 <https://github.com/ungoogled-software/ungoogled-chromium/blob/master/patches/extra/ungoogled-chromium/add-flag-to-clear-data-on-exit.patch>
 
-<https://chromium-review.googlesource.com/c/chromium/src/+/4257656>
-
-<https://chromium-review.googlesource.com/c/devtools/devtools-frontend/+/4257582>
-
 <https://github.com/Muril-o/electron-chromium-codecs/blob/main/v25.1.0/look_chromium_hevc_ac3.patch>
 
 <https://github.com/Muril-o/electron-chromium-codecs/blob/main/v25.1.0/look_electron_hevc_ac3.patch>
