@@ -247,7 +247,7 @@
 #include "components/network_session_configurator/common/network_switches.h"
 #include "components/no_state_prefetch/browser/no_state_prefetch_manager.h"
 #include "components/no_state_prefetch/common/no_state_prefetch_final_status.h"
-#include "components/no_state_prefetch/common/prerender_url_loader_throttle.h"
+#include "components/no_state_prefetch/common/no_state_prefetch_url_loader_throttle.h"
 #include "components/omnibox/common/omnibox_features.h"
 #include "components/page_load_metrics/browser/metrics_navigation_throttle.h"
 #include "components/page_load_metrics/browser/metrics_web_contents_observer.h"
@@ -269,6 +269,7 @@
 #include "components/privacy_sandbox/privacy_sandbox_prefs.h"
 #include "components/privacy_sandbox/privacy_sandbox_settings.h"
 #include "components/privacy_sandbox/tracking_protection_settings.h"
+#include "components/safe_browsing/content/browser/async_check_tracker.h"
 #include "components/safe_browsing/content/browser/browser_url_loader_throttle.h"
 #include "components/safe_browsing/content/browser/password_protection/password_protection_commit_deferring_condition.h"
 #include "components/safe_browsing/content/browser/safe_browsing_navigation_throttle.h"
@@ -847,23 +848,6 @@ void HandleSSLErrorWrapper(
       is_ssl_error_override_allowed_for_origin);
 }
 
-enum AppLoadedInTabSource {
-  // A platform app page tried to load one of its own URLs in a tab.
-  APP_LOADED_IN_TAB_SOURCE_APP = 0,
-
-  // A platform app background page tried to load one of its own URLs in a tab.
-  APP_LOADED_IN_TAB_SOURCE_BACKGROUND_PAGE,
-
-  // An extension or app tried to load a resource of a different platform app in
-  // a tab.
-  APP_LOADED_IN_TAB_SOURCE_OTHER_EXTENSION,
-
-  // A non-app and non-extension page tried to load a platform app in a tab.
-  APP_LOADED_IN_TAB_SOURCE_OTHER,
-
-  APP_LOADED_IN_TAB_SOURCE_MAX
-};
-
 // Cached version of the locale so we can return the locale on the I/O
 // thread.
 std::string& GetIOThreadApplicationLocale() {
@@ -1111,31 +1095,6 @@ class CertificateReportingServiceCertReporter : public SSLCertReporter {
 };
 
 #if BUILDFLAG(ENABLE_EXTENSIONS)
-
-AppLoadedInTabSource ClassifyAppLoadedInTabSource(
-    const GURL& opener_url,
-    const extensions::Extension* target_platform_app) {
-  if (!opener_url.SchemeIs(extensions::kExtensionScheme)) {
-    // The forbidden app URL was being opened by a non-extension page (e.g.
-    // http).
-    return APP_LOADED_IN_TAB_SOURCE_OTHER;
-  }
-
-  if (opener_url.host_piece() != target_platform_app->id()) {
-    // The forbidden app URL was being opened by a different app or extension.
-    return APP_LOADED_IN_TAB_SOURCE_OTHER_EXTENSION;
-  }
-
-  // This platform app was trying to window.open() one of its own URLs.
-  if (opener_url ==
-      extensions::BackgroundInfo::GetBackgroundURL(target_platform_app)) {
-    // Source was the background page.
-    return APP_LOADED_IN_TAB_SOURCE_BACKGROUND_PAGE;
-  }
-
-  // Source was a different page inside the app.
-  return APP_LOADED_IN_TAB_SOURCE_APP;
-}
 
 // Returns true if there is is an extension matching `url` in
 // `render_process_id` with `permission`.
@@ -4007,11 +3966,6 @@ bool ChromeContentBrowserClient::CanCreateWindow(
     const Extension* extension =
         registry->enabled_extensions().GetExtensionOrAppByURL(target_url);
     if (extension && extension->is_platform_app()) {
-      UMA_HISTOGRAM_ENUMERATION(
-          "Extensions.AppLoadedInTab",
-          ClassifyAppLoadedInTabSource(opener_url, extension),
-          APP_LOADED_IN_TAB_SOURCE_MAX);
-
       // window.open() may not be used to load v2 apps in a regular tab.
       return false;
     }
@@ -5646,6 +5600,10 @@ ChromeContentBrowserClient::MaybeCreateSafeBrowsingURLLoaderThrottle(
                 safe_browsing::hash_realtime_utils::GetCountryCode(
                     g_browser_process->variations_service()),
                 /*log_usage_histograms=*/true);
+    safe_browsing::AsyncCheckTracker* async_check_tracker =
+        GetAsyncCheckTracker(wc_getter, is_enterprise_lookup_enabled,
+                             is_consumer_lookup_enabled,
+                             hash_realtime_selection);
 
     return safe_browsing::BrowserURLLoaderThrottle::Create(
         base::BindOnce(
@@ -5659,7 +5617,8 @@ ChromeContentBrowserClient::MaybeCreateSafeBrowsingURLLoaderThrottle(
         url_lookup_service ? url_lookup_service->GetWeakPtr() : nullptr,
         hash_realtime_service ? hash_realtime_service->GetWeakPtr() : nullptr,
         ping_manager ? ping_manager->GetWeakPtr() : nullptr,
-        hash_realtime_selection);
+        hash_realtime_selection,
+        async_check_tracker ? async_check_tracker->GetWeakPtr() : nullptr);
   }
   return nullptr;
 }
@@ -5770,9 +5729,10 @@ ChromeContentBrowserClient::CreateURLLoaderThrottles(
 
   if (chrome_navigation_ui_data &&
       chrome_navigation_ui_data->is_no_state_prefetching()) {
-    result.push_back(std::make_unique<prerender::PrerenderURLLoaderThrottle>(
-        chrome_navigation_ui_data->prerender_histogram_prefix(),
-        GetPrerenderCanceler(wc_getter)));
+    result.push_back(
+        std::make_unique<prerender::NoStatePrefetchURLLoaderThrottle>(
+            chrome_navigation_ui_data->prerender_histogram_prefix(),
+            GetPrerenderCanceler(wc_getter)));
   }
 
 #if BUILDFLAG(IS_ANDROID)
@@ -7133,10 +7093,36 @@ ChromeContentBrowserClient::GetUrlLookupService(
   return nullptr;
 }
 
+safe_browsing::AsyncCheckTracker*
+ChromeContentBrowserClient::GetAsyncCheckTracker(
+    const base::RepeatingCallback<content::WebContents*()>& wc_getter,
+    bool is_enterprise_lookup_enabled,
+    bool is_consumer_lookup_enabled,
+    safe_browsing::hash_realtime_utils::HashRealTimeSelection
+        hash_realtime_selection) {
+  content::WebContents* contents = wc_getter.Run();
+  if (!contents || !safe_browsing_service_ ||
+      !safe_browsing_service_->ui_manager()) {
+    return nullptr;
+  }
+  if (!is_enterprise_lookup_enabled && !is_consumer_lookup_enabled &&
+      hash_realtime_selection ==
+          safe_browsing::hash_realtime_utils::HashRealTimeSelection::kNone) {
+    return nullptr;
+  }
+  if (!base::FeatureList::IsEnabled(
+          safe_browsing::kSafeBrowsingAsyncRealTimeCheck)) {
+    return nullptr;
+  }
+  return safe_browsing::AsyncCheckTracker::GetOrCreateForWebContents(
+      contents, safe_browsing_service_->ui_manager().get());
+}
+
 void ChromeContentBrowserClient::ReportLegacyTechEvent(
     content::RenderFrameHost* render_frame_host,
     const std::string type,
     const GURL& url,
+    const GURL& frame_url,
     const std::string& filename,
     uint64_t line,
     uint64_t column) {
@@ -7149,7 +7135,7 @@ void ChromeContentBrowserClient::ReportLegacyTechEvent(
     return;
   }
   enterprise_reporting::LegacyTechServiceFactory::GetForProfile(profile)
-      ->ReportEvent(type, url, filename, line, column);
+      ->ReportEvent(type, url, frame_url, filename, line, column);
 }
 
 bool ChromeContentBrowserClient::CanAcceptUntrustedExchangesIfNeeded() {

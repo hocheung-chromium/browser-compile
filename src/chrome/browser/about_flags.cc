@@ -4439,10 +4439,6 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kOsSettingsRevampWayfindingName,
      flag_descriptions::kOsSettingsRevampWayfindingDescription, kOsCrOS,
      FEATURE_VALUE_TYPE(ash::features::kOsSettingsRevampWayfinding)},
-    {"os-settings-test-chrome-refresh",
-     flag_descriptions::kOsSettingsTestChromeRefreshName,
-     flag_descriptions::kOsSettingsTestChromeRefreshDescription, kOsCrOS,
-     FEATURE_VALUE_TYPE(ash::features::kOsSettingsTestChromeRefresh)},
     {"disable-cancel-all-touches",
      flag_descriptions::kDisableCancelAllTouchesName,
      flag_descriptions::kDisableCancelAllTouchesDescription, kOsCrOS,
@@ -4735,21 +4731,23 @@ const FeatureEntry kFeatureEntries[] = {
                                        kDXGIWaitableSwapChainVariations,
                                        "DXGIWaitableSwapChain"),
     },
+#endif  // BUILDFLAG(IS_WIN)
+#if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_LINUX)
     {
         "fluent-overlay-scrollbars",
         flag_descriptions::kFluentOverlayScrollbarsName,
         flag_descriptions::kFluentOverlayScrollbarsDescription,
-        kOsWin,
+        kOsWin | kOsLinux,
         FEATURE_VALUE_TYPE(features::kFluentOverlayScrollbar),
     },
     {
         "fluent-scrollbars",
         flag_descriptions::kFluentScrollbarsName,
         flag_descriptions::kFluentScrollbarsDescription,
-        kOsWin,
+        kOsWin | kOsLinux,
         FEATURE_VALUE_TYPE(features::kFluentScrollbar),
     },
-#endif
+#endif  // BUILDFLAG(IS_WIN) || BUILDFLAG(IS_LINUX)
 #if BUILDFLAG(IS_CHROMEOS_ASH)
     {
         "zero-copy-video-capture",
@@ -5747,6 +5745,10 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kImeKoreanModeSwitchDebugName,
      flag_descriptions::kImeKoreanModeSwitchDebugDescription, kOsCrOS,
      FEATURE_VALUE_TYPE(ash::features::kImeKoreanModeSwitchDebug)},
+    {"enable-cros-ime-korean-only-mode-switch-on-right-alt",
+     flag_descriptions::kImeKoreanOnlyModeSwitchOnRightAltName,
+     flag_descriptions::kImeKoreanOnlyModeSwitchOnRightAltDescription, kOsCrOS,
+     FEATURE_VALUE_TYPE(ash::features::kImeKoreanOnlyModeSwitchOnRightAlt)},
     {"enable-cros-japanese-os-settings",
      flag_descriptions::kJapaneseOSSettingsName,
      flag_descriptions::kJapaneseOSSettingsDescription, kOsCrOS,
@@ -7080,12 +7082,6 @@ const FeatureEntry kFeatureEntries[] = {
      FEATURE_VALUE_TYPE(features::kAsyncDns)},
 #endif  // BUILDFLAG(IS_WIN) || BUILDFLAG(IS_LINUX)
 
-    {"enable-new-download-backend",
-     flag_descriptions::kEnableNewDownloadBackendName,
-     flag_descriptions::kEnableNewDownloadBackendDescription, kOsAll,
-     FEATURE_VALUE_TYPE(
-         download::features::kUseDownloadOfflineContentProvider)},
-
     {"downloads-migrate-to-jobs-api",
      flag_descriptions::kDownloadsMigrateToJobsAPIName,
      flag_descriptions::kDownloadsMigrateToJobsAPIDescription, kOsAndroid,
@@ -7425,6 +7421,11 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kReadAnythingWithScreen2xName,
      flag_descriptions::kReadAnythingWithScreen2xDescription, kOsDesktop,
      FEATURE_VALUE_TYPE(features::kReadAnythingWithScreen2x)},
+
+    {"read-anything-with-algorithm",
+     flag_descriptions::kReadAnythingWithAlgorithmName,
+     flag_descriptions::kReadAnythingWithAlgorithmDescription, kOsDesktop,
+     FEATURE_VALUE_TYPE(features::kReadAnythingWithAlgorithm)},
 
     {"read-anything-webui-toolbar",
      flag_descriptions::kReadAnythingWebUIToolbarName,
@@ -7883,6 +7884,10 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kFastPairSoftwareScanningName,
      flag_descriptions::kFastPairSoftwareScanningDescription, kOsCrOS,
      FEATURE_VALUE_TYPE(ash::features::kFastPairSoftwareScanning)},
+
+    {"nearby-presence", flag_descriptions::kNearbyPresenceName,
+     flag_descriptions::kNearbyPresenceDescription, kOsCrOS,
+     FEATURE_VALUE_TYPE(ash::features::kNearbyPresence)},
 
     {"pcie-billboard-notification",
      flag_descriptions::kPcieBillboardNotificationName,
@@ -8357,6 +8362,9 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kOsSettingsAppNotificationsPageName,
      flag_descriptions::kOsSettingsAppNotificationsPageDescription, kOsCrOS,
      FEATURE_VALUE_TYPE(ash::features::kOsSettingsAppNotificationsPage)},
+    {"help-app-app-detail-page", flag_descriptions::kHelpAppAppDetailPageName,
+     flag_descriptions::kHelpAppAppDetailPageDescription, kOsCrOS,
+     FEATURE_VALUE_TYPE(ash::features::kHelpAppAppDetailPage)},
     {"help-app-apps-list", flag_descriptions::kHelpAppAppsListName,
      flag_descriptions::kHelpAppAppsListDescription, kOsCrOS,
      FEATURE_VALUE_TYPE(ash::features::kHelpAppAppsList)},
@@ -9878,6 +9886,11 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kReduceAcceptLanguageDescription, kOsAll,
      FEATURE_VALUE_TYPE(network::features::kReduceAcceptLanguage)},
 
+    {"reduce-transfer-size-updated-ipc",
+     flag_descriptions::kReduceTransferSizeUpdatedIPCName,
+     flag_descriptions::kReduceTransferSizeUpdatedIPCDescription, kOsAll,
+     FEATURE_VALUE_TYPE(network::features::kReduceTransferSizeUpdatedIPC)},
+
 #if BUILDFLAG(IS_CHROMEOS_ASH)
     {"enable-variable-refresh-rate",
      flag_descriptions::kEnableVariableRefreshRateName,
@@ -10793,16 +10806,15 @@ const FeatureEntry kFeatureEntries[] = {
      kOsDesktop | kOsAndroid,
      FEATURE_VALUE_TYPE(features::kProcessPerSiteUpToMainFrameThreshold)},
 
-#if BUILDFLAG(IS_MAC) || BUILDFLAG(IS_WIN) || BUILDFLAG(IS_LINUX) || \
-    BUILDFLAG(IS_FUCHSIA)
+#if BUILDFLAG(IS_MAC) || BUILDFLAG(IS_WIN) || BUILDFLAG(IS_LINUX)
     {"camera-mic-effects", flag_descriptions::kCameraMicEffectsName,
      flag_descriptions::kCameraMicEffectsDescription,
-     static_cast<unsigned short>(kOsMac | kOsWin | kOsLinux | kOsFuchsia),
+     static_cast<unsigned short>(kOsMac | kOsWin | kOsLinux),
      FEATURE_VALUE_TYPE(media::kCameraMicEffects)},
 
     {"camera-mic-preview", flag_descriptions::kCameraMicPreviewName,
      flag_descriptions::kCameraMicPreviewDescription,
-     static_cast<unsigned short>(kOsMac | kOsWin | kOsLinux | kOsFuchsia),
+     static_cast<unsigned short>(kOsMac | kOsWin | kOsLinux),
      FEATURE_VALUE_TYPE(features::kCameraMicPreview)},
 #endif
 
@@ -11280,15 +11292,6 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kPasswordGenerationStrongLabelExperimentName,
      flag_descriptions::kPasswordGenerationStrongLabelExperimentDescription,
      kOsDesktop, FEATURE_VALUE_TYPE(blink::features::kPasswordStrongLabel)},
-#endif
-
-#if BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_MAC) || BUILDFLAG(IS_WIN)
-    {"attach-logs-to-autofill-rater-extentsion-report",
-     flag_descriptions::kAttachLogsToAutofillRaterExtensionReportName,
-     flag_descriptions::kAttachLogsToAutofillRaterExtensionReportDescription,
-     kOsMac | kOsWin | kOsLinux,
-     FEATURE_VALUE_TYPE(password_manager::features::
-                            kAttachLogsToAutofillRaterExtensionReport)},
 #endif
 
 #if !BUILDFLAG(IS_ANDROID)

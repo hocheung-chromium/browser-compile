@@ -763,11 +763,6 @@ BASE_FEATURE(kSuspendMutedAudio,
              "SuspendMutedAudio",
              base::FEATURE_ENABLED_BY_DEFAULT);
 
-// Enables using the media history store to store media engagement metrics.
-BASE_FEATURE(kUseMediaHistoryStore,
-             "UseMediaHistoryStore",
-             base::FEATURE_DISABLED_BY_DEFAULT);
-
 // Enables the Unified Autoplay policy by overriding the platform's default
 // autoplay policy.
 BASE_FEATURE(kUnifiedAutoplay,
@@ -796,6 +791,12 @@ BASE_FEATURE(kVaapiIgnoreDriverChecks,
              "VaapiIgnoreDriverChecks",
              base::FEATURE_DISABLED_BY_DEFAULT);
 #endif  // BUILDFLAG(IS_LINUX)
+
+// NVIDIA VA-API drivers do not support Chromium and can sometimes cause
+// crashes, disable VA-API on NVIDIA GPUs by default. See crbug.com/1492880.
+BASE_FEATURE(kVaapiOnNvidiaGPUs,
+             "VaapiOnNvidiaGPUs",
+             base::FEATURE_DISABLED_BY_DEFAULT);
 
 // Enable VA-API hardware low power encoder for all codecs on intel Gen9x gpu.
 BASE_FEATURE(kVaapiLowPowerEncoderGen9x,
@@ -972,6 +973,11 @@ BASE_FEATURE(kLiveCaptionMultiLanguage,
 // Enable experimental Live Caption languages.
 BASE_FEATURE(kLiveCaptionExperimentalLanguages,
              "LiveCaptionExperimentalLanguages",
+             base::FEATURE_DISABLED_BY_DEFAULT);
+
+// Enable automatic downloading of speech recognition language packs.
+BASE_FEATURE(kLiveCaptionAutomaticLanguageDownload,
+             "LiveCaptionAutomaticLanguageDownload",
              base::FEATURE_DISABLED_BY_DEFAULT);
 
 // Enable or disable Live Caption from the right click menu.
@@ -1574,12 +1580,13 @@ BASE_FEATURE(kUseFakeDeviceForMediaStream,
              "use-fake-device-for-media-stream",
              base::FEATURE_DISABLED_BY_DEFAULT);
 
-#if !BUILDFLAG(IS_ANDROID) && !BUILDFLAG(IS_CHROMEOS)
+#if !BUILDFLAG(IS_ANDROID) && !BUILDFLAG(IS_CHROMEOS) && !BUILDFLAG(IS_FUCHSIA)
 // Enables effects for camera and mic streams.
 BASE_FEATURE(kCameraMicEffects,
              "CameraMicEffects",
              base::FEATURE_DISABLED_BY_DEFAULT);
-#endif  // !BUILDFLAG(IS_ANDROID) && !BUILDFLAG(IS_CHROMEOS)
+#endif  // !BUILDFLAG(IS_ANDROID) && !BUILDFLAG(IS_CHROMEOS) &&
+        // !BUILDFLAG(IS_FUCHSIA)
 
 // Controls whether mirroring negotiations will include the AV1 codec for video
 // encoding.
