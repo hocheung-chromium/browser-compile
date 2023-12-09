@@ -18,6 +18,8 @@
 
 <https://github.com/StaZhu/enable-chromium-hevc-hardware-decoding/blob/main/add-hevc-ffmpeg-decoder-parser.patch>
 
+<https://github.com/StaZhu/enable-chromium-hevc-hardware-decoding/blob/main/enable-hevc-encoding-by-default.patch>
+
 <https://github.com/ungoogled-software/ungoogled-chromium-windows/blob/master/patches/ungoogled-chromium/windows/windows-disable-encryption.patch>
 
 <https://github.com/ungoogled-software/ungoogled-chromium-windows/blob/master/patches/ungoogled-chromium/windows/windows-disable-machine-id.patch>
@@ -27,6 +29,10 @@
 <https://github.com/ungoogled-software/ungoogled-chromium/blob/master/patches/extra/ungoogled-chromium/add-flag-to-scroll-tabs.patch>
 
 <https://github.com/ungoogled-software/ungoogled-chromium/blob/master/patches/extra/ungoogled-chromium/add-flag-to-clear-data-on-exit.patch>
+
+<https://github.com/ungoogled-software/ungoogled-chromium/blob/master/patches/extra/ungoogled-chromium/add-flag-for-incognito-themes.patch>
+
+<https://github.com/ungoogled-software/ungoogled-chromium/blob/master/patches/extra/ungoogled-chromium/disable-download-quarantine.patch>
 
 <https://github.com/Muril-o/electron-chromium-codecs/blob/main/v25.1.0/look_chromium_hevc_ac3.patch>
 

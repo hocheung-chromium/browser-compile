@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 
@@ -225,7 +226,6 @@
 #include "extensions/common/manifest_handlers/background_info.h"
 #include "net/base/filename_util.h"
 #include "ppapi/buildflags/buildflags.h"
-#include "third_party/abseil-cpp/absl/types/optional.h"
 #include "third_party/blink/public/common/security/protocol_handler_security_level.h"
 #include "third_party/blink/public/mojom/frame/blocked_navigation_types.mojom.h"
 #include "third_party/blink/public/mojom/frame/frame.mojom.h"
@@ -1276,7 +1276,7 @@ void Browser::OnTabGroupChanged(const TabGroupChange& change) {
           base::FeatureList::IsEnabled(features::kTabGroupsSave)
               ? SavedTabGroupServiceFactory::GetForProfile(profile_)
               : nullptr;
-      absl::optional<std::string> saved_guid;
+      std::optional<std::string> saved_guid;
 
       if (saved_tab_group_keyed_service) {
         const SavedTabGroup* const saved_group =
@@ -1314,7 +1314,7 @@ void Browser::TabPinnedStateChanged(TabStripModel* tab_strip_model,
 }
 
 void Browser::TabGroupedStateChanged(
-    absl::optional<tab_groups::TabGroupId> group,
+    std::optional<tab_groups::TabGroupId> group,
     content::WebContents* contents,
     int index) {
   // See comment in Browser::OnTabGroupChanged
@@ -1781,7 +1781,7 @@ void Browser::CloseContents(WebContents* source) {
 }
 
 void Browser::SetContentsBounds(WebContents* source, const gfx::Rect& bounds) {
-  if (is_type_normal() || is_type_picture_in_picture()) {
+  if (is_type_normal()) {
     return;
   }
 
@@ -2346,7 +2346,7 @@ void Browser::SetWebContentsBlocked(content::WebContents* web_contents,
     // class-level comments for further details.
     if (!exclusive_access_manager_->fullscreen_controller()
              ->IsFullscreenWithinTab(web_contents)) {
-      web_contents->ExitFullscreen();
+      web_contents->ExitFullscreen(true);
     }
   }
 
@@ -2856,7 +2856,7 @@ void Browser::SyncHistoryWithTabs(int index) {
         session_service->SetTabIndexInWindow(
             session_id(), session_tab_helper->session_id(), i);
 
-        absl::optional<tab_groups::TabGroupId> group_id =
+        std::optional<tab_groups::TabGroupId> group_id =
             tab_strip_model_->GetTabGroupForTab(i);
         session_service->SetTabGroup(session_id(),
                                      session_tab_helper->session_id(),

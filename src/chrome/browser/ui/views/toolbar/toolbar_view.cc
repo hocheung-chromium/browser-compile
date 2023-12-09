@@ -278,7 +278,7 @@ void ToolbarView::Init() {
   size_animation_.Reset(1);
 
   std::unique_ptr<DownloadToolbarButtonView> download_button;
-  if (download::IsDownloadBubbleEnabled(browser_->profile())) {
+  if (download::IsDownloadBubbleEnabled()) {
     download_button =
         std::make_unique<DownloadToolbarButtonView>(browser_view_);
   }
@@ -626,7 +626,7 @@ void ToolbarView::ShowIntentPickerBubble(
     bool show_stay_in_chrome,
     bool show_remember_selection,
     IntentPickerBubbleView::BubbleType bubble_type,
-    const absl::optional<url::Origin>& initiating_origin,
+    const std::optional<url::Origin>& initiating_origin,
     IntentPickerResponse callback) {
   views::Button* highlighted_button = nullptr;
   if (bubble_type == IntentPickerBubbleView::BubbleType::kClickToCall) {

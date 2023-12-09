@@ -25,6 +25,9 @@ namespace chrome {
 void DefaultBrowserInfoBarDelegate::Create(
     infobars::ContentInfoBarManager* infobar_manager,
     Profile* profile) {
+  // infobar_manager->AddInfoBar(
+  //     CreateConfirmInfoBar(std::unique_ptr<ConfirmInfoBarDelegate>(
+  //         new DefaultBrowserInfoBarDelegate(profile))));
 }
 
 DefaultBrowserInfoBarDelegate::DefaultBrowserInfoBarDelegate(Profile* profile)

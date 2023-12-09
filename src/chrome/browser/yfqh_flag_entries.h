@@ -40,6 +40,11 @@
      "Enables double clicking a tab to close it.",
      kOsDesktop, SINGLE_VALUE_TYPE("double-click-close-tab")},
 
+     {"enable-incognito-themes",
+     "Enable themes in Incognito mode",
+     "Allows themes to override Google's built-in Incognito theming.",
+     kOsDesktop, SINGLE_VALUE_TYPE("enable-incognito-themes")},
+
     {"hide-sidepanel-button",
      "Hide SidePanel Button",
      "Hides the SidePanel Button.",

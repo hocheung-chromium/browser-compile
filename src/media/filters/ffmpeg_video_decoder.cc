@@ -87,8 +87,8 @@ static int GetFFmpegVideoDecoderThreadCount(const VideoDecoderConfig& config) {
       // No extra threads for these codecs.
       break;
 
-    case VideoCodec::kHEVC:
     case VideoCodec::kH264:
+    case VideoCodec::kHEVC:
     case VideoCodec::kVP8:
       // Normalize to three threads for 1080p content, then scale linearly
       // with number of pixels.
