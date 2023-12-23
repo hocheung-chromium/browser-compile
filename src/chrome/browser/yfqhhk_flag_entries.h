@@ -1,9 +1,9 @@
-// Copyright (c) 2023 Cheung_yfqh. All rights reserved.
+// Copyright (c) 2023 yfqhhk. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef CHROME_BROWSER_YFQH_FLAG_ENTRIES_H_
-#define CHROME_BROWSER_YFQH_FLAG_ENTRIES_H_
+#ifndef CHROME_BROWSER_YFQHHK_FLAG_ENTRIES_H_
+#define CHROME_BROWSER_YFQHHK_FLAG_ENTRIES_H_
 
     {"clear-data-on-exit",
      "Clear data on exit",
@@ -55,4 +55,9 @@
      "Switch to the left/right tab if the wheel-scroll happens over the tabstrip, or the empty space beside the tabstrip.",
      kOsDesktop, MULTI_VALUE_TYPE(kScrollEventChangesTab)},
 
-#endif  // CHROME_BROWSER_YFQH_FLAG_ENTRIES_H_
+    {"show-avatar-button",
+     "Show avatar/people/profile button",
+     "Show avatar/people/profile button in the browser toolbar.",
+     kOsDesktop, MULTI_VALUE_TYPE(kShowAvatarButtonChoices)},
+
+#endif  // CHROME_BROWSER_YFQHHK_FLAG_ENTRIES_H_

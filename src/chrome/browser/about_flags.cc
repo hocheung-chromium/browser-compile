@@ -3905,9 +3905,9 @@ const flags_ui::FeatureEntry::FeatureVariation
 // calculate and verify checksum.
 //
 // When adding a new choice, add it to the end of the list.
-#include "chrome/browser/yfqh_flag_choices.h"
+#include "chrome/browser/yfqhhk_flag_choices.h"
 const FeatureEntry kFeatureEntries[] = {
-#include "chrome/browser/yfqh_flag_entries.h"
+#include "chrome/browser/yfqhhk_flag_entries.h"
 // Include generated flags for flag unexpiry; see //docs/flag_expiry.md and
 // //tools/flags/generate_unexpire_flags.py.
 #include "build/chromeos_buildflags.h"
