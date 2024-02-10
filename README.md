@@ -36,6 +36,8 @@
 
 <https://github.com/ungoogled-software/ungoogled-chromium/blob/master/patches/extra/ungoogled-chromium/disable-download-quarantine.patch>
 
+<https://github.com/ungoogled-software/ungoogled-chromium/blob/master/patches/core/ungoogled-chromium/disable-privacy-sandbox.patch>
+
 <https://github.com/Muril-o/electron-chromium-codecs/blob/main/v25.1.0/look_chromium_hevc_ac3.patch>
 
 <https://github.com/Muril-o/electron-chromium-codecs/blob/main/v25.1.0/look_electron_hevc_ac3.patch>

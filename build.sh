@@ -12,7 +12,7 @@ die() { yell "$*"; exit 111; }
 try() { "$@" || die "${RED}Failed $*"; }
 
 printf "\n" &&
-printf "${bold}${YEL}Building Chromium for Windows on Linux.${c0}\n" &&
+printf "${bold}${YEL}Building Chromium for Windows.${c0}\n" &&
 
 # Build Chromium and installer
 

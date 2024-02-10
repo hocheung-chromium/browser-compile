@@ -39,9 +39,6 @@ git rebase-update &&
 
 git fetch --tags &&
 
-# Install all sysroots (i.e. for ARM64)
-build/linux/sysroot_scripts/install-sysroot.py --all &&
-
 cd $HOME/chromium/src &&
 
 gclient sync --with_branch_heads --with_tags -f -R -D &&

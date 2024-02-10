@@ -144,6 +144,8 @@ declare_args() {
   # recognizable in the debugger, and crashes on memory accesses through
   # uninitialized pointers.
   #
+  # Flag discussion: https://crbug.com/977230
+  #
   # TODO(crbug.com/1131993): This regresses binary size by ~1MB on Android and
   # needs to be evaluated before enabling it there as well.
   init_stack_vars = !(is_android && is_official_build)
@@ -636,9 +638,9 @@ config("compiler") {
 
     # TODO(crbug.com/1235145): Investigate why/if this should be needed.
     if (is_win) {
-      cflags += [ "/clang:-ffp-contract=off" ]
+      cflags += [ "/clang:-ffp-contract=fast" ]
     } else {
-      cflags += [ "-ffp-contract=off" ]
+      cflags += [ "-ffp-contract=fast" ]
     }
   }
 
@@ -800,13 +802,10 @@ config("compiler") {
       if (is_apple) {
         ldflags += [ "-Wcrl,object_path_lto" ]
       }
-      if (!is_chromeos) {
-        # TODO(https://crbug.com/972449): turn on for ChromeOS when that
-        # toolchain has this flag.
-        # We only use one version of LLVM within a build so there's no need to
-        # upgrade debug info, which can be expensive since it runs the verifier.
-        ldflags += [ "-Wl,-mllvm,-disable-auto-upgrade-debug-info" ]
-      }
+
+      # We only use one version of LLVM within a build so there's no need to
+      # upgrade debug info, which can be expensive since it runs the verifier.
+      ldflags += [ "-Wl,-mllvm,-disable-auto-upgrade-debug-info" ]
     }
 
     # TODO(https://crbug.com/1211155): investigate why this isn't effective on
@@ -1023,8 +1022,9 @@ config("compiler") {
     # directory from appearing in build outputs.
     "-Zremap-cwd-prefix=.",
 
-    "-Ctarget-feature=+sse3,+ssse3,+sse4.1,+sse4.2,+avx",
-    "-Cllvm-args=-fp-contract=off",
+    "-Ztune-cpu=raptorlake",
+    "-Ctarget-feature=+sse3,+ssse3,+sse4.1,+sse4.2,+avx,+avx2,+fma,+f16c",
+    "-Cllvm-args=-fp-contract=fast",
   ]
 
   if (!is_win || force_rustc_color_output) {
@@ -1036,7 +1036,7 @@ config("compiler") {
   if (rust_abi_target != "") {
     rustflags += [ "--target=$rust_abi_target" ]
   }
-  if (!use_thin_lto) {
+  if (!use_thin_lto || !toolchain_supports_rust_thin_lto) {
     # Don't include bitcode if it won't be used.
     rustflags += [ "-Cembed-bitcode=no" ]
   }
@@ -1154,11 +1154,15 @@ config("compiler_cpu_abi") {
     if (current_cpu == "x64") {
       cflags += [
         "-m64",
+        "-mtune=raptorlake",
         "-msse3",
         "-mssse3",
         "-msse4.1",
         "-msse4.2",
         "-mavx",
+        "-mavx2",
+        "-mfma",
+        "-mf16c",
       ]
 
       # Minimum SIMD support for devices running lacros.
@@ -1768,9 +1772,9 @@ config("default_warnings") {
       cflags += [ "/wd4244" ]
     }
   } else {
-    if (is_apple && !is_nacl) {
-      # When compiling Objective-C, warns if a method is used whose
-      # availability is newer than the deployment target.
+    if ((is_apple || is_android) && !is_nacl) {
+      # Warns if a method is used whose availability is newer than the
+      # deployment target.
       cflags += [ "-Wunguarded-availability" ]
     }
 
@@ -1867,27 +1871,30 @@ config("default_warnings") {
         # Ignore warnings about MSVC optimization pragmas.
         # TODO(thakis): Only for no_chromium_code? http://crbug.com/912662
         "-Wno-ignored-pragma-optimize",
+
+        # TODO(crbug.com/1343975) Evaluate and possibly enable.
+        "-Wno-deprecated-builtins",
+
+        # TODO(crbug.com/1352183) Evaluate and possibly enable.
+        "-Wno-bitfield-constant-conversion",
+
+        # TODO(crbug.com/1412713) Evaluate and possibly enable.
+        "-Wno-deprecated-this-capture",
+
+        # TODO(https://crbug.com/1491833): Fix and re-enable.
+        "-Wno-invalid-offsetof",
+
+        # TODO(crbug.com/1494809): Evaluate and possibly enable.
+        "-Wno-vla-extension",
+
+        # TODO(https://crbug.com/1490607): Fix and re-enable.
+        "-Wno-thread-safety-reference-return",
       ]
 
       if (!is_nacl) {
-        cflags += [
-          # TODO(crbug.com/1343975) Evaluate and possibly enable.
-          "-Wno-deprecated-builtins",
-
-          # TODO(crbug.com/1352183) Evaluate and possibly enable.
-          "-Wno-bitfield-constant-conversion",
-
-          # TODO(crbug.com/1412713) Evaluate and possibly enable.
-          "-Wno-deprecated-this-capture",
-
-          # TODO(https://crbug.com/1491833): Fix and re-enable.
-          "-Wno-invalid-offsetof",
-
-          # TODO(crbug.com/1494809): Evaluate and possibly enable.
-          "-Wno-vla-extension",
-
-          # TODO(https://crbug.com/1490607): Fix and re-enable.
-          "-Wno-thread-safety-reference-return",
+        cflags_cc += [
+          # TODO(https://crbug.com/1513724): Fix and re-enable.
+          "-Wno-c++11-narrowing-const-reference",
         ]
       }
     }
@@ -1899,6 +1906,7 @@ config("default_warnings") {
       cflags += [
         "-Wno-error=unknown-warning-option",
         "-Wno-error=unused-command-line-argument",
+        "-Wno-error=unknown-pragmas",
       ]
     }
   }
@@ -1948,6 +1956,35 @@ config("prevent_unsafe_narrowing") {
         # fixing types to be sign-correct.
         "-Wtautological-unsigned-zero-compare",
       ]
+    }
+  }
+}
+
+# unsafe_buffer_warning -------------------------------------------------------
+
+# Paths of third-party headers that violate Wunsafe-buffer-usage, but which we
+# have been unable to fix yet. We use this list to be able to make progress and
+# enable the warning on code that we do control/own.
+#
+# WARNING: This will disable all warnings in the files. ONLY USE THIS for
+# third-party code which we do not control/own. Fix the warnings instead in
+# our own code.
+if (is_clang) {
+  unsafe_buffer_warning_header_allowlist =
+      [ "third_party/googletest/src/googletest/include/gtest" ]
+}
+
+# Enables warnings on pointer arithmetic/indexing or calls to functions
+# annotated with `UNSAFE_BUFFER_USAGE`.
+config("unsafe_buffer_warning") {
+  if (is_clang) {
+    cflags = [ "-Wunsafe-buffer-usage" ]
+    foreach(h, unsafe_buffer_warning_header_allowlist) {
+      if (is_win) {
+        cflags += [ "/clang:--system-header-prefix=$h" ]
+      } else {
+        cflags += [ "--system-header-prefix=$h" ]
+      }
     }
   }
 }

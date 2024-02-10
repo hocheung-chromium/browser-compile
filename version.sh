@@ -13,7 +13,7 @@ yell() { echo "$0: $*" >&2; }
 die() { yell "$*"; exit 111; }
 try() { "$@" || die "${RED}Failed $*"; }
 
-COMMIT_ID="384c515ddeaf9c1205a518508be75ab2896031b2"
+COMMIT_ID="48c9e8592a8f1712065a51e0f913ecc22594224f"
 
 export COMMIT_ID &&
 
@@ -29,9 +29,6 @@ git clean -ffd &&
 gclient sync --with_branch_heads --with_tags -f -R -D &&
 
 gclient runhooks &&
-
-# Install all sysroots (i.e. for ARM64)
-build/linux/sysroot_scripts/install-sysroot.py --all &&
 
 printf "\n"
 printf "${bold}${GRE}Chromium tree is checked out at: $COMMIT_ID${c0}\n"

@@ -1,4 +1,4 @@
-# Copyright 2023 The Chromium Authors. All rights reserved.
+# Copyright 2024 The Chromium Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
@@ -171,6 +171,7 @@ if ((is_android && current_cpu == "arm" && arm_use_neon) || (is_android && curre
     "libavutil/hdr_dynamic_vivid_metadata.c",
     "libavutil/hwcontext.c",
     "libavutil/hwcontext_stub.c",
+    "libavutil/iamf.c",
     "libavutil/integer.c",
     "libavutil/intmath.c",
     "libavutil/lfg.c",
@@ -241,23 +242,35 @@ if (use_linux_config && ffmpeg_branding == "ChromeOS") {
 
 if ((is_apple && ffmpeg_branding == "Chrome") || (is_win && ffmpeg_branding == "Chrome") || (use_linux_config && ffmpeg_branding == "Chrome") || (use_linux_config && ffmpeg_branding == "ChromeOS")) {
 
-  # ffmpeg_c_sources += [
-  #   "libavcodec/autorename_libavcodec_bswapdsp.c",
-  #   "libavcodec/dovi_rpu.c",
-  #   "libavcodec/dynamic_hdr_vivid.c",
-  #   "libavcodec/hevc_cabac.c",
-  #   "libavcodec/hevc_data.c",
-  #   "libavcodec/hevc_filter.c",
-  #   "libavcodec/hevc_mvs.c",
-  #   "libavcodec/hevc_parse.c",
-  #   "libavcodec/hevc_parser.c",
-  #   "libavcodec/hevc_ps.c",
-  #   "libavcodec/hevc_refs.c",
-  #   "libavcodec/hevc_sei.c",
-  #   "libavcodec/hevcdec.c",
-  #   "libavcodec/hevcdsp.c",
-  #   "libavcodec/hevcpred.c"
-  # ]
+  ffmpeg_c_sources += [
+    "libavcodec/autorename_libavcodec_bswapdsp.c",
+    "libavcodec/dovi_rpu.c",
+    "libavcodec/dynamic_hdr_vivid.c",
+    "libavcodec/hevc_cabac.c",
+    "libavcodec/hevc_data.c",
+    "libavcodec/hevc_filter.c",
+    "libavcodec/hevc_mvs.c",
+    "libavcodec/hevc_parse.c",
+    "libavcodec/hevc_parser.c",
+    "libavcodec/hevc_ps.c",
+    "libavcodec/hevc_refs.c",
+    "libavcodec/hevc_sei.c",
+    "libavcodec/hevcdec.c",
+    "libavcodec/hevcdsp.c",
+    "libavcodec/hevcpred.c",
+    "libavcodec/x86/ac3dsp_init.c",
+    "libavcodec/ac3dsp.c",
+    "libavcodec/fmtconvert.c",
+    "libavcodec/ac3tab.c",
+    "libavcodec/ac3dec_float.c",
+    "libavcodec/ac3.c",
+    "libavcodec/x86/fmtconvert_init.c",
+    "libavcodec/ac3dec_data.c",
+    "libavcodec/eac3dec.c",
+    "libavcodec/eac3_data.c",
+    "libavcodec/ac3dec_fixed.c",
+    "libavformat/ac3dec.c",
+  ]
 
   ffmpeg_c_sources += [
     "libavcodec/atsc_a53.c",
@@ -335,20 +348,23 @@ if ((use_linux_config && current_cpu == "arm" && arm_use_neon && ffmpeg_branding
 
 if ((is_apple && current_cpu == "x64" && ffmpeg_branding == "Chrome") || (is_win && current_cpu == "x64" && ffmpeg_branding == "Chrome") || (is_win && current_cpu == "x86" && ffmpeg_branding == "Chrome") || (use_linux_config && current_cpu == "x64" && ffmpeg_branding == "Chrome") || (use_linux_config && current_cpu == "x64" && ffmpeg_branding == "ChromeOS") || (use_linux_config && current_cpu == "x86" && ffmpeg_branding == "Chrome") || (use_linux_config && current_cpu == "x86" && ffmpeg_branding == "ChromeOS")) {
 
-  # ffmpeg_c_sources += [
-  #   "libavcodec/x86/bswapdsp_init.c",
-  #   "libavcodec/x86/hevcdsp_init.c"
-  # ]
+  ffmpeg_c_sources += [
+    "libavcodec/x86/bswapdsp_init.c",
+    "libavcodec/x86/hevcdsp_init.c"
+  ]
 
-  # ffmpeg_asm_sources += [
-  #   "libavcodec/x86/bswapdsp.asm",
-  #   "libavcodec/x86/hevc_add_res.asm",
-  #   "libavcodec/x86/hevc_deblock.asm",
-  #   "libavcodec/x86/hevc_idct.asm",
-  #   "libavcodec/x86/hevc_mc.asm",
-  #   "libavcodec/x86/hevc_sao.asm",
-  #   "libavcodec/x86/hevc_sao_10bit.asm"
-  # ]
+  ffmpeg_asm_sources += [
+    "libavcodec/x86/bswapdsp.asm",
+    "libavcodec/x86/hevc_add_res.asm",
+    "libavcodec/x86/hevc_deblock.asm",
+    "libavcodec/x86/hevc_idct.asm",
+    "libavcodec/x86/hevc_mc.asm",
+    "libavcodec/x86/hevc_sao.asm",
+    "libavcodec/x86/hevc_sao_10bit.asm",
+    "libavcodec/x86/ac3dsp.asm",
+    "libavcodec/x86/ac3dsp_downmix.asm",
+    "libavcodec/x86/fmtconvert.asm",
+  ]
 
   ffmpeg_c_sources += [
     "libavcodec/x86/h264_qpel.c",
@@ -445,53 +461,6 @@ if ((is_apple) || (is_win) || (use_linux_config)) {
     "libavcodec/vp8data.c",
     "libavcodec/vp8dsp.c",
     "libavcodec/vpx_rac.c",
-  ]
-  ffmpeg_c_sources += [
-    "libavcodec/autorename_libavcodec_bswapdsp.c",
-    "libavcodec/dovi_rpu.c",
-    "libavcodec/dynamic_hdr_vivid.c",
-    "libavcodec/hevc_cabac.c",
-    "libavcodec/hevc_data.c",
-    "libavcodec/hevc_filter.c",
-    "libavcodec/hevc_mvs.c",
-    "libavcodec/hevc_parse.c",
-    "libavcodec/hevc_parser.c",
-    "libavcodec/hevc_ps.c",
-    "libavcodec/hevc_refs.c",
-    "libavcodec/hevc_sei.c",
-    "libavcodec/hevcdec.c",
-    "libavcodec/hevcdsp.c",
-    "libavcodec/hevcpred.c",
-    "libavcodec/x86/ac3dsp_init.c",
-    "libavcodec/ac3dsp.c",
-    "libavcodec/fmtconvert.c",
-    "libavcodec/ac3tab.c",
-    "libavcodec/ac3dec_float.c",
-    "libavcodec/ac3.c",
-    "libavcodec/x86/fmtconvert_init.c",
-    "libavcodec/ac3dec_data.c",
-    "libavcodec/eac3dec.c",
-    "libavcodec/eac3_data.c",
-    "libavcodec/ac3dec_fixed.c",
-    "libavformat/ac3dec.c",
-  ]
-  
-  ffmpeg_c_sources += [
-    "libavcodec/x86/bswapdsp_init.c",
-    "libavcodec/x86/hevcdsp_init.c"
-  ]
-
-  ffmpeg_asm_sources += [
-    "libavcodec/x86/bswapdsp.asm",
-    "libavcodec/x86/hevc_add_res.asm",
-    "libavcodec/x86/hevc_deblock.asm",
-    "libavcodec/x86/hevc_idct.asm",
-    "libavcodec/x86/hevc_mc.asm",
-    "libavcodec/x86/hevc_sao.asm",
-    "libavcodec/x86/hevc_sao_10bit.asm",
-    "libavcodec/x86/ac3dsp.asm",
-    "libavcodec/x86/ac3dsp_downmix.asm",
-    "libavcodec/x86/fmtconvert.asm",
   ]
 }
 
@@ -748,3 +717,4 @@ if (use_linux_config && current_cpu == "x64" && ffmpeg_branding == "ChromeOS") {
     "libavcodec/x86/simple_idct10.asm",
   ]
 }
+
