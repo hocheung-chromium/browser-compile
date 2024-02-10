@@ -20,7 +20,7 @@ cd $HOME/chromium/src &&
 
 export NINJA_SUMMARIZE_BUILD=1 &&
 
-autoninja -C ~/chromium/src/out/chromium chrome chromedriver clear_key_cdm content_shell setup mini_installer -j$@ &&
+autoninja -C ~/chromium/src/out/chromium chrome setup mini_installer -j$@ &&
 
 printf "${bold}${GRE}Build Completed!${c0}\n" &&
 tput sgr0 &&
