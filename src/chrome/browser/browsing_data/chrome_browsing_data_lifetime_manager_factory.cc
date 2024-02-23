@@ -48,8 +48,9 @@ ChromeBrowsingDataLifetimeManagerFactory::BuildServiceInstanceForBrowserContext(
   if (!base::FeatureList::IsEnabled(
           browsing_data::features::kClearDataOnExit) &&
       !base::FeatureList::IsEnabled(
-          browsing_data::features::kEnableBrowsingDataLifetimeManager))
+          browsing_data::features::kEnableBrowsingDataLifetimeManager)) {
     return nullptr;
+  }
 #if BUILDFLAG(IS_CHROMEOS_ASH) || BUILDFLAG(IS_CHROMEOS_LACROS)
   Profile* profile = Profile::FromBrowserContext(context);
   // This condition still needs to be explicitly stated here despite having

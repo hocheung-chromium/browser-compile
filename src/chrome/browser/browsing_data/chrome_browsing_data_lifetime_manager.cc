@@ -331,10 +331,12 @@ void ChromeBrowsingDataLifetimeManager::ClearBrowsingDataForOnExitPolicy(
   const base::Value::List& data_types = profile_->GetPrefs()->GetList(
       browsing_data::prefs::kClearBrowsingDataOnExitList);
 
-  bool cdoe = base::FeatureList::IsEnabled(browsing_data::features::kClearDataOnExit);
-  if (cdoe || (!data_types.empty() &&
-      IsConditionSatisfiedForBrowsingDataRemoval(GetSyncTypesForPolicyPref(
-          profile_, browsing_data::prefs::kClearBrowsingDataOnExitList)))) {
+  bool cdoe =
+      base::FeatureList::IsEnabled(browsing_data::features::kClearDataOnExit);
+  if (cdoe ||
+      (!data_types.empty() &&
+       IsConditionSatisfiedForBrowsingDataRemoval(GetSyncTypesForPolicyPref(
+           profile_, browsing_data::prefs::kClearBrowsingDataOnExitList)))) {
     profile_->GetPrefs()->SetBoolean(
         browsing_data::prefs::kClearBrowsingDataOnExitDeletionPending, true);
     auto* remover = profile_->GetBrowsingDataRemover();
@@ -344,12 +346,13 @@ void ChromeBrowsingDataLifetimeManager::ClearBrowsingDataForOnExitPolicy(
     if (browser_shutdown::HasShutdownStarted())
       DCHECK(keep_browser_alive);
 #endif
-    remover->RemoveAndReply(base::Time(), base::Time::Max(),
-                            cdoe ? AllRemoveMask() : GetRemoveMask(data_types),
-                            cdoe ? AllOriginTypeMask() : GetOriginTypeMask(data_types),
-                            BrowsingDataRemoverObserver::Create(
-                                remover, /*filterable_deletion=*/true, profile_,
-                                keep_browser_alive));
+    remover->RemoveAndReply(
+        base::Time(), base::Time::Max(),
+        cdoe ? AllRemoveMask() : GetRemoveMask(data_types),
+        cdoe ? AllOriginTypeMask() : GetOriginTypeMask(data_types),
+        BrowsingDataRemoverObserver::Create(remover,
+                                            /*filterable_deletion=*/true,
+                                            profile_, keep_browser_alive));
   } else {
     profile_->GetPrefs()->ClearPref(
         browsing_data::prefs::kClearBrowsingDataOnExitDeletionPending);

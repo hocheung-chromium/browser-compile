@@ -94,10 +94,10 @@ class PepperFileIOHost final : public ppapi::host::ResourceHost {
                          base::File::Error error_code);
 
   // void OnLocalFileQuarantined(
-      // ppapi::host::ReplyMessageContext reply_context,
-      // const base::FilePath& path,
-      // mojo::Remote<quarantine::mojom::Quarantine> quarantine_remote,
-      // quarantine::mojom::QuarantineFileResult quarantine_result);
+  // ppapi::host::ReplyMessageContext reply_context,
+  // const base::FilePath& path,
+  // mojo::Remote<quarantine::mojom::Quarantine> quarantine_remote,
+  // quarantine::mojom::QuarantineFileResult quarantine_result);
 
   void SendFileOpenReply(ppapi::host::ReplyMessageContext reply_context,
                          base::File::Error error_code);

@@ -177,6 +177,7 @@
 #include "components/keep_alive_registry/scoped_keep_alive.h"
 #include "components/omnibox/browser/location_bar_model.h"
 #include "components/omnibox/browser/location_bar_model_impl.h"
+#include "components/omnibox/browser/omnibox_prefs.h"
 #include "components/page_load_metrics/browser/metrics_web_contents_observer.h"
 #include "components/page_load_metrics/common/page_load_metrics.mojom.h"
 #include "components/paint_preview/buildflags/buildflags.h"
@@ -447,6 +448,12 @@ Browser::CreationStatus Browser::GetCreationStatusForProfile(Profile* profile) {
   return CreationStatus::kOk;
 }
 
+#if BUILDFLAG(ENABLE_EXTENSIONS)
+// static
+const char* Browser::url_elision_extension_id_ =
+    "jknemblkbdhdcpllfgbfekkdciegfboi";
+#endif  // BUILDFLAG(ENABLE_EXTENSIONS)
+
 // static
 Browser* Browser::Create(const CreateParams& params) {
   // If this is failing, a caller is trying to create a browser when creation is
@@ -488,7 +495,8 @@ Browser::Browser(const CreateParams& params)
           new BrowserContentSettingBubbleModelDelegate(this)),
       location_bar_model_delegate_(new BrowserLocationBarModelDelegate(this)),
       location_bar_model_(std::make_unique<LocationBarModelImpl>(
-          location_bar_model_delegate_.get(), content::kMaxURLDisplayChars)),
+          location_bar_model_delegate_.get(),
+          content::kMaxURLDisplayChars)),
       live_tab_context_(new BrowserLiveTabContext(this)),
       synced_window_delegate_(new BrowserSyncedWindowDelegate(this)),
       app_controller_(web_app::MaybeCreateAppBrowserController(this)),
@@ -568,6 +576,25 @@ Browser::Browser(const CreateParams& params)
         ->GetDownloadDisplayController()
         ->ListenToFullScreenChanges();
   }
+
+#if BUILDFLAG(ENABLE_EXTENSIONS)
+  // Temporary migration code: if users have the Suspicious Site Reporter
+  // extension installed, which has the effect of disabling URL elisions in the
+  // omnibox, set the pref that disables URL elisions. This is so that we can
+  // eventually deprecate this extension without reverting its users to elided
+  // URL display.
+  // TODO(crbug/324934130): remove this code and deprecate the extension in
+  // ~M125 or so.
+  if (!profile_->GetPrefs()
+           ->FindPreference(omnibox::kPreventUrlElisionsInOmnibox)
+           ->IsManaged() &&
+      extensions::ExtensionRegistry::Get(profile_)
+          ->enabled_extensions()
+          .Contains(url_elision_extension_id_)) {
+    profile_->GetPrefs()->SetBoolean(omnibox::kPreventUrlElisionsInOmnibox,
+                                     true);
+  }
+#endif  // BUILDFLAG(ENABLE_EXTENSIONS)
 
   BrowserList::AddBrowser(this);
 }
@@ -2123,6 +2150,12 @@ blink::mojom::DisplayMode Browser::GetDisplayMode(
   if (window_->IsFullscreen())
     return blink::mojom::DisplayMode::kFullscreen;
 
+  if (is_type_picture_in_picture() &&
+      base::FeatureList::IsEnabled(
+          blink::features::kCSSDisplayModePictureInPicture)) {
+    return blink::mojom::DisplayMode::kPictureInPicture;
+  }
+
   if (is_type_app() || is_type_devtools() || is_type_app_popup()) {
     if (app_controller_ && app_controller_->HasMinimalUiButtons())
       return blink::mojom::DisplayMode::kMinimalUi;
@@ -3398,3 +3431,9 @@ BackgroundContents* Browser::CreateBackgroundContents(
 
   return contents;
 }
+
+#if BUILDFLAG(ENABLE_EXTENSIONS)
+void Browser::SetURLElisionExtensionIDForTesting(const char* extension_id) {
+  url_elision_extension_id_ = extension_id;
+}
+#endif  // BUILDFLAG(ENABLE_EXTENSIONS)

@@ -277,9 +277,9 @@ void FileSystemAccessSafeMoveHelper::DidAfterWriteCheck(
   // valid filesystem location.
   base::OnceCallback<void(base::File::Error)> result_callback;
   // if (RequireQuarantine()) {
-  //   GURL referrer_url = manager_->is_off_the_record() ? GURL() : context_.url;
-  //   mojo::Remote<quarantine::mojom::Quarantine> quarantine_remote;
-  //   if (quarantine_connection_callback_) {
+  //   GURL referrer_url = manager_->is_off_the_record() ? GURL() :
+  //   context_.url; mojo::Remote<quarantine::mojom::Quarantine>
+  //   quarantine_remote; if (quarantine_connection_callback_) {
   //     quarantine_connection_callback_.Run(
   //         quarantine_remote.BindNewPipeAndPassReceiver());
   //   }
@@ -288,9 +288,9 @@ void FileSystemAccessSafeMoveHelper::DidAfterWriteCheck(
   //                      weak_factory_.GetWeakPtr(), dest_url(), referrer_url,
   //                      std::move(quarantine_remote));
   // } else {
-    result_callback =
-        base::BindOnce(&FileSystemAccessSafeMoveHelper::DidFileSkipQuarantine,
-                       weak_factory_.GetWeakPtr());
+  result_callback =
+      base::BindOnce(&FileSystemAccessSafeMoveHelper::DidFileSkipQuarantine,
+                     weak_factory_.GetWeakPtr());
   // }
   manager_->DoFileSystemOperation(
       FROM_HERE, &storage::FileSystemOperationRunner::Move,
@@ -340,32 +340,32 @@ void FileSystemAccessSafeMoveHelper::DidFileDoQuarantine(
           ? referrer_url
           : GURL();
 
-//   if (quarantine_remote) {
-//     quarantine::mojom::Quarantine* raw_quarantine = quarantine_remote.get();
-//     raw_quarantine->QuarantineFile(
-//         target_url.path(), authority_url, referrer_url,
-//         GetContentClient()
-//             ->browser()
-//             ->GetApplicationClientGUIDForQuarantineCheck(),
-//         mojo::WrapCallbackWithDefaultInvokeIfNotRun(
-//             base::BindOnce(&FileSystemAccessSafeMoveHelper::DidAnnotateFile,
-//                            weak_factory_.GetWeakPtr(),
-//                            std::move(quarantine_remote)),
-//             quarantine::mojom::QuarantineFileResult::ANNOTATION_FAILED));
-//   } else {
-// #if BUILDFLAG(IS_WIN)
-//     base::ThreadPool::PostTaskAndReplyWithResult(
-//         FROM_HERE, {base::MayBlock()},
-//         base::BindOnce(&quarantine::SetInternetZoneIdentifierDirectly,
-//                        target_url.path(), authority_url, referrer_url),
-//         base::BindOnce(&FileSystemAccessSafeMoveHelper::DidAnnotateFile,
-//                        weak_factory_.GetWeakPtr(),
-//                        std::move(quarantine_remote)));
-// #else
-//     DidAnnotateFile(std::move(quarantine_remote),
-//                     quarantine::mojom::QuarantineFileResult::ANNOTATION_FAILED);
-// #endif
-//   }
+  //   if (quarantine_remote) {
+  //     quarantine::mojom::Quarantine* raw_quarantine =
+  //     quarantine_remote.get(); raw_quarantine->QuarantineFile(
+  //         target_url.path(), authority_url, referrer_url,
+  //         GetContentClient()
+  //             ->browser()
+  //             ->GetApplicationClientGUIDForQuarantineCheck(),
+  //         mojo::WrapCallbackWithDefaultInvokeIfNotRun(
+  //             base::BindOnce(&FileSystemAccessSafeMoveHelper::DidAnnotateFile,
+  //                            weak_factory_.GetWeakPtr(),
+  //                            std::move(quarantine_remote)),
+  //             quarantine::mojom::QuarantineFileResult::ANNOTATION_FAILED));
+  //   } else {
+  // #if BUILDFLAG(IS_WIN)
+  //     base::ThreadPool::PostTaskAndReplyWithResult(
+  //         FROM_HERE, {base::MayBlock()},
+  //         base::BindOnce(&quarantine::SetInternetZoneIdentifierDirectly,
+  //                        target_url.path(), authority_url, referrer_url),
+  //         base::BindOnce(&FileSystemAccessSafeMoveHelper::DidAnnotateFile,
+  //                        weak_factory_.GetWeakPtr(),
+  //                        std::move(quarantine_remote)));
+  // #else
+  //     DidAnnotateFile(std::move(quarantine_remote),
+  //                     quarantine::mojom::QuarantineFileResult::ANNOTATION_FAILED);
+  // #endif
+  //   }
 }
 
 void FileSystemAccessSafeMoveHelper::DidAnnotateFile(

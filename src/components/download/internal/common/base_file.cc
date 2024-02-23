@@ -581,38 +581,38 @@ GURL BaseFile::GetEffectiveAuthorityURL(const GURL& source_url,
   //   // going to assume that at this point it's okay to treat this download as
   //   // being from the local system.
   //   if (source_url.SchemeIsFile())
-      return source_url;
+  return source_url;
 
-//     // ftp:// has an authority.
-//     if (source_url.SchemeIs(url::kFtpScheme))
-//       return source_url;
+  //     // ftp:// has an authority.
+  //     if (source_url.SchemeIs(url::kFtpScheme))
+  //       return source_url;
 
-//     if (source_url.SchemeIs(url::kBlobScheme))
-//       return url::Origin::Create(source_url).GetURL();
-//   }
+  //     if (source_url.SchemeIs(url::kBlobScheme))
+  //       return url::Origin::Create(source_url).GetURL();
+  //   }
 
-//   if (referrer_url.is_valid() && referrer_url.SchemeIsHTTPOrHTTPS())
-//     return referrer_url;
+  //   if (referrer_url.is_valid() && referrer_url.SchemeIsHTTPOrHTTPS())
+  //     return referrer_url;
 
-//   return GURL();
-// }
+  //   return GURL();
+  // }
 
-// void BaseFile::OnFileQuarantined(
-//     quarantine::mojom::QuarantineFileResult result) {
-//   DCHECK(on_annotation_done_callback_);
-//   quarantine_service_.reset();
-//   std::move(on_annotation_done_callback_)
-//       .Run(QuarantineFileResultToReason(result));
-// }
+  // void BaseFile::OnFileQuarantined(
+  //     quarantine::mojom::QuarantineFileResult result) {
+  //   DCHECK(on_annotation_done_callback_);
+  //   quarantine_service_.reset();
+  //   std::move(on_annotation_done_callback_)
+  //       .Run(QuarantineFileResultToReason(result));
+  // }
 
-// void BaseFile::OnQuarantineServiceError(const GURL& source_url,
-//                                         const GURL& referrer_url) {
-// #if BUILDFLAG(IS_WIN)
-//   OnFileQuarantined(quarantine::SetInternetZoneIdentifierDirectly(
-//       full_path_, source_url, referrer_url));
-// #else   // !BUILDFLAG(IS_WIN)
-//   CHECK(false) << "In-process quarantine service should not have failed.";
-// #endif  // !BUILDFLAG(IS_WIN)
+  // void BaseFile::OnQuarantineServiceError(const GURL& source_url,
+  //                                         const GURL& referrer_url) {
+  // #if BUILDFLAG(IS_WIN)
+  //   OnFileQuarantined(quarantine::SetInternetZoneIdentifierDirectly(
+  //       full_path_, source_url, referrer_url));
+  // #else   // !BUILDFLAG(IS_WIN)
+  //   CHECK(false) << "In-process quarantine service should not have failed.";
+  // #endif  // !BUILDFLAG(IS_WIN)
 }
 
 void BaseFile::AnnotateWithSourceInformation(
@@ -621,34 +621,34 @@ void BaseFile::AnnotateWithSourceInformation(
     const GURL& referrer_url,
     mojo::PendingRemote<quarantine::mojom::Quarantine> remote_quarantine,
     OnAnnotationDoneCallback on_annotation_done_callback) {
-//   GURL authority_url = GetEffectiveAuthorityURL(source_url, referrer_url);
-//   if (!remote_quarantine) {
-// #if BUILDFLAG(IS_WIN)
-//     quarantine::mojom::QuarantineFileResult result =
-//         quarantine::SetInternetZoneIdentifierDirectly(full_path_, authority_url,
-//                                                       referrer_url);
-// #else
-//     quarantine::mojom::QuarantineFileResult result =
-//         quarantine::mojom::QuarantineFileResult::ANNOTATION_FAILED;
-// #endif
-//     std::move(on_annotation_done_callback)
-//         .Run(QuarantineFileResultToReason(result));
-//   } else {
-//     quarantine_service_.Bind(std::move(remote_quarantine));
+  //   GURL authority_url = GetEffectiveAuthorityURL(source_url, referrer_url);
+  //   if (!remote_quarantine) {
+  // #if BUILDFLAG(IS_WIN)
+  //     quarantine::mojom::QuarantineFileResult result =
+  //         quarantine::SetInternetZoneIdentifierDirectly(full_path_,
+  //         authority_url,
+  //                                                       referrer_url);
+  // #else
+  //     quarantine::mojom::QuarantineFileResult result =
+  //         quarantine::mojom::QuarantineFileResult::ANNOTATION_FAILED;
+  // #endif
+  //     std::move(on_annotation_done_callback)
+  //         .Run(QuarantineFileResultToReason(result));
+  //   } else {
+  //     quarantine_service_.Bind(std::move(remote_quarantine));
 
-//     on_annotation_done_callback_ = std::move(on_annotation_done_callback);
+  //     on_annotation_done_callback_ = std::move(on_annotation_done_callback);
 
-//     quarantine_service_.set_disconnect_handler(base::BindOnce(
-//         &BaseFile::OnQuarantineServiceError, weak_factory_.GetWeakPtr(),
-//         authority_url, referrer_url));
+  //     quarantine_service_.set_disconnect_handler(base::BindOnce(
+  //         &BaseFile::OnQuarantineServiceError, weak_factory_.GetWeakPtr(),
+  //         authority_url, referrer_url));
 
-//     quarantine_service_->QuarantineFile(
-//         full_path_, authority_url, referrer_url, client_guid,
-//         base::BindOnce(&BaseFile::OnFileQuarantined,
-//                        weak_factory_.GetWeakPtr()));
-//   }
-  std::move(on_annotation_done_callback)
-      .Run(DOWNLOAD_INTERRUPT_REASON_NONE);
+  //     quarantine_service_->QuarantineFile(
+  //         full_path_, authority_url, referrer_url, client_guid,
+  //         base::BindOnce(&BaseFile::OnFileQuarantined,
+  //                        weak_factory_.GetWeakPtr()));
+  //   }
+  std::move(on_annotation_done_callback).Run(DOWNLOAD_INTERRUPT_REASON_NONE);
 }
 
 }  // namespace download

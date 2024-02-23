@@ -302,11 +302,6 @@ const base::FeatureParam<base::TimeDelta>
         &kAudioRendererAlgorithmParameters, "starting_capacity_for_encrypted",
         base::Milliseconds(500)};
 
-// Prefer FFmpeg to LibVPX for Vp8 decoding with opaque alpha mode.
-BASE_FEATURE(kFFmpegDecodeOpaqueVP8,
-             "FFmpegDecodeOpaqueVP8",
-             base::FEATURE_DISABLED_BY_DEFAULT);
-
 // Only used for disabling overlay fullscreen (aka SurfaceView) in Clank.
 BASE_FEATURE(kOverlayFullscreenVideo,
              "overlay-fullscreen-video",
@@ -737,7 +732,7 @@ BASE_FEATURE(kGlobalMediaControlsAutoDismiss,
 // Updated global media controls UI for CrOS.
 BASE_FEATURE(kGlobalMediaControlsCrOSUpdatedUI,
              "GlobalMediaControlsCrOSUpdatedUI",
-             base::FEATURE_DISABLED_BY_DEFAULT);
+             base::FEATURE_ENABLED_BY_DEFAULT);
 #else   // BUILDFLAG(IS_CHROMEOS)
 // Updated global media controls UI for all the non-CrOS desktop platforms.
 BASE_FEATURE(kGlobalMediaControlsUpdatedUI,
@@ -857,7 +852,12 @@ BASE_FEATURE(kVaapiAV1Encoder,
 // calls for thread safe backends.
 BASE_FEATURE(kGlobalVaapiLock,
              "GlobalVaapiLock",
-             base::FEATURE_ENABLED_BY_DEFAULT);
+#if BUILDFLAG(IS_CHROMEOS)
+             base::FEATURE_DISABLED_BY_DEFAULT
+#else
+             base::FEATURE_ENABLED_BY_DEFAULT
+#endif
+);
 
 #if defined(ARCH_CPU_X86_FAMILY) && BUILDFLAG(IS_CHROMEOS)
 // TODO(b/214589754): revisit the need for the BUILDFLAG(IS_CHROMEOS) guard (as
@@ -877,12 +877,18 @@ BASE_FEATURE(kVaapiVp9SModeHWEncoding,
              base::FEATURE_DISABLED_BY_DEFAULT);
 #endif  // defined(ARCH_CPU_X86_FAMILY) && BUILDFLAG(IS_CHROMEOS)
 #if BUILDFLAG(IS_CHROMEOS) || BUILDFLAG(IS_LINUX)
-// Enables the new V4L2StatefulVideoDecoder instead of V4L2VideoDecoder.
-BASE_FEATURE(kV4L2FlatStatelessVideoDecoder,
-             "V4L2FlatStatelessVideoDecoder",
+// Enables the new V4L2 flat video decoder clients instead of V4L2VideoDecoder.
+// Owners: frkoenig@chromium.org, mcasas@chromium.org
+// Expiry: When flat decoders are supported on all platforms and the legacy
+//         decoders have been deprecated.
+BASE_FEATURE(kV4L2FlatVideoDecoder,
+             "V4L2FlatVideoDecoder",
              base::FEATURE_DISABLED_BY_DEFAULT);
 
 // Enables the new V4L2StatefulVideoDecoder instead of V4L2VideoDecoder.
+// Owners: frkoenig@chromium.org, mcasas@chromium.org
+// Expiry: When the |V4L2FlatVideoDecoder| flag handles both stateful and
+//         stateless decoders.
 BASE_FEATURE(kV4L2FlatStatefulVideoDecoder,
              "V4L2FlatStatefulVideoDecoder",
              base::FEATURE_DISABLED_BY_DEFAULT);
@@ -1459,7 +1465,7 @@ BASE_FEATURE(kExposeOutOfProcessVideoDecodingToLacros,
 // using the GPU process.
 BASE_FEATURE(kUseOutOfProcessVideoDecoding,
              "UseOutOfProcessVideoDecoding",
-#if BUILDFLAG(IS_CHROMEOS_LACROS)
+#if BUILDFLAG(IS_CHROMEOS)
              base::FEATURE_ENABLED_BY_DEFAULT
 #else
              base::FEATURE_DISABLED_BY_DEFAULT
@@ -1746,19 +1752,12 @@ BASE_FEATURE(kLibaomUseChromeThreads,
              "LibaomUseChromeThreads",
              base::FEATURE_DISABLED_BY_DEFAULT);
 
-#if BUILDFLAG(ENABLE_FFMPEG_VIDEO_DECODERS)
-// Allows decoding of theora / vp3 content.
-BASE_FEATURE(kTheoraVideoCodec,
-             "TheoraVideoCodec",
-             base::FEATURE_DISABLED_BY_DEFAULT);
-
-#if BUILDFLAG(IS_CHROMEOS)
+#if BUILDFLAG(ENABLE_FFMPEG_VIDEO_DECODERS) && BUILDFLAG(IS_CHROMEOS)
 // Allows demuxing of AVI and decoding of MPEG4 streams. These should not be
 // allowed through the web in Chrome, but may be enabled by the local file app.
 BASE_FEATURE(kCrOSLegacyMediaFormats,
              "CrOSLegacyMediaFormats",
              base::FEATURE_DISABLED_BY_DEFAULT);
-#endif
 #endif
 
 #if BUILDFLAG(IS_WIN)
