@@ -7,42 +7,25 @@
 
 const FeatureEntry::Choice kCloseConfirmation[] = {
     {flags_ui::kGenericExperimentChoiceDefault, "", ""},
-    {"Show confirmation with last window",
-     "close-confirmation",
-     "last"},
-    {"Show confirmation with multiple windows",
-     "close-confirmation",
+    {"Show confirmation with last window", "close-confirmation", "last"},
+    {"Show confirmation with multiple windows", "close-confirmation",
      "multiple"},
 };
 
 const FeatureEntry::Choice kCloseWindowWithLastTab[] = {
     {flags_ui::kGenericExperimentChoiceDefault, "", ""},
-    {"Never",
-     "close-window-with-last-tab",
-     "never"},
+    {"Never", "close-window-with-last-tab", "never"},
 };
 
 const FeatureEntry::Choice kScrollEventChangesTab[] = {
     {flags_ui::kGenericExperimentChoiceDefault, "", ""},
-    {"Always",
-     "scroll-tabs",
-     "always"},
-    {"Never",
-     "scroll-tabs",
-     "never"}
-};
+    {"Always", "scroll-tabs", "always"},
+    {"Never", "scroll-tabs", "never"}};
 
 const FeatureEntry::Choice kShowAvatarButtonChoices[] = {
     {flags_ui::kGenericExperimentChoiceDefault, "", ""},
-    {"Always",
-     "show-avatar-button",
-     "always"},
-    {"Incognito and Guest",
-     "show-avatar-button",
-     "incognito-and-guest"},
-    {"Never",
-     "show-avatar-button",
-     "never"}
-};
+    {"Always", "show-avatar-button", "always"},
+    {"Incognito and Guest", "show-avatar-button", "incognito-and-guest"},
+    {"Never", "show-avatar-button", "never"}};
 
 #endif  // CHROME_BROWSER_YFQHHK_FLAG_CHOICES_H_
