@@ -280,6 +280,24 @@ if ((is_apple && ffmpeg_branding == "Chrome") ||
   ]
 
   ffmpeg_c_sources += [
+    "libavcodec/x86/bswapdsp_init.c",
+    "libavcodec/x86/hevcdsp_init.c",
+  ]
+
+  ffmpeg_asm_sources += [
+    "libavcodec/x86/ac3dsp.asm",
+    "libavcodec/x86/ac3dsp_downmix.asm",
+    "libavcodec/x86/bswapdsp.asm",
+    "libavcodec/x86/fmtconvert.asm",
+    "libavcodec/x86/hevc_add_res.asm",
+    "libavcodec/x86/hevc_deblock.asm",
+    "libavcodec/x86/hevc_idct.asm",
+    "libavcodec/x86/hevc_mc.asm",
+    "libavcodec/x86/hevc_sao.asm",
+    "libavcodec/x86/hevc_sao_10bit.asm",
+  ]
+
+  ffmpeg_c_sources += [
     "libavcodec/atsc_a53.c",
     "libavcodec/autorename_libavcodec_videodsp.c",
     "libavcodec/cabac.c",
@@ -320,24 +338,6 @@ if ((is_apple && current_cpu == "x64" && ffmpeg_branding == "Chrome") ||
     (use_linux_config && current_cpu == "x86" && ffmpeg_branding == "Chrome") ||
     (use_linux_config && current_cpu == "x86" &&
      ffmpeg_branding == "ChromeOS")) {
-  ffmpeg_c_sources += [
-    "libavcodec/x86/bswapdsp_init.c",
-    "libavcodec/x86/hevcdsp_init.c",
-  ]
-
-  ffmpeg_asm_sources += [
-    "libavcodec/x86/ac3dsp.asm",
-    "libavcodec/x86/ac3dsp_downmix.asm",
-    "libavcodec/x86/bswapdsp.asm",
-    "libavcodec/x86/fmtconvert.asm",
-    "libavcodec/x86/hevc_add_res.asm",
-    "libavcodec/x86/hevc_deblock.asm",
-    "libavcodec/x86/hevc_idct.asm",
-    "libavcodec/x86/hevc_mc.asm",
-    "libavcodec/x86/hevc_sao.asm",
-    "libavcodec/x86/hevc_sao_10bit.asm",
-  ]
-
   ffmpeg_c_sources += [
     "libavcodec/x86/autorename_libavcodec_x86_videodsp_init.c",
     "libavcodec/x86/h264_intrapred_init.c",

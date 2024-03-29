@@ -28,20 +28,16 @@
 
 <https://github.com/ungoogled-software/ungoogled-chromium/blob/master/patches/extra/ungoogled-chromium/add-flag-to-scroll-tabs.patch>
 
-<https://github.com/ungoogled-software/ungoogled-chromium/blob/master/patches/extra/ungoogled-chromium/add-flag-to-clear-data-on-exit.patch>
-
 <https://github.com/ungoogled-software/ungoogled-chromium/blob/master/patches/extra/ungoogled-chromium/add-flag-to-show-avatar-button.patch>
 
 <https://github.com/ungoogled-software/ungoogled-chromium/blob/master/patches/extra/ungoogled-chromium/add-flag-for-incognito-themes.patch>
 
 <https://github.com/ungoogled-software/ungoogled-chromium/blob/master/patches/extra/ungoogled-chromium/disable-download-quarantine.patch>
 
-<https://github.com/ungoogled-software/ungoogled-chromium/blob/master/patches/core/ungoogled-chromium/disable-privacy-sandbox.patch>
+<https://github.com/Muril-o/electron-chromium-codecs/blob/main/v29.1.4/look_chromium_hevc_ac3.patch>
 
-<https://github.com/Muril-o/electron-chromium-codecs/blob/main/v25.1.0/look_chromium_hevc_ac3.patch>
+<https://github.com/Muril-o/electron-chromium-codecs/blob/main/v29.1.4/look_electron_hevc_ac3.patch>
 
-<https://github.com/Muril-o/electron-chromium-codecs/blob/main/v25.1.0/look_electron_hevc_ac3.patch>
-
-<https://github.com/Muril-o/electron-chromium-codecs/blob/main/v25.1.0/look_ffmpeg_hevc_ac3.patch>
+<https://github.com/Muril-o/electron-chromium-codecs/blob/main/v29.1.4/look_ffmpeg_hevc_ac3.patch>
 
 # The changes made in this repo are listed above, with many thanks to the owners and contributors of the above repos, who own the copyrights to the changes listed above.

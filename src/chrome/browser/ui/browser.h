@@ -43,6 +43,7 @@
 #include "content/public/browser/web_contents_delegate.h"
 #include "extensions/buildflags/buildflags.h"
 #include "printing/buildflags/buildflags.h"
+#include "third_party/blink/public/mojom/page/draggable_region.mojom-forward.h"
 #include "ui/base/page_transition_types.h"
 #include "ui/base/ui_base_types.h"
 #include "ui/base/window_open_disposition.h"
@@ -72,6 +73,10 @@ class StatusBubble;
 class TabStripModel;
 class TabStripModelDelegate;
 class TabMenuModelDelegate;
+
+namespace tab_groups {
+class DeletionDialogController;
+}
 
 namespace blink {
 enum class ProtocolHandlerSecurityLevel;
@@ -131,6 +136,9 @@ class Browser : public TabStripModelObserver,
   // SessionService::WindowType mirrors these values.  If you add to this
   // enum, look at SessionService::WindowType to see if it needs to be
   // updated.
+  // TODO(https://crbug.com/331031753): Several of these existing Window Types
+  // likely should not have been using Browser as a base to begin with and
+  // should be migrated. Please refrain from adding new types.
   enum Type {
     // Normal tabbed non-app browser (previously TYPE_TABBED).
     TYPE_NORMAL,
@@ -459,6 +467,16 @@ class Browser : public TabStripModelObserver,
 #endif
 
   // Never nullptr.
+  //
+  // When the last tab is removed, the browser attempts to close, see
+  // TabStripEmpty().
+  // TODO(https://crbug.com/331031753): Several existing Browser::Types never
+  // show a tab strip, yet are forced to work with the tab strip API to deal
+  // with the previous condition. This creates confusing control flow both for
+  // the tab strip and this class. One or both of the following should happen:
+  //  (1) tab_strip_model_ should become an optional member.
+  //  (2) Variations of Browser::Type that never show a tab strip should not use
+  //      this class.
   TabStripModel* tab_strip_model() const { return tab_strip_model_.get(); }
 
   // Never nullptr.
@@ -474,6 +492,12 @@ class Browser : public TabStripModelObserver,
   chrome::BrowserCommandController* command_controller() {
     return command_controller_.get();
   }
+
+  tab_groups::DeletionDialogController* tab_group_deletion_dialog_controller()
+      const {
+    return tab_group_deletion_dialog_controller_.get();
+  }
+
   SessionID session_id() const { return session_id_; }
   bool omit_from_session_restore() const { return omit_from_session_restore_; }
   bool should_trigger_session_restore() const {
@@ -706,7 +730,10 @@ class Browser : public TabStripModelObserver,
   // Interface implementations ////////////////////////////////////////////////
 
   // Overridden from content::PageNavigator:
-  content::WebContents* OpenURL(const content::OpenURLParams& params) override;
+  content::WebContents* OpenURL(
+      const content::OpenURLParams& params,
+      base::OnceCallback<void(content::NavigationHandle&)>
+          navigation_handle_callback) override;
 
   // Overridden from TabStripModelObserver:
   void OnTabStripModelChanged(
@@ -772,13 +799,15 @@ class Browser : public TabStripModelObserver,
   bool ShouldShowStaleContentOnEviction(content::WebContents* source) override;
   void MediaWatchTimeChanged(
       const content::MediaPlayerWatchTime& watch_time) override;
-  base::WeakPtr<content::WebContentsDelegate> GetDelegateWeakPtr() override;
   std::unique_ptr<content::EyeDropper> OpenEyeDropper(
       content::RenderFrameHost* frame,
       content::EyeDropperListener* listener) override;
   void InitiatePreview(content::WebContents& web_contents,
                        const GURL& url) override;
   bool ShouldUseInstancedSystemMediaControls() const override;
+  void DraggableRegionsChanged(
+      const std::vector<blink::mojom::DraggableRegionPtr>& regions,
+      content::WebContents* contents) override;
 
   bool is_type_normal() const { return type_ == TYPE_NORMAL; }
   bool is_type_popup() const { return type_ == TYPE_POPUP; }
@@ -893,7 +922,9 @@ class Browser : public TabStripModelObserver,
   // Overridden from content::WebContentsDelegate:
   content::WebContents* OpenURLFromTab(
       content::WebContents* source,
-      const content::OpenURLParams& params) override;
+      const content::OpenURLParams& params,
+      base::OnceCallback<void(content::NavigationHandle&)>
+          navigation_handle_callback) override;
   void NavigationStateChanged(content::WebContents* source,
                               content::InvalidateTypes changed_flags) override;
   void VisibleSecurityStateChanged(content::WebContents* source) override;
@@ -1369,6 +1400,10 @@ class Browser : public TabStripModelObserver,
       extension_window_controller_;
 
   std::unique_ptr<chrome::BrowserCommandController> command_controller_;
+
+  // Dialog controller that handles the showing of the deletion dialog.
+  std::unique_ptr<tab_groups::DeletionDialogController>
+      tab_group_deletion_dialog_controller_;
 
   // True if the browser window has been shown at least once.
   bool window_has_shown_;

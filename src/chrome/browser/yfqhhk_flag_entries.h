@@ -5,10 +5,6 @@
 #ifndef CHROME_BROWSER_YFQHHK_FLAG_ENTRIES_H_
 #define CHROME_BROWSER_YFQHHK_FLAG_ENTRIES_H_
 
-{"clear-data-on-exit", "Clear data on exit",
- "Clears all browsing data on exit.", kOsDesktop,
- FEATURE_VALUE_TYPE(browsing_data::features::kClearDataOnExit)},
-
     {"close-window-with-last-tab", "Close window with last tab",
      "Determines whether a window should close once the last tab is closed.",
      kOsDesktop, MULTI_VALUE_TYPE(kCloseWindowWithLastTab)},
