@@ -890,7 +890,8 @@ bool HandleNewTabPageLocationOverride(
     ntp_location = base::CommandLine::ForCurrentProcess()->GetSwitchValueASCII(
         "custom-ntp");
   }
-  if (profile->IsOffTheRecord() && base::Contains(ntp_location, "chrome://")) {
+  if (profile->IsOffTheRecord() &&
+      ntp_location.find("chrome://") != std::string::npos) {
     return false;
   }
   if (ntp_location.empty())

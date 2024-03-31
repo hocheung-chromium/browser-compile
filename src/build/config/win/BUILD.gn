@@ -85,7 +85,7 @@ config("compiler") {
 
   cflags += [
     # Work around crbug.com/526851, bug in VS 2015 RTM compiler.
-    # "/Zc:sizedDealloc-",
+    "/Zc:sizedDealloc",
   ]
 
   if (is_clang) {
@@ -127,7 +127,7 @@ config("compiler") {
     # next step after SSE2 will be AVX.
     if (current_cpu == "x86" || current_cpu == "x64") {
       cflags += [
-        "-mtune=raptorlake",
+        "-mtune=haswell",
         "-msse3",
         "-mssse3",
         "-msse4.1",

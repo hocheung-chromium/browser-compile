@@ -4457,9 +4457,6 @@ const FeatureEntry kFeatureEntries[] = {
     {"firmware-update-ui-v2", flag_descriptions::kFirmwareUpdateUIV2Name,
      flag_descriptions::kFirmwareUpdateUIV2Description, kOsCrOS,
      FEATURE_VALUE_TYPE(ash::features::kFirmwareUpdateUIV2)},
-    {"screen-saver-duration", flag_descriptions::kScreenSaverDurationName,
-     flag_descriptions::kScreenSaverDurationDescription, kOsCrOS,
-     FEATURE_VALUE_TYPE(ash::features::kScreenSaverDuration)},
     {"multi-zone-rgb-keyboard", flag_descriptions::kMultiZoneRgbKeyboardName,
      flag_descriptions::kMultiZoneRgbKeyboardDescription, kOsCrOS,
      FEATURE_VALUE_TYPE(ash::features::kMultiZoneRgbKeyboard)},
@@ -6699,6 +6696,10 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kNtpCacheOneGoogleBarDescription, kOsDesktop,
      FEATURE_VALUE_TYPE(ntp_features::kCacheOneGoogleBar)},
 
+    {"ntp-calendar-module", flag_descriptions::kNtpCalendarModuleName,
+     flag_descriptions::kNtpCalendarModuleDescription, kOsDesktop,
+     FEATURE_VALUE_TYPE(ntp_features::kNtpCalendarModule)},
+
     {"ntp-chrome-cart-journeys-module-coexist",
      flag_descriptions::kNtpChromeCartHistoryClusterCoexistName,
      flag_descriptions::kNtpChromeCartHistoryClusterCoexistDescription,
@@ -6810,6 +6811,11 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kNtpModulesRedesignedDescription, kOsDesktop,
      FEATURE_VALUE_TYPE(ntp_features::kNtpModulesRedesigned)},
 
+    {"ntp-outlook-calendar-module",
+     flag_descriptions::kNtpOutlookCalendarModuleName,
+     flag_descriptions::kNtpOutlookCalendarModuleDescription, kOsDesktop,
+     FEATURE_VALUE_TYPE(ntp_features::kNtpOutlookCalendarModule)},
+
     {"ntp-photos-module", flag_descriptions::kNtpPhotosModuleName,
      flag_descriptions::kNtpPhotosModuleDescription, kOsDesktop,
      FEATURE_WITH_PARAMS_VALUE_TYPE(ntp_features::kNtpPhotosModule,
@@ -6913,6 +6919,10 @@ const FeatureEntry kFeatureEntries[] = {
      FEATURE_WITH_PARAMS_VALUE_TYPE(ntp_features::kNtpSafeBrowsingModule,
                                     kNtpSafeBrowsingModuleVariations,
                                     "DesktopNtpModules")},
+
+    {"ntp-sharepoint-module", flag_descriptions::kNtpSharepointModuleName,
+     flag_descriptions::kNtpSharepointModuleDescription, kOsDesktop,
+     FEATURE_VALUE_TYPE(ntp_features::kNtpSharepointModule)},
 
     {"ntp-tab-resumption-module",
      flag_descriptions::kNtpTabResumptionModuleName,
@@ -7759,10 +7769,6 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kDisplayAlignmentAssistanceDescription, kOsCrOS,
      FEATURE_VALUE_TYPE(ash::features::kDisplayAlignAssist)},
 
-    {"dropdown-panel", flag_descriptions::kDropdownPanel,
-     flag_descriptions::kDropdownPanelDescription, kOsCrOS,
-     FEATURE_VALUE_TYPE(ash::features::kDropdownPanel)},
-
     {"enable-experimental-rgb-keyboard-patterns",
      flag_descriptions::kExperimentalRgbKeyboardPatternsName,
      flag_descriptions::kExperimentalRgbKeyboardPatternsDescription, kOsCrOS,
@@ -7897,6 +7903,10 @@ const FeatureEntry kFeatureEntries[] = {
      SINGLE_VALUE_TYPE(switches::kEnableWebGPUDeveloperFeatures)},
 
 #if BUILDFLAG(IS_CHROMEOS_ASH)
+    {"game-dashboard", flag_descriptions::kGameDashboard,
+     flag_descriptions::kGameDashboardDescription, kOsCrOS,
+     FEATURE_VALUE_TYPE(ash::features::kGameDashboard)},
+
     {"gesture-properties-dbus-service",
      flag_descriptions::kEnableGesturePropertiesDBusServiceName,
      flag_descriptions::kEnableGesturePropertiesDBusServiceDescription, kOsCrOS,

@@ -567,7 +567,7 @@ void Tab::OnMouseReleased(const ui::MouseEvent& event) {
   // (normal windows behavior is to discard presses of a UI element where the
   // releases happen off the element).
   if (event.IsOnlyMiddleMouseButton() ||
-      // Double click close tab.
+      // Close tab on double click, mirror of IsOnlyMiddleMouseButton.
       ((event.IsOnlyLeftMouseButton() && event.GetClickCount() == 2) &&
        base::CommandLine::ForCurrentProcess()->HasSwitch(
            "double-click-close-tab"))) {

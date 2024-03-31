@@ -2031,11 +2031,15 @@ void TabStripModel::CloseTabs(base::span<content::WebContents* const> items,
     }
   }
 
+  if (filtered_items.empty()) {
+    return;
+  }
+
   const std::string flag_value =
       base::CommandLine::ForCurrentProcess()->GetSwitchValueASCII(
           "close-window-with-last-tab");
   if (flag_value == "never" && !closing_all_ &&
-      static_cast<int>(items.size()) == count()) {
+      static_cast<int>(filtered_items.size()) == count()) {
     delegate()->AddTabAt(GURL(), -1, true);
   }
 

@@ -10,15 +10,11 @@
 
 <https://github.com/ungoogled-software/ungoogled-chromium/blob/master/patches/extra/ungoogled-chromium/enable-menu-on-reload-button.patch>
 
-<https://github.com/RobRich999/Chromium_Clang/blob/main/Windows/win64-avx.patch>
-
 <https://github.com/RobRich999/Chromium_Clang/blob/main/Windows/win64-avx2.patch>
 
 <https://github.com/RobRich999/Chromium_Clang/blob/main/V8/v8.patch>
 
 <https://github.com/StaZhu/enable-chromium-hevc-hardware-decoding/blob/main/add-hevc-ffmpeg-decoder-parser.patch>
-
-<https://github.com/StaZhu/enable-chromium-hevc-hardware-decoding/blob/main/enable-hevc-encoding-by-default.patch>
 
 <https://github.com/ungoogled-software/ungoogled-chromium-windows/blob/master/patches/ungoogled-chromium/windows/windows-disable-encryption.patch>
 
@@ -39,5 +35,10 @@
 <https://github.com/Muril-o/electron-chromium-codecs/blob/main/v29.1.4/look_electron_hevc_ac3.patch>
 
 <https://github.com/Muril-o/electron-chromium-codecs/blob/main/v29.1.4/look_ffmpeg_hevc_ac3.patch>
+
+
+<Double Click Close Tabs>
+
+<Remove Default Browser Infobar>
 
 # The changes made in this repo are listed above, with many thanks to the owners and contributors of the above repos, who own the copyrights to the changes listed above.

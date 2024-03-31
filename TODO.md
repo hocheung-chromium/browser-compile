@@ -1,4 +1,4 @@
-# Remove the following patches again until these patches are updated in the future.
+# Delete the following patches until the patches are updated or bug troubleshooting is completed.
 
 <https://github.com/ungoogled-software/ungoogled-chromium/blob/master/patches/core/ungoogled-chromium/disable-privacy-sandbox.patch>
 
