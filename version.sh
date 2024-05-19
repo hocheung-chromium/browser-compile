@@ -13,7 +13,7 @@ yell() { echo "$0: $*" >&2; }
 die() { yell "$*"; exit 111; }
 try() { "$@" || die "${RED}Failed $*"; }
 
-COMMIT_ID="72275879a2cb70a6f79d74aad24ab1383ce21374"
+COMMIT_ID="1f6ef00ff52cb793c6d0f92e8429022a6a75de78"
 
 export COMMIT_ID &&
 
@@ -42,7 +42,7 @@ vpython3 v8/tools/builtins-pgo/download_profiles.py --depot-tools=$HOME/depot_to
 
 printf "\n" &&
 
-cd $HOME/chromium_compile &&
+cd $HOME/browser-compile &&
 
 printf "${bold}${GRE}Done!${c0}" &&
 printf "${bold}${YEL}You can now run ./setup.sh.${c0}\n" &&

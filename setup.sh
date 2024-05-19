@@ -11,15 +11,6 @@ yell() { echo "$0: $*" >&2; }
 die() { yell "$*"; exit 111; }
 try() { "$@" || die "${RED}Failed $*"; }
 
-# --help
-displayHelp () {
-	printf "\n" &&
-	printf "${bold}${GRE}Script to copy files over the Chromium source tree.${c0}\n" &&
-}
-case $1 in
-	--help) displayHelp; exit 0;;
-esac
-
 printf "\n" &&
 printf "${bold}${YEL}Copying files over the Chromium source tree.${c0}\n" &&
 tput sgr0 &&

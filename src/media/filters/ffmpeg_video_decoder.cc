@@ -213,10 +213,6 @@ int FFmpegVideoDecoder::GetVideoBuffer(struct AVCodecContext* codec_context,
     frame->linesize[plane] = layout->planes()[plane].stride;
   }
 
-  // This seems unsafe, given threaded decoding.  However, `reordered_opaque` is
-  // also going away upstream, so we need a whole new mechanism either way.
-  frame->reordered_opaque = codec_context->reordered_opaque;
-
   // This will be freed by `ReleaseVideoBufferImpl`.
   auto* opaque = new OpaqueData(fb_priv, frame_pool_, data, allocation_size,
                                 std::move(*layout));
@@ -358,7 +354,7 @@ bool FFmpegVideoDecoder::FFmpegDecode(const DecoderBuffer& buffer) {
     packet->size = 0;
   } else {
     packet->data = const_cast<uint8_t*>(buffer.data());
-    packet->size = buffer.data_size();
+    packet->size = buffer.size();
 
     DCHECK(packet->data);
     DCHECK_GT(packet->size, 0);
@@ -398,8 +394,9 @@ bool FFmpegVideoDecoder::OnNewFrame(AVFrame* frame) {
   // TODO(fbarchard): Work around for FFmpeg http://crbug.com/27675
   // The decoder is in a bad state and not decoding correctly.
   // Checking for NULL avoids a crash in CopyPlane().
-  if (!frame->data[VideoFrame::kYPlane] || !frame->data[VideoFrame::kUPlane] ||
-      !frame->data[VideoFrame::kVPlane]) {
+  if (!frame->data[VideoFrame::Plane::kY] ||
+      !frame->data[VideoFrame::Plane::kU] ||
+      !frame->data[VideoFrame::Plane::kV]) {
     DLOG(ERROR) << "Video frame was produced yet has invalid frame data.";
     return false;
   }
