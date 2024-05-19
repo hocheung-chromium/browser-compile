@@ -38,7 +38,7 @@ tput sgr0 &&
 
 vpython3 tools/update_pgo_profiles.py --target=win64 update --gs-url-base=chromium-optimization-profiles/pgo_profiles &&
 
-vpython3 v8/tools/builtins-pgo/download_profiles.py --depot-tools=$HOME/depot_tools download &&
+vpython3 v8/tools/builtins-pgo/download_profiles.py --depot-tools=$HOME/depot_tools download --force &&
 
 printf "\n" &&
 
