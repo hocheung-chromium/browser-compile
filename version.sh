@@ -13,16 +13,16 @@ yell() { echo "$0: $*" >&2; }
 die() { yell "$*"; exit 111; }
 try() { "$@" || die "${RED}Failed $*"; }
 
-COMMIT_ID="1f6ef00ff52cb793c6d0f92e8429022a6a75de78"
+CHOR_VER="124.0.6367.221"
 
-export COMMIT_ID &&
+export CHOR_VER &&
 
 printf "\n"
-printf "${bold}${RED}NOTE: ${bold}${YEL}Checking out${bold}${CYA} $COMMIT_ID ${bold}${YEL}in $HOME/chromium/src...${c0}\n"
+printf "${bold}${RED}NOTE: ${bold}${YEL}Checking out${bold}${CYA} $CHOR_VER ${bold}${YEL}in $HOME/chromium/src...${c0}\n"
 
 cd $HOME/chromium/src &&
 
-git checkout -f $COMMIT_ID &&
+git checkout -f tags/$CHOR_VER &&
 
 git clean -ffd &&
 
@@ -31,7 +31,7 @@ gclient sync --with_branch_heads --with_tags -f -R -D &&
 gclient runhooks &&
 
 printf "\n"
-printf "${bold}${GRE}Chromium tree is checked out at: $COMMIT_ID${c0}\n"
+printf "${bold}${GRE}Chromium tree is checked out at: $CHOR_VER${c0}\n"
 
 printf "${YEL}Downloading PGO Profiles for Chromium.\n" &&
 tput sgr0 &&

@@ -349,7 +349,7 @@ bool AVCodecContextToAudioDecoderConfig(const AVCodecContext* codec_context,
       // F.3.1 and F.5.1 in that spec the sample_format for AC3/EAC3 must be 16.
       sample_format = kSampleFormatS16;
 #else
-      NOTREACHED_IN_MIGRATION();
+      NOTREACHED();
 #endif
       break;
 #if BUILDFLAG(ENABLE_PLATFORM_MPEG_H_AUDIO)
@@ -408,9 +408,7 @@ bool AVCodecContextToAudioDecoderConfig(const AVCodecContext* codec_context,
 
     // TODO(dalecurtis): Just use the profile from the codec context if ffmpeg
     // ever starts supporting xHE-AAC.
-    // FFmpeg provides the (defined_profile - 1) for AVCodecContext::profile
-    if (codec_context->profile == FF_PROFILE_UNKNOWN ||
-        codec_context->profile == mp4::AAC::kXHeAAcType - 1) {
+    if (codec_context->profile == FF_PROFILE_UNKNOWN) {
       // Errors aren't fatal here, so just drop any MediaLog messages.
       NullMediaLog media_log;
       mp4::AAC aac_parser;
@@ -550,7 +548,7 @@ bool AVStreamToVideoDecoderConfig(const AVStream* stream,
 #if BUILDFLAG(ENABLE_PLATFORM_HEVC)
     case VideoCodec::kHEVC: {
       int hevc_profile = -1;
-      // We need to parse extradata each time, because we won't add ffmpeg
+      // We need to parse extradata each time, because we wont add ffmpeg
       // hevc decoder & parser to chromium and codec_context->profile
       // should always be FF_PROFILE_UNKNOWN (-99) here
       if (codec_context->extradata && codec_context->extradata_size) {
@@ -746,7 +744,7 @@ bool AVStreamToVideoDecoderConfig(const AVStream* stream,
           smpte_st_2086.luminance_min = av_q2d(mdcv->min_luminance);
         }
 
-        // TODO(crbug.com/40268540): Consider rejecting metadata that
+        // TODO(https://crbug.com/1446302): Consider rejecting metadata that
         // does not specify all values.
         if (mdcv->has_primaries || mdcv->has_luminance) {
           hdr_metadata.smpte_st_2086 = smpte_st_2086;

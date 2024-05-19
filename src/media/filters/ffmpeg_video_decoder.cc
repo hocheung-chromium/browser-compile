@@ -82,13 +82,13 @@ static int GetFFmpegVideoDecoderThreadCount(const VideoDecoderConfig& config) {
       // No extra threads for these codecs.
       break;
 
-    case VideoCodec::kH264:
+    case VideoCodec::kHEVC:
     case VideoCodec::kVC1:
     case VideoCodec::kMPEG2:
-    case VideoCodec::kHEVC:
     case VideoCodec::kVP9:
     case VideoCodec::kAV1:
     case VideoCodec::kDolbyVision:
+    case VideoCodec::kH264:
     case VideoCodec::kVP8:
       // Normalize to three threads for 1080p content, then scale linearly
       // with number of pixels.
@@ -134,7 +134,7 @@ bool FFmpegVideoDecoder::IsCodecSupported(VideoCodec codec) {
 }
 
 FFmpegVideoDecoder::FFmpegVideoDecoder(MediaLog* media_log)
-    : media_log_(media_log), timestamp_map_(128) {
+    : media_log_(media_log) {
   DVLOG(1) << __func__;
   DETACH_FROM_SEQUENCE(sequence_checker_);
 }
@@ -212,6 +212,10 @@ int FFmpegVideoDecoder::GetVideoBuffer(struct AVCodecContext* codec_context,
     frame->data[plane] = data + layout->planes()[plane].offset;
     frame->linesize[plane] = layout->planes()[plane].stride;
   }
+
+  // This seems unsafe, given threaded decoding.  However, `reordered_opaque` is
+  // also going away upstream, so we need a whole new mechanism either way.
+  frame->reordered_opaque = codec_context->reordered_opaque;
 
   // This will be freed by `ReleaseVideoBufferImpl`.
   auto* opaque = new OpaqueData(fb_priv, frame_pool_, data, allocation_size,
@@ -354,15 +358,13 @@ bool FFmpegVideoDecoder::FFmpegDecode(const DecoderBuffer& buffer) {
     packet->size = 0;
   } else {
     packet->data = const_cast<uint8_t*>(buffer.data());
-    packet->size = buffer.size();
+    packet->size = buffer.data_size();
 
     DCHECK(packet->data);
     DCHECK_GT(packet->size, 0);
 
-    const int64_t timestamp = buffer.timestamp().InMicroseconds();
-    const TimestampId timestamp_id = timestamp_id_generator_.GenerateNextId();
-    timestamp_map_.Put(std::make_pair(timestamp_id, timestamp));
-    packet->opaque = reinterpret_cast<void*>(timestamp_id.GetUnsafeValue());
+    // Let FFmpeg handle presentation timestamp reordering.
+    codec_context_->reordered_opaque = buffer.timestamp().InMicroseconds();
   }
   FFmpegDecodingLoop::DecodeStatus decode_status = decoding_loop_->DecodePacket(
       packet, base::BindRepeating(&FFmpegVideoDecoder::OnNewFrame,
@@ -394,9 +396,8 @@ bool FFmpegVideoDecoder::OnNewFrame(AVFrame* frame) {
   // TODO(fbarchard): Work around for FFmpeg http://crbug.com/27675
   // The decoder is in a bad state and not decoding correctly.
   // Checking for NULL avoids a crash in CopyPlane().
-  if (!frame->data[VideoFrame::Plane::kY] ||
-      !frame->data[VideoFrame::Plane::kU] ||
-      !frame->data[VideoFrame::Plane::kV]) {
+  if (!frame->data[VideoFrame::kYPlane] || !frame->data[VideoFrame::kUPlane] ||
+      !frame->data[VideoFrame::kVPlane]) {
     DLOG(ERROR) << "Video frame was produced yet has invalid frame data.";
     return false;
   }
@@ -422,12 +423,7 @@ bool FFmpegVideoDecoder::OnNewFrame(AVFrame* frame) {
   }
   gfx::Size natural_size = aspect_ratio.GetNaturalSize(visible_rect);
 
-  const auto ts_id = TimestampId(reinterpret_cast<size_t>(frame->opaque));
-  const auto ts_lookup = timestamp_map_.Get(ts_id);
-  if (ts_lookup == timestamp_map_.end()) {
-    return false;
-  }
-  const auto pts = base::Microseconds(std::get<1>(*ts_lookup));
+  const auto pts = base::Microseconds(frame->reordered_opaque);
   auto video_frame = VideoFrame::WrapExternalDataWithLayout(
       opaque->layout, visible_rect, natural_size, opaque->data, opaque->size,
       pts);
@@ -502,10 +498,8 @@ bool FFmpegVideoDecoder::ConfigureDecoder(const VideoDecoderConfig& config,
   codec_context_->thread_count = GetFFmpegVideoDecoderThreadCount(config);
   codec_context_->thread_type =
       FF_THREAD_SLICE | (low_delay ? 0 : FF_THREAD_FRAME);
-
   codec_context_->opaque = this;
   codec_context_->get_buffer2 = GetVideoBufferImpl;
-  codec_context_->flags |= AV_CODEC_FLAG_COPY_OPAQUE;
 
   if (base::FeatureList::IsEnabled(kFFmpegAllowLists)) {
     // Note: FFmpeg will try to free this string, so we must duplicate it.
