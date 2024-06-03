@@ -13,16 +13,16 @@ yell() { echo "$0: $*" >&2; }
 die() { yell "$*"; exit 111; }
 try() { "$@" || die "${RED}Failed $*"; }
 
-COMMIT_ID="609fc4166c4cba47386f4fbf9a2f9e45a5ca0779"
+BRANCH_NAME="125.0.6422.141"
 
-export COMMIT_ID &&
+export BRANCH_NAME &&
 
 printf "\n"
-printf "${bold}${RED}NOTE: ${bold}${YEL}Checking out${bold}${CYA} $COMMIT_ID ${bold}${YEL}in $HOME/chromium/src...${c0}\n"
+printf "${bold}${RED}NOTE: ${bold}${YEL}Checking out${bold}${CYA} $BRANCH_NAME ${bold}${YEL}in $HOME/chromium/src...${c0}\n"
 
 cd $HOME/chromium/src &&
 
-git checkout -f $COMMIT_ID &&
+git checkout -f tags/$BRANCH_NAME &&
 
 git clean -ffd &&
 
@@ -31,14 +31,14 @@ gclient sync --with_branch_heads --with_tags -f -R -D &&
 gclient runhooks &&
 
 printf "\n"
-printf "${bold}${GRE}Chromium tree is checked out at: $COMMIT_ID${c0}\n"
+printf "${bold}${GRE}Chromium tree is checked out at: $BRANCH_NAME${c0}\n"
 
 printf "${YEL}Downloading PGO Profiles for Chromium.\n" &&
 tput sgr0 &&
 
 vpython3 tools/update_pgo_profiles.py --target=win64 update --gs-url-base=chromium-optimization-profiles/pgo_profiles &&
 
-vpython3 v8/tools/builtins-pgo/download_profiles.py --depot-tools=$HOME/depot_tools download --force &&
+vpython3 v8/tools/builtins-pgo/download_profiles.py --depot-tools=$HOME/depot_tools download &&
 
 printf "\n" &&
 

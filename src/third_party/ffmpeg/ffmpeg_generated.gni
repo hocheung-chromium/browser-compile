@@ -30,6 +30,7 @@ if ((is_android && current_cpu == "arm" && arm_use_neon) ||
     "libavcodec/avcodec.c",
     "libavcodec/avdct.c",
     "libavcodec/avfft.c",
+    "libavcodec/avpacket.c",
     "libavcodec/bitstream.c",
     "libavcodec/bitstream_filters.c",
     "libavcodec/bsf.c",
@@ -70,7 +71,6 @@ if ((is_android && current_cpu == "arm" && arm_use_neon) ||
     "libavcodec/options.c",
     "libavcodec/opus_parse.c",
     "libavcodec/opus_parser.c",
-    "libavcodec/packet.c",
     "libavcodec/parser.c",
     "libavcodec/parsers.c",
     "libavcodec/pcm.c",
@@ -202,7 +202,6 @@ if ((is_android && current_cpu == "arm" && arm_use_neon) ||
     "libavutil/threadmessage.c",
     "libavutil/time.c",
     "libavutil/timecode.c",
-    "libavutil/timestamp.c",
     "libavutil/twofish.c",
     "libavutil/tx.c",
     "libavutil/uuid.c",
@@ -251,7 +250,6 @@ if ((is_apple && ffmpeg_branding == "Chrome") ||
     (use_linux_config && ffmpeg_branding == "Chrome") ||
     (use_linux_config && ffmpeg_branding == "ChromeOS")) {
   ffmpeg_c_sources += [
-    "libavcodec/aom_film_grain.c",
     "libavcodec/autorename_libavcodec_bswapdsp.c",
     "libavcodec/dovi_rpu.c",
     "libavcodec/dynamic_hdr_vivid.c",

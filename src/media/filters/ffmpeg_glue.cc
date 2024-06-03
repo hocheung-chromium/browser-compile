@@ -56,7 +56,7 @@ static int64_t AVIOSeekOperation(void* opaque, int64_t offset, int whence) {
       break;
 
     default:
-      NOTREACHED_IN_MIGRATION();
+      NOTREACHED();
   }
   return new_offset;
 }
@@ -227,7 +227,7 @@ bool FFmpegGlue::OpenContext(bool is_local_file) {
     return false;
   }
 
-  // Rely on ffmpeg's parsing if we're able to successfully open the file.
+  // Rely on ffmpeg's parsing if we're able to succesfully open the file.
   if (strcmp(format_context_->iformat->name, "mov,mp4,m4a,3gp,3g2,mj2") == 0)
     container_ = container_names::MediaContainerName::kContainerMOV;
   else if (strcmp(format_context_->iformat->name, "flac") == 0)

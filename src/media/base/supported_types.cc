@@ -15,6 +15,7 @@
 #include "media/base/media_client.h"
 #include "media/base/media_switches.h"
 #include "media/media_buildflags.h"
+#include "ui/display/display_switches.h"
 #include "ui/gfx/hdr_metadata.h"
 
 #if BUILDFLAG(ENABLE_LIBVPX)
@@ -252,7 +253,7 @@ bool IsVp9ProfileSupported(const VideoType& type) {
       return vpx_supports_hbd;
 #endif  // BUILDFLAG(IS_ANDROID)
     default:
-      NOTREACHED_IN_MIGRATION();
+      NOTREACHED();
   }
 #endif  // BUILDFLAG(ENABLE_LIBVPX)
   return false;
