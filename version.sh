@@ -13,7 +13,7 @@ yell() { echo "$0: $*" >&2; }
 die() { yell "$*"; exit 111; }
 try() { "$@" || die "${RED}Failed $*"; }
 
-BRANCH_NAME="125.0.6422.141"
+BRANCH_NAME="126.0.6478.36"
 
 export BRANCH_NAME &&
 
@@ -38,7 +38,7 @@ tput sgr0 &&
 
 vpython3 tools/update_pgo_profiles.py --target=win64 update --gs-url-base=chromium-optimization-profiles/pgo_profiles &&
 
-vpython3 v8/tools/builtins-pgo/download_profiles.py --depot-tools=$HOME/depot_tools download &&
+vpython3 v8/tools/builtins-pgo/download_profiles.py --depot-tools=$HOME/depot_tools download --force &&
 
 printf "\n" &&
 
