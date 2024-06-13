@@ -1,5 +1,7 @@
 # PATCHES (Only for Windows)
 
+<https://github.com/RobRich999/Chromium_Clang/blob/main/Windows/win64-avx2.patch>
+
 <https://github.com/RobRich999/Chromium_Clang/blob/main/V8/v8.patch>
 
 <https://github.com/StaZhu/enable-chromium-hevc-hardware-decoding/blob/main/enable-hevc-encoding-by-default.patch>

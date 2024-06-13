@@ -597,9 +597,9 @@ config("compiler") {
 
     # TODO(crbug.com/40192287): Investigate why/if this should be needed.
     if (is_win) {
-      cflags += [ "/clang:-ffp-contract=off" ]
+      cflags += [ "/clang:-ffp-contract=fast" ]
     } else {
-      cflags += [ "-ffp-contract=off" ]
+      cflags += [ "-ffp-contract=fast" ]
     }
   }
 
@@ -1019,7 +1019,9 @@ config("compiler") {
     # directory from appearing in build outputs.
     "-Zremap-cwd-prefix=.",
 
-    "-Ctarget-feature=+sse3",
+    "-Ztune-cpu=haswell",
+    "-Ctarget-feature=+sse3,+ssse3,+sse4.1,+sse4.2,+avx,+avx2,+fma,+f16c",
+    "-Cllvm-args=-fp-contract=fast",
     "-Awarnings",
   ]
 
@@ -1162,7 +1164,15 @@ config("compiler_cpu_abi") {
     if (current_cpu == "x64") {
       cflags += [
         "-m64",
+        "-mtune=haswell",
         "-msse3",
+        "-mssse3",
+        "-msse4.1",
+        "-msse4.2",
+        "-mavx",
+        "-mavx2",
+        "-mfma",
+        "-mf16c",
       ]
 
       # Minimum SIMD support for devices running lacros.
