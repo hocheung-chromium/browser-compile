@@ -13,7 +13,7 @@ yell() { echo "$0: $*" >&2; }
 die() { yell "$*"; exit 111; }
 try() { "$@" || die "${RED}Failed $*"; }
 
-BRANCH_NAME="126.0.6478.56"
+BRANCH_NAME="126.0.6478.61"
 
 export BRANCH_NAME &&
 
