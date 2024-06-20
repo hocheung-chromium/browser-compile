@@ -583,14 +583,14 @@ config("compiler") {
     if (default_toolchain != "//build/toolchain/cros:target" &&
         !llvm_android_mainline) {
       cflags += [
-        "-mllvm",
-        "-split-threshold-for-reg-with-hint=0",
+        # "-mllvm",
+        # "-split-threshold-for-reg-with-hint=0",
       ]
       if (use_thin_lto && is_a_target_toolchain) {
         if (is_win) {
-          ldflags += [ "-mllvm:-split-threshold-for-reg-with-hint=0" ]
+          # ldflags += [ "-mllvm:-split-threshold-for-reg-with-hint=0" ]
         } else {
-          ldflags += [ "-Wl,-mllvm,-split-threshold-for-reg-with-hint=0" ]
+          # ldflags += [ "-Wl,-mllvm,-split-threshold-for-reg-with-hint=0" ]
         }
       }
     }
@@ -746,7 +746,7 @@ config("compiler") {
     # [0]: https://pinpoint-dot-chromeperf.appspot.com/job/16984a18be0000
     # [1]: https://pinpoint-dot-chromeperf.appspot.com/job/11984a18be0000
     # [2]: https://ci.chromium.org/ui/p/chromium/builders/try/android-binary-size/1848442
-    import_instr_limit = 30
+    import_instr_limit = 100
 
     if (is_win) {
       ldflags += [
@@ -1088,12 +1088,14 @@ config("compiler") {
 # building with ThinLTO, no optimization is performed in the link step.
 config("thinlto_optimize_default") {
   if (!is_debug && use_thin_lto && is_a_target_toolchain) {
-    lto_opt_level = 0
+    lto_opt_level = 3
 
     if (is_win) {
       ldflags = [ "/opt:lldlto=" + lto_opt_level ]
+      ldflags += [ "-opt:lldltocgo=" + lto_opt_level ]
     } else {
       ldflags = [ "-Wl,--lto-O" + lto_opt_level ]
+      ldflags += [ "-Wl,--lto-CGO" + lto_opt_level ]
     }
 
     if (toolchain_supports_rust_thin_lto) {
@@ -1119,16 +1121,17 @@ config("thinlto_optimize_default") {
 config("thinlto_optimize_max") {
   if (!is_debug && use_thin_lto && is_a_target_toolchain) {
     if (thin_lto_enable_optimizations) {
-      lto_opt_level = 2
+      lto_opt_level = 3
     } else {
-      lto_opt_level = 0
+      lto_opt_level = 3
     }
 
     if (is_win) {
       ldflags = [ "/opt:lldlto=" + lto_opt_level ]
-      ldflags += [ "-mllvm:-enable-gvn-hoist" ]
+      ldflags += [ "-opt:lldltocgo=" + lto_opt_level ]
     } else {
-      ldflags = [ "-Wl,--lto-O" + lto_opt_level ]
+      ldflags = [ "-Wl,--lto-O0" + lto_opt_level ]
+      ldflags += [ "-Wl,--lto-CGO" + lto_opt_level ]
     }
 
     if (toolchain_supports_rust_thin_lto) {
@@ -2430,7 +2433,7 @@ config("default_stack_frames") {
 # [2]: https://crrev.com/c/5447532
 config("optimize") {
   if (is_win) {
-    cflags = [ "/O2" ] + common_optimize_on_cflags
+    cflags = [ "/clang:-O3" ] + common_optimize_on_cflags
 
     # https://doc.rust-lang.org/rustc/profile-guided-optimization.html#usage
     # suggests not using an explicit `-Copt-level` at all, and the default is
@@ -2458,7 +2461,7 @@ config("optimize") {
     # vectorization while otherwise optimizing for size.
     rustflags = [ "-Copt-level=s" ]
   } else {
-    cflags = [ "-O2" ] + common_optimize_on_cflags
+    cflags = [ "-O3" ] + common_optimize_on_cflags
 
     # The `-O3` for clang turns on extra optimizations compared to the standard
     # `-O2`. But for rust, `-Copt-level=3` is the default and is thus reliable
@@ -2525,7 +2528,7 @@ config("optimize_max") {
     if (is_win) {
       # Favor speed over size, /O2 must be before the common flags.
       # /O2 implies /Ot, /Oi, and /GF.
-      cflags = [ "/O2" ] + common_optimize_on_cflags
+      cflags = [ "/clang:-O3" ] + common_optimize_on_cflags
     } else if (optimize_for_fuzzing) {
       cflags = [ "-O1" ] + common_optimize_on_cflags
     } else {
@@ -2558,10 +2561,7 @@ config("optimize_speed") {
     if (is_win) {
       # Favor speed over size, /O2 must be before the common flags.
       # /O2 implies /Ot, /Oi, and /GF.
-      cflags = [ "/O2" ] + common_optimize_on_cflags
-      if (is_clang) {
-        cflags += [ "/clang:-O3" ]
-      }
+      cflags = [ "/clang:-O3" ] + common_optimize_on_cflags
     } else if (optimize_for_fuzzing) {
       cflags = [ "-O1" ] + common_optimize_on_cflags
     } else {

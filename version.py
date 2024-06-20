@@ -16,7 +16,7 @@ def try_run(command):
         die(f"Failed {command}\n{result.stderr}")
 
 CODE_DIR = r'C:\src\chromium\src'
-BRANCH_NAME = "126.0.6478.61"
+BRANCH_NAME = "126.0.6478.114"
 DEPOT_TOOLS_DIR = r'C:\src\depot_tools'
 
 # Print note about checking out Chromium branch
