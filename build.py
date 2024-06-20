@@ -1,6 +1,7 @@
 import os
 import subprocess
 import sys
+import argparse
 
 # Error handling
 def yell(msg):
@@ -21,6 +22,11 @@ CODE_DIR = r'C:\src\chromium\src'
 
 def main():
 
+    # Argument parsing
+    parser = argparse.ArgumentParser(description="Build Chromium for Windows.")
+    parser.add_argument('-j', type=int, default=os.cpu_count(), help='Number of parallel jobs to run')
+    args = parser.parse_args()
+
     # Print message
     print("\n")
     print("Building Chromium for Windows.")
@@ -31,7 +37,7 @@ def main():
 
     # Build Chromium and installer
     autoninja_path = os.path.join(AUTONINJA_DIR, "autoninja.bat")
-    try_run([autoninja_path, "-C", os.path.join(CODE_DIR, "out", "chromium"), "chrome", "setup", "mini_installer", f"-j{os.cpu_count()}"])
+    try_run([autoninja_path, "-C", os.path.join(CODE_DIR, "out", "chromium"), "chrome", "setup", "mini_installer", f"-j{args.j}"])
 
     # Print completion message
     print("\n")
