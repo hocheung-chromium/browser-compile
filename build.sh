@@ -11,16 +11,36 @@ yell() { echo "$0: $*" >&2; }
 die() { yell "$*"; exit 111; }
 try() { "$@" || die "${RED}Failed $*"; }
 
+# HOME dir env variable
+if [ -z "${HOME_DIR}" ]; then 
+    HOME_SRC_DIR="$HOME/browser-compile"
+    export HOME_SRC_DIR
+else 
+    HOME_SRC_DIR="${HOME_DIR}"
+    export HOME_SRC_DIR
+fi
+
+# chromium/src dir env variable
+if [ -z "${CR_DIR}" ]; then 
+    CR_SRC_DIR="$HOME/chromium/src"
+    export CR_SRC_DIR
+else 
+    CR_SRC_DIR="${CR_DIR}"
+    export CR_SRC_DIR
+fi
+
 printf "\n" &&
 printf "${bold}${YEL}Building Chromium for Windows.${c0}\n" &&
 
 # Build Chromium and installer
 
-cd $HOME/chromium/src &&
+cd ${CR_SRC_DIR} &&
 
-export NINJA_SUMMARIZE_BUILD=1 &&
+autoninja -C ${CR_SRC_DIR}/out/chromium chrome setup mini_installer -j$@ &&
 
-autoninja -C ~/chromium/src/out/chromium chrome setup mini_installer -j$@ &&
+printf "\n" &&
+
+cd ${HOME_SRC_DIR} &&
 
 printf "${bold}${GRE}Build Completed!${c0}\n" &&
 tput sgr0 &&

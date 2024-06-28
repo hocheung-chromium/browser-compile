@@ -13,19 +13,47 @@ yell() { echo "$0: $*" >&2; }
 die() { yell "$*"; exit 111; }
 try() { "$@" || die "${RED}Failed $*"; }
 
-BRANCH_NAME="126.0.6478.114"
+# HOME dir env variable
+if [ -z "${HOME_DIR}" ]; then 
+    HOME_SRC_DIR="$HOME/browser-compile"
+    export HOME_SRC_DIR
+else 
+    HOME_SRC_DIR="${HOME_DIR}"
+    export HOME_SRC_DIR
+fi
+
+# DEPOT_TOOLS dir env variable
+if [ -z "${TOOLS_DIR}" ]; then 
+    TOOLS_SRC_DIR="$HOME/depot_tools"
+    export TOOLS_SRC_DIR
+else 
+    TOOLS_SRC_DIR="${TOOLS_DIR}"
+    export TOOLS_SRC_DIR
+fi
+
+# chromium/src dir env variable
+if [ -z "${CR_DIR}" ]; then 
+    CR_SRC_DIR="$HOME/chromium/src"
+    export CR_SRC_DIR
+else 
+    CR_SRC_DIR="${CR_DIR}"
+    export CR_SRC_DIR
+fi
+
+BRANCH_NAME="126.0.6478.126"
 
 export BRANCH_NAME &&
 
 printf "\n"
 printf "${bold}${RED}NOTE: ${bold}${YEL}Checking out${bold}${CYA} $BRANCH_NAME ${bold}${YEL}in $HOME/chromium/src...${c0}\n"
 
-cd $HOME/chromium/src &&
+cd ${CR_SRC_DIR} &&
 
 git checkout -f tags/$BRANCH_NAME &&
 
 git clean -ffd &&
 
+# TODO: Investigate and fix errors on Git Bash
 gclient sync --with_branch_heads --with_tags -f -R -D &&
 
 gclient runhooks &&
@@ -36,13 +64,13 @@ printf "${bold}${GRE}Chromium tree is checked out at: $BRANCH_NAME${c0}\n"
 printf "${YEL}Downloading PGO Profiles for Chromium.\n" &&
 tput sgr0 &&
 
-vpython3 tools/update_pgo_profiles.py --target=win64 update --gs-url-base=chromium-optimization-profiles/pgo_profiles &&
+python3 tools/update_pgo_profiles.py --target=win64 update --gs-url-base=chromium-optimization-profiles/pgo_profiles &&
 
-vpython3 v8/tools/builtins-pgo/download_profiles.py --depot-tools=$HOME/depot_tools download --force &&
+python3 v8/tools/builtins-pgo/download_profiles.py --depot-tools=${TOOLS_SRC_DIR} download --force &&
 
 printf "\n" &&
 
-cd $HOME/browser-compile &&
+cd ${HOME_SRC_DIR} &&
 
 printf "${bold}${GRE}Done!${c0}" &&
 printf "${bold}${YEL}You can now run ./setup.sh.${c0}\n" &&
