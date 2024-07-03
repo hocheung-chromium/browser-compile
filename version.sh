@@ -40,16 +40,16 @@ else
     export CR_SRC_DIR
 fi
 
-BRANCH_NAME="126.0.6478.126"
+BRANCH_TAGS="127.0.6533.57"
 
-export BRANCH_NAME &&
+export BRANCH_TAGS &&
 
 printf "\n"
-printf "${bold}${RED}NOTE: ${bold}${YEL}Checking out${bold}${CYA} $BRANCH_NAME ${bold}${YEL}in $HOME/chromium/src...${c0}\n"
+printf "${bold}${RED}NOTE: ${bold}${YEL}Checking out${bold}${CYA} $BRANCH_TAGS ${bold}${YEL}in $HOME/chromium/src...${c0}\n"
 
 cd ${CR_SRC_DIR} &&
 
-git checkout -f tags/$BRANCH_NAME &&
+git checkout -f tags/$BRANCH_TAGS &&
 
 git clean -ffd &&
 
@@ -59,7 +59,7 @@ gclient sync --with_branch_heads --with_tags -f -R -D &&
 gclient runhooks &&
 
 printf "\n"
-printf "${bold}${GRE}Chromium tree is checked out at: $BRANCH_NAME${c0}\n"
+printf "${bold}${GRE}Chromium tree is checked out at: $BRANCH_TAGS${c0}\n"
 
 printf "${YEL}Downloading PGO Profiles for Chromium.\n" &&
 tput sgr0 &&

@@ -31,10 +31,6 @@ declare_args() {
   # Dynamically set an additional dependency from v8/custom_deps.
   v8_custom_deps = ""
 
-  # Turns on all V8 debug features. Enables running V8 in a pseudo debug mode
-  # within a release Chrome.
-  v8_enable_debugging_features = is_debug
-
   # Sets -DV8_ENABLE_FUTURE.
   v8_enable_future = false
 
@@ -429,10 +425,6 @@ declare_args() {
 
   # Use sticky mark-bits for separating object generations.
   v8_enable_sticky_mark_bits = false
-
-  # Always move prototype transitions to the start of the transition tree
-  # (see issue 332914927).
-  v8_move_prototype_transitions_first = false
 }
 
 # Derived defaults.
@@ -695,12 +687,6 @@ assert(!v8_enable_memory_corruption_api || v8_enable_sandbox,
 assert(
     !v8_enable_pointer_compression_shared_cage || v8_enable_pointer_compression,
     "Can't share a pointer compression cage if pointers aren't compressed")
-
-assert(
-    !v8_enable_pointer_compression ||
-        v8_enable_pointer_compression_shared_cage ||
-        !v8_enable_external_code_space,
-    "Multi-cage pointer compression mode is not compatible with external code space")
 
 assert(
     !v8_enable_pointer_compression_shared_cage || v8_current_cpu == "x64" ||
@@ -1299,9 +1285,6 @@ config("features") {
   if (v8_enable_sticky_mark_bits) {
     defines += [ "V8_ENABLE_STICKY_MARK_BITS" ]
   }
-  if (v8_move_prototype_transitions_first) {
-    defines += [ "V8_MOVE_PROTOYPE_TRANSITIONS_FIRST" ]
-  }
 }
 
 config("toolchain") {
@@ -1818,6 +1801,7 @@ if (v8_postmortem_support) {
       "src/objects/abstract-code-inl.h",
       "src/objects/instruction-stream.h",
       "src/objects/instruction-stream-inl.h",
+      "src/objects/casting.h",
       "src/objects/code.h",
       "src/objects/code-inl.h",
       "src/objects/data-handler.h",
@@ -3298,6 +3282,7 @@ v8_header_set("v8_internal_headers") {
     "src/common/operation.h",
     "src/common/ptr-compr-inl.h",
     "src/common/ptr-compr.h",
+    "src/common/simd128.h",
     "src/compiler-dispatcher/lazy-compile-dispatcher.h",
     "src/compiler-dispatcher/optimizing-compile-dispatcher.h",
     "src/compiler/access-builder.h",
@@ -3472,10 +3457,12 @@ v8_header_set("v8_internal_headers") {
     "src/compiler/turboshaft/opmasks.h",
     "src/compiler/turboshaft/optimize-phase.h",
     "src/compiler/turboshaft/phase.h",
+    "src/compiler/turboshaft/pipelines.h",
     "src/compiler/turboshaft/pretenuring-propagation-reducer.h",
     "src/compiler/turboshaft/recreate-schedule-phase.h",
     "src/compiler/turboshaft/recreate-schedule.h",
     "src/compiler/turboshaft/reducer-traits.h",
+    "src/compiler/turboshaft/register-allocation-phase.h",
     "src/compiler/turboshaft/representations.h",
     "src/compiler/turboshaft/required-optimization-reducer.h",
     "src/compiler/turboshaft/runtime-call-descriptors.h",
@@ -3506,6 +3493,7 @@ v8_header_set("v8_internal_headers") {
     "src/compiler/turboshaft/value-numbering-reducer.h",
     "src/compiler/turboshaft/variable-reducer.h",
     "src/compiler/turboshaft/wasm-dead-code-elimination-phase.h",
+    "src/compiler/turboshaft/zone-with-name.h",
     "src/compiler/type-cache.h",
     "src/compiler/type-narrowing-reducer.h",
     "src/compiler/typed-optimization.h",
@@ -3633,7 +3621,6 @@ v8_header_set("v8_internal_headers") {
     "src/heap/free-list-inl.h",
     "src/heap/free-list.h",
     "src/heap/gc-callbacks.h",
-    "src/heap/gc-idle-time-handler.h",
     "src/heap/gc-tracer-inl.h",
     "src/heap/gc-tracer.h",
     "src/heap/heap-allocator-inl.h",
@@ -3648,8 +3635,8 @@ v8_header_set("v8_internal_headers") {
     "src/heap/incremental-marking-job.h",
     "src/heap/incremental-marking.h",
     "src/heap/index-generator.h",
-    "src/heap/large-page-inl.h",
-    "src/heap/large-page.h",
+    "src/heap/large-page-metadata-inl.h",
+    "src/heap/large-page-metadata.h",
     "src/heap/large-spaces.h",
     "src/heap/linear-allocation-area.h",
     "src/heap/list.h",
@@ -3685,8 +3672,8 @@ v8_header_set("v8_internal_headers") {
     "src/heap/minor-gc-job.h",
     "src/heap/minor-mark-sweep-inl.h",
     "src/heap/minor-mark-sweep.h",
-    "src/heap/mutable-page-inl.h",
-    "src/heap/mutable-page.h",
+    "src/heap/mutable-page-metadata-inl.h",
+    "src/heap/mutable-page-metadata.h",
     "src/heap/new-spaces-inl.h",
     "src/heap/new-spaces.h",
     "src/heap/object-lock-inl.h",
@@ -3694,7 +3681,7 @@ v8_header_set("v8_internal_headers") {
     "src/heap/object-stats.h",
     "src/heap/objects-visiting-inl.h",
     "src/heap/objects-visiting.h",
-    "src/heap/page.h",
+    "src/heap/page-metadata.h",
     "src/heap/paged-spaces-inl.h",
     "src/heap/paged-spaces.h",
     "src/heap/parallel-work-item.h",
@@ -3793,6 +3780,7 @@ v8_header_set("v8_internal_headers") {
     "src/objects/bigint.h",
     "src/objects/call-site-info-inl.h",
     "src/objects/call-site-info.h",
+    "src/objects/casting.h",
     "src/objects/cell-inl.h",
     "src/objects/cell.h",
     "src/objects/code-inl.h",
@@ -4076,6 +4064,9 @@ v8_header_set("v8_internal_headers") {
     "src/sandbox/code-pointer.h",
     "src/sandbox/compactible-external-entity-table-inl.h",
     "src/sandbox/compactible-external-entity-table.h",
+    "src/sandbox/cppheap-pointer-inl.h",
+    "src/sandbox/cppheap-pointer-table-inl.h",
+    "src/sandbox/cppheap-pointer-table.h",
     "src/sandbox/external-buffer-inl.h",
     "src/sandbox/external-buffer-table-inl.h",
     "src/sandbox/external-buffer-table.h",
@@ -4095,6 +4086,7 @@ v8_header_set("v8_internal_headers") {
     "src/sandbox/sandbox.h",
     "src/sandbox/sandboxed-pointer-inl.h",
     "src/sandbox/sandboxed-pointer.h",
+    "src/sandbox/tagged-payload.h",
     "src/sandbox/testing.h",
     "src/sandbox/trusted-pointer-table-inl.h",
     "src/sandbox/trusted-pointer-table.h",
@@ -4143,8 +4135,8 @@ v8_header_set("v8_internal_headers") {
     "src/third_party/siphash/halfsiphash.h",
     "src/third_party/utf8-decoder/utf8-decoder.h",
     "src/torque/runtime-macro-shims.h",
-    "src/tracing/trace-event.h",
     "src/tracing/trace-event-no-perfetto.h",
+    "src/tracing/trace-event.h",
     "src/tracing/traced-value.h",
     "src/tracing/tracing-category-observer.h",
     "src/utils/address-map.h",
@@ -4311,6 +4303,7 @@ v8_header_set("v8_internal_headers") {
       "src/wasm/object-access.h",
       "src/wasm/pgo.h",
       "src/wasm/serialized-signature-inl.h",
+      "src/wasm/signature-hashing.h",
       "src/wasm/simd-shuffle.h",
       "src/wasm/stacks.h",
       "src/wasm/std-object-sizes.h",
@@ -5136,6 +5129,7 @@ v8_source_set("v8_turboshaft") {
     "src/compiler/turboshaft/operations.cc",
     "src/compiler/turboshaft/optimize-phase.cc",
     "src/compiler/turboshaft/phase.cc",
+    "src/compiler/turboshaft/pipelines.cc",
     "src/compiler/turboshaft/pretenuring-propagation-reducer.cc",
     "src/compiler/turboshaft/recreate-schedule-phase.cc",
     "src/compiler/turboshaft/recreate-schedule.cc",
@@ -5383,7 +5377,6 @@ v8_source_set("v8_base_without_compiler") {
     "src/heap/factory.cc",
     "src/heap/finalization-registry-cleanup-task.cc",
     "src/heap/free-list.cc",
-    "src/heap/gc-idle-time-handler.cc",
     "src/heap/gc-tracer.cc",
     "src/heap/heap-allocator.cc",
     "src/heap/heap-controller.cc",
@@ -5394,7 +5387,7 @@ v8_source_set("v8_base_without_compiler") {
     "src/heap/incremental-marking-job.cc",
     "src/heap/incremental-marking.cc",
     "src/heap/index-generator.cc",
-    "src/heap/large-page.cc",
+    "src/heap/large-page-metadata.cc",
     "src/heap/large-spaces.cc",
     "src/heap/local-factory.cc",
     "src/heap/local-heap.cc",
@@ -5413,11 +5406,11 @@ v8_source_set("v8_base_without_compiler") {
     "src/heap/memory-reducer.cc",
     "src/heap/minor-gc-job.cc",
     "src/heap/minor-mark-sweep.cc",
-    "src/heap/mutable-page.cc",
+    "src/heap/mutable-page-metadata.cc",
     "src/heap/new-spaces.cc",
     "src/heap/object-stats.cc",
     "src/heap/objects-visiting.cc",
-    "src/heap/page.cc",
+    "src/heap/page-metadata.cc",
     "src/heap/paged-spaces.cc",
     "src/heap/pretenuring-handler.cc",
     "src/heap/read-only-heap.cc",
@@ -5629,6 +5622,7 @@ v8_source_set("v8_base_without_compiler") {
     "src/runtime/runtime-weak-refs.cc",
     "src/runtime/runtime.cc",
     "src/sandbox/code-pointer-table.cc",
+    "src/sandbox/cppheap-pointer-table.cc",
     "src/sandbox/external-buffer-table.cc",
     "src/sandbox/external-pointer-table.cc",
     "src/sandbox/sandbox.cc",
@@ -6449,6 +6443,7 @@ v8_component("v8_libbase") {
     "src/base/template-meta-programming/algorithm.h",
     "src/base/template-meta-programming/functional.h",
     "src/base/template-meta-programming/list.h",
+    "src/base/template-meta-programming/string-literal.h",
     "src/base/template-utils.h",
     "src/base/threaded-list.h",
     "src/base/timezone-cache.h",
@@ -6788,7 +6783,12 @@ v8_source_set("v8_heap_base") {
 
   if (is_clang || !is_win) {
     if (current_cpu == "x64") {
-      sources += [ "src/heap/base/asm/x64/push_registers_asm.cc" ]
+      if (is_win) {
+        # Prefer a masm version with unwind directives.
+        sources += [ "src/heap/base/asm/x64/push_registers_masm.asm" ]
+      } else {
+        sources += [ "src/heap/base/asm/x64/push_registers_asm.cc" ]
+      }
     } else if (current_cpu == "x86") {
       sources += [ "src/heap/base/asm/ia32/push_registers_asm.cc" ]
     } else if (current_cpu == "arm") {
@@ -7195,7 +7195,7 @@ if (current_toolchain == v8_snapshot_toolchain) {
       ldflags = [ "/OPT:NOICF" ]  # link.exe, but also lld-link.exe.
     } else if (is_apple && !use_lld) {
       ldflags = [ "-Wl,-no_deduplicate" ]  # ld64.
-    } else if (use_gold || use_lld) {
+    } else if (use_lld) {
       ldflags = [ "-Wl,--icf=none" ]
     }
   }
