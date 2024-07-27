@@ -1031,8 +1031,7 @@ config("compiler") {
     # directory from appearing in build outputs.
     "-Zremap-cwd-prefix=.",
 
-    "-Ztune-cpu=haswell",
-    "-Ctarget-feature=+sse3,+ssse3,+sse4.1,+sse4.2,+avx,+avx2,+fma,+f16c",
+    "-Ctarget-cpu=x86-64-v3",
     "-Cllvm-args=-fp-contract=fast",
     "-Awarnings",
   ]
@@ -1110,14 +1109,14 @@ config("compiler") {
 # building with ThinLTO, no optimization is performed in the link step.
 config("thinlto_optimize_default") {
   if (!is_debug && use_thin_lto && is_a_target_toolchain) {
-    lto_opt_level = 3
+    lto_opt_level = 2
 
     if (is_win) {
       ldflags = [ "/opt:lldlto=" + lto_opt_level ]
-      ldflags += [ "-opt:lldltocgo=" + lto_opt_level ]
+      # ldflags += [ "-opt:lldltocgo=" + lto_opt_level ]
     } else {
       ldflags = [ "-Wl,--lto-O" + lto_opt_level ]
-      ldflags += [ "-Wl,--lto-CGO" + lto_opt_level ]
+      # ldflags += [ "-Wl,--lto-CGO" + lto_opt_level ]
     }
 
     if (toolchain_supports_rust_thin_lto) {
@@ -1143,17 +1142,17 @@ config("thinlto_optimize_default") {
 config("thinlto_optimize_max") {
   if (!is_debug && use_thin_lto && is_a_target_toolchain) {
     if (thin_lto_enable_optimizations) {
-      lto_opt_level = 3
+      lto_opt_level = 2
     } else {
-      lto_opt_level = 3
+      lto_opt_level = 2
     }
 
     if (is_win) {
       ldflags = [ "/opt:lldlto=" + lto_opt_level ]
-      ldflags += [ "-opt:lldltocgo=" + lto_opt_level ]
+      # ldflags += [ "-opt:lldltocgo=" + lto_opt_level ]
     } else {
       ldflags = [ "-Wl,--lto-O" + lto_opt_level ]
-      ldflags += [ "-Wl,--lto-CGO" + lto_opt_level ]
+      # ldflags += [ "-Wl,--lto-CGO" + lto_opt_level ]
     }
 
     if (toolchain_supports_rust_thin_lto) {
@@ -1189,15 +1188,7 @@ config("compiler_cpu_abi") {
     if (current_cpu == "x64") {
       cflags += [
         "-m64",
-        "-mtune=haswell",
-        "-msse3",
-        "-mssse3",
-        "-msse4.1",
-        "-msse4.2",
-        "-mavx",
-        "-mavx2",
-        "-mfma",
-        "-mf16c",
+        "-march=x86-64-v3",
       ]
 
       # Minimum SIMD support for devices running lacros.
@@ -2457,7 +2448,7 @@ config("default_stack_frames") {
 # [2]: https://crrev.com/c/5447532
 config("optimize") {
   if (is_win) {
-    cflags = [ "/clang:-O3" ] + common_optimize_on_cflags
+    cflags = [ "/O2" ] + common_optimize_on_cflags
 
     # The `-O3` for clang turns on extra optimizations compared to the standard
     # `-O2`. But for rust, `-Copt-level=3` is the default and is thus reliable
@@ -2485,7 +2476,7 @@ config("optimize") {
     # vectorization while otherwise optimizing for size.
     rustflags = [ "-Copt-level=s" ]
   } else {
-    cflags = [ "-O3" ] + common_optimize_on_cflags
+    cflags = [ "-O2" ] + common_optimize_on_cflags
 
     # The `-O3` for clang turns on extra optimizations compared to the standard
     # `-O2`. But for rust, `-Copt-level=3` is the default and is thus reliable
@@ -2552,7 +2543,7 @@ config("optimize_max") {
     if (is_win) {
       # Favor speed over size, /O2 must be before the common flags.
       # /O2 implies /Ot, /Oi, and /GF.
-      cflags = [ "/clang:-O3" ] + common_optimize_on_cflags
+      cflags = [ "/O2" ] + common_optimize_on_cflags
     } else if (optimize_for_fuzzing) {
       cflags = [ "-O1" ] + common_optimize_on_cflags
     } else {
