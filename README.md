@@ -26,4 +26,7 @@
 ##  Fallback to old translation recognition model by default
 <https://gitlab.com/yfqhhk/browser-compile/-/commit/ccae65288ddcc060ebe55f3791754de96376f756>
 
+## Disable MV2 extension deprecation warning
+<https://gitlab.com/yfqhhk/browser-compile/-/commit/ff1e99cf1529a8823c2c4a6b661e0f8a8a230925>
+
 # The changes made in this repo are listed above, with many thanks to the owners and contributors of the above repos, who own the copyrights to the changes listed above.
