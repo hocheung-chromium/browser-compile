@@ -137,13 +137,7 @@ config("compiler") {
         "-mfma",
         "-mf16c",
         "-mlzcnt",
-        "-mbmi",
         "-mbmi2",
-        "-mmovbe",
-        "-mxsave",
-        "-mcx16",
-        "-mcrc32",
-        "-mpopcnt",
         "/clang:-w",
       ]
     }

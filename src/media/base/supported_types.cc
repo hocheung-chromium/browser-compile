@@ -222,12 +222,7 @@ bool IsAudioCodecProprietary(AudioCodec codec) {
 #endif  // !BUILDFLAG(USE_PROPRIETARY_CODECS)
 
 bool IsHevcProfileSupported(const VideoType& type) {
-#if BUILDFLAG(IS_ANDROID)
-  // Android doesn't bundle FFMpegVideoDecoder, so this is not always supported.
-  return GetSupplementalProfileCache()->IsProfileSupported(type.profile);
-#else
   return true;
-#endif  // BUILDFLAG(IS_ANDROID)
 }
 
 bool IsVp9ProfileSupported(const VideoType& type) {

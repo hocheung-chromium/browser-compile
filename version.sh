@@ -40,7 +40,7 @@ else
     export CR_SRC_DIR
 fi
 
-BRANCH_TAGS="127.0.6533.72"
+BRANCH_TAGS="127.0.6533.88"
 
 export BRANCH_TAGS &&
 
@@ -53,7 +53,7 @@ git checkout -f tags/$BRANCH_TAGS &&
 
 git clean -ffd &&
 
-# TODO: Investigate and fix errors on Git Bash
+# TODO: Investigate and fix errors on Msys2
 gclient sync --with_branch_heads --with_tags -f -R -D &&
 
 gclient runhooks &&
