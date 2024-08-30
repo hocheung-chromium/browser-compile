@@ -10,6 +10,6 @@
      "Show Component Extension Options",
      "Shows internal Chromium component extensions on the `chrome://extensions`.",
      kOsDesktop, SINGLE_VALUE_TYPE(extensions::switches::kShowComponentExtensionOptions)},
-#endif // BUILDFLAG(IS_ANDROID)
+#endif // !BUILDFLAG(IS_ANDROID)
 
 #endif  // CHROMIUM_FLAG_ENTRIES_H_
