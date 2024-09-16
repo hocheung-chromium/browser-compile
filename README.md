@@ -20,10 +20,10 @@
 
 <https://github.com/Muril-o/electron-chromium-codecs/blob/main/v29.1.4/look_ffmpeg_hevc_ac3.patch>
 
-##  Show all built-in extensions
+## Show all built-in extensions
 <https://gitlab.com/yfqhhk/browser-compile/-/commit/3518ba11f099322f376d290329ba69332c81fa38>
 
-##  Fallback to old translation recognition model by default
+## Fallback to old translation recognition model by default
 <https://gitlab.com/yfqhhk/browser-compile/-/commit/ccae65288ddcc060ebe55f3791754de96376f756>
 
 ## Disable MV2 extension deprecation warning

@@ -35,25 +35,19 @@ tput sgr0 &&
 
 cd ${CR_SRC_DIR}/v8/ &&
 
-git restore . &&
-
-git clean -ffd &&
+git checkout -f origin/main &&
 
 cd ${CR_SRC_DIR}/third_party/ffmpeg &&
 
-git restore . &&
-
-git clean -ffd &&
+git checkout -f origin/master &&
 
 cd ${CR_SRC_DIR} &&
 
 rm -r -f -v ${CR_SRC_DIR}/chrome/build/pgo_profiles/*.profdata &&
 
-rm -r -f -v ${CR_SRC_DIR}/out/* &&
+rm -r -f -v ${CR_SRC_DIR}/out/chromium &&
 
 git checkout -f origin/main &&
-
-git clean -ffd &&
 
 git clean -ffd &&
 

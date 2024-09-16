@@ -40,26 +40,25 @@ else
     export CR_SRC_DIR
 fi
 
-BRANCH_TAGS="128.0.6613.114"
+COMMIT_ID="753858f3bbc8359b0b7608a2e0e6ded265dfd836"
 
-export BRANCH_TAGS &&
+export COMMIT_ID &&
 
 printf "\n"
-printf "${bold}${RED}NOTE: ${bold}${YEL}Checking out${bold}${CYA} $BRANCH_TAGS ${bold}${YEL}in $HOME/chromium/src...${c0}\n"
+printf "${bold}${RED}NOTE: ${bold}${YEL}Checking out${bold}${CYA} $COMMIT_ID ${bold}${YEL}in $HOME/chromium/src...${c0}\n"
 
 cd ${CR_SRC_DIR} &&
 
-git checkout -f tags/$BRANCH_TAGS &&
+git checkout -f $COMMIT_ID &&
 
 git clean -ffd &&
 
-# TODO: Investigate and fix errors on Msys2
 gclient sync --with_branch_heads --with_tags -f -R -D &&
 
 gclient runhooks &&
 
 printf "\n"
-printf "${bold}${GRE}Chromium tree is checked out at: $BRANCH_TAGS${c0}\n"
+printf "${bold}${GRE}Chromium tree is checked out at: $COMMIT_ID${c0}\n"
 
 printf "${YEL}Downloading PGO Profiles for Chromium.\n" &&
 tput sgr0 &&

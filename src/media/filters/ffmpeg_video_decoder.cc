@@ -2,6 +2,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#ifdef UNSAFE_BUFFERS_BUILD
+// TODO(crbug.com/40285824): Remove this and convert code to safer constructs.
+#pragma allow_unsafe_buffers
+#endif
+
 #include "media/filters/ffmpeg_video_decoder.h"
 
 #include <stddef.h>
@@ -21,8 +26,10 @@
 #include "media/base/limits.h"
 #include "media/base/media_log.h"
 #include "media/base/media_switches.h"
+#include "media/base/supported_types.h"
 #include "media/base/timestamp_constants.h"
 #include "media/base/video_aspect_ratio.h"
+#include "media/base/video_codecs.h"
 #include "media/base/video_frame.h"
 #include "media/base/video_util.h"
 #include "media/ffmpeg/ffmpeg_common.h"
@@ -120,7 +127,9 @@ static void ReleaseVideoBufferImpl(void* opaque, uint8_t* data) {
 
 // static
 bool FFmpegVideoDecoder::IsCodecSupported(VideoCodec codec) {
-  return avcodec_find_decoder(VideoCodecToCodecID(codec)) != nullptr;
+  // We only build support for H.264 / HEVC.
+  return (codec == VideoCodec::kH264 || codec == VideoCodec::kHEVC) &&
+         IsBuiltInVideoCodec(codec);
 }
 
 FFmpegVideoDecoder::FFmpegVideoDecoder(MediaLog* media_log)

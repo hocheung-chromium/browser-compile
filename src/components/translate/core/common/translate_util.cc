@@ -20,23 +20,11 @@ const char kSecurityOrigin[] = "https://translate.googleapis.com/";
 // TODO(crbug.com/40790180): Enable the feature on WebLayer.
 BASE_FEATURE(kTFLiteLanguageDetectionEnabled,
              "TFLiteLanguageDetectionEnabled",
-#if BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS) || \
-    BUILDFLAG(IS_MAC) || BUILDFLAG(IS_ANDROID) || BUILDFLAG(IS_IOS)
-             base::FEATURE_ENABLED_BY_DEFAULT
-#else
-             base::FEATURE_DISABLED_BY_DEFAULT
-#endif
-);
+             base::FEATURE_DISABLED_BY_DEFAULT);
 
 BASE_FEATURE(kTFLiteLanguageDetectionIgnoreEnabled,
              "TFLiteLanguageDetectionIgnoreEnabled",
              base::FEATURE_DISABLED_BY_DEFAULT);
-
-#if !BUILDFLAG(IS_WIN)
-BASE_FEATURE(kMmapLanguageDetectionModel,
-             "MmapLanguageDetectionModel",
-             base::FEATURE_ENABLED_BY_DEFAULT);
-#endif
 
 GURL GetTranslateSecurityOrigin() {
   std::string security_origin(kSecurityOrigin);
