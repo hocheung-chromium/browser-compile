@@ -579,8 +579,7 @@ if (v8_enable_short_builtin_calls &&
   v8_enable_short_builtin_calls = false
 }
 if (v8_enable_shared_ro_heap == "") {
-  v8_enable_shared_ro_heap = !v8_enable_pointer_compression ||
-                             v8_enable_pointer_compression_shared_cage
+  v8_enable_shared_ro_heap = true
 }
 
 if (v8_enable_sandbox == "") {
@@ -673,13 +672,6 @@ assert(!v8_disable_write_barriers || v8_enable_single_generation,
 
 assert(v8_current_cpu == "arm64" || !v8_control_flow_integrity,
        "Control-flow integrity is only supported on arm64")
-
-if (v8_enable_shared_ro_heap && v8_enable_pointer_compression &&
-    !v8_enable_pointer_compression_shared_cage) {
-  assert(
-      is_linux || is_chromeos || is_android,
-      "Sharing read-only heap with pointer compression is only supported on Linux or Android")
-}
 
 assert(!v8_enable_map_packing || !v8_enable_pointer_compression,
        "Map packing does not support pointer compression")
@@ -1416,14 +1408,11 @@ config("toolchain") {
     defines += [ "V8_TARGET_ARCH_LOONG64" ]
   }
 
-  if (v8_current_cpu == "s390" || v8_current_cpu == "s390x") {
-    defines += [ "V8_TARGET_ARCH_S390" ]
+  if (v8_current_cpu == "s390x") {
     cflags += [ "-ffp-contract=off" ]
-    if (v8_current_cpu == "s390x") {
-      defines += [ "V8_TARGET_ARCH_S390X" ]
-    }
+    defines += [ "V8_TARGET_ARCH_S390X" ]
     if (host_byteorder == "little") {
-      defines += [ "V8_TARGET_ARCH_S390_LE_SIM" ]
+      defines += [ "V8_TARGET_ARCH_S390X_LE_SIM" ]
     } else if (current_os != "zos") {
       cflags += [ "-march=z196" ]
     }
@@ -2748,10 +2737,7 @@ action("v8_dump_build_config") {
     mips_use_msa_var = mips_use_msa
   }
 
-  js_shared_memory =
-      v8_enable_shared_ro_heap && (!v8_enable_pointer_compression ||
-                                   v8_enable_pointer_compression_shared_cage) &&
-      !v8_disable_write_barriers
+  js_shared_memory = v8_enable_shared_ro_heap && !v8_disable_write_barriers
   simd_mips = mips_arch_variant_var == "r6" && mips_use_msa
   simulator_run = target_cpu != v8_target_cpu
   use_sanitizer = is_asan || is_cfi || is_msan || is_tsan || is_ubsan
@@ -3086,7 +3072,7 @@ v8_source_set("v8_initializers") {
       ### gcmole(ppc64) ###
       "src/builtins/ppc/builtins-ppc.cc",
     ]
-  } else if (v8_current_cpu == "s390" || v8_current_cpu == "s390x") {
+  } else if (v8_current_cpu == "s390x") {
     sources += [
       ### gcmole(s390) ###
       "src/builtins/s390/builtins-s390.cc",
@@ -3600,8 +3586,6 @@ v8_header_set("v8_internal_headers") {
     "src/compiler/turboshaft/runtime-call-descriptors.h",
     "src/compiler/turboshaft/select-lowering-reducer.h",
     "src/compiler/turboshaft/sidetable.h",
-    "src/compiler/turboshaft/simplified-lowering-phase.h",
-    "src/compiler/turboshaft/simplified-lowering-reducer.h",
     "src/compiler/turboshaft/simplify-tf-loops.h",
     "src/compiler/turboshaft/snapshot-table-opindex.h",
     "src/compiler/turboshaft/snapshot-table.h",
@@ -3758,7 +3742,9 @@ v8_header_set("v8_internal_headers") {
     "src/heap/heap-allocator.h",
     "src/heap/heap-controller.h",
     "src/heap/heap-inl.h",
+    "src/heap/heap-layout-inl.h",
     "src/heap/heap-layout-tracer.h",
+    "src/heap/heap-layout.h",
     "src/heap/heap-write-barrier-inl.h",
     "src/heap/heap-write-barrier.h",
     "src/heap/heap.h",
@@ -3771,6 +3757,8 @@ v8_header_set("v8_internal_headers") {
     "src/heap/large-spaces.h",
     "src/heap/linear-allocation-area.h",
     "src/heap/list.h",
+    "src/heap/live-object-range-inl.h",
+    "src/heap/live-object-range.h",
     "src/heap/local-factory-inl.h",
     "src/heap/local-factory.h",
     "src/heap/local-heap-inl.h",
@@ -4781,7 +4769,7 @@ v8_header_set("v8_internal_headers") {
         "src/baseline/ppc/baseline-compiler-ppc-inl.h",
       ]
     }
-  } else if (v8_current_cpu == "s390" || v8_current_cpu == "s390x") {
+  } else if (v8_current_cpu == "s390x") {
     sources += [
       ### gcmole(s390) ###
       "src/codegen/s390/assembler-s390-inl.h",
@@ -5103,7 +5091,7 @@ if (v8_current_cpu == "x86") {
     "src/compiler/backend/ppc/instruction-selector-ppc.cc",
     "src/compiler/backend/ppc/unwinding-info-writer-ppc.cc",
   ]
-} else if (v8_current_cpu == "s390" || v8_current_cpu == "s390x") {
+} else if (v8_current_cpu == "s390x") {
   v8_compiler_sources += [
     ### gcmole(s390) ###
     "src/compiler/backend/s390/code-generator-s390.cc",
@@ -5267,7 +5255,6 @@ v8_source_set("v8_turboshaft") {
     "src/compiler/turboshaft/recreate-schedule.cc",
     "src/compiler/turboshaft/representations.cc",
     "src/compiler/turboshaft/sidetable.cc",
-    "src/compiler/turboshaft/simplified-lowering-phase.cc",
     "src/compiler/turboshaft/simplify-tf-loops.cc",
     "src/compiler/turboshaft/store-store-elimination-phase.cc",
     "src/compiler/turboshaft/type-assertions-phase.cc",
@@ -5515,6 +5502,7 @@ v8_source_set("v8_base_without_compiler") {
     "src/heap/heap-allocator.cc",
     "src/heap/heap-controller.cc",
     "src/heap/heap-layout-tracer.cc",
+    "src/heap/heap-layout.cc",
     "src/heap/heap-verifier.cc",
     "src/heap/heap-write-barrier.cc",
     "src/heap/heap.cc",
@@ -6139,7 +6127,7 @@ v8_source_set("v8_base_without_compiler") {
       "src/execution/ppc/simulator-ppc.cc",
       "src/regexp/ppc/regexp-macro-assembler-ppc.cc",
     ]
-  } else if (v8_current_cpu == "s390" || v8_current_cpu == "s390x") {
+  } else if (v8_current_cpu == "s390x") {
     sources += [
       ### gcmole(s390) ###
       "src/codegen/s390/assembler-s390.cc",
@@ -6315,8 +6303,7 @@ v8_source_set("v8_base_without_compiler") {
   # to implement atomic memory access
   if (v8_current_cpu == "mips64" || v8_current_cpu == "mips64el" ||
       v8_current_cpu == "ppc64" ||
-      (current_os != "zos" &&
-       (v8_current_cpu == "s390" || v8_current_cpu == "s390x")) ||
+      (current_os != "zos" && v8_current_cpu == "s390x") ||
       v8_current_cpu == "riscv64" || v8_current_cpu == "riscv32") {
     if (!is_clang) {
       libs += [ "atomic" ]
