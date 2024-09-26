@@ -68,16 +68,29 @@ def main():
     out_dir = os.path.normpath(os.path.join(cr_src_dir, "out", "chromium"))
 
     # Check if any files or directories need to be deleted
-    will_delete_files = any(os.path.isfile(os.path.join(profiles_dir, filename)) for filename in os.listdir(profiles_dir))
-    will_delete_dir = os.path.exists(out_dir)
+    will_delete_files = False
+    will_delete_dir = False
+
+    if os.path.isdir(profiles_dir):
+        will_delete_files = any(os.path.isfile(os.path.join(profiles_dir, filename)) for filename in os.listdir(profiles_dir))
+
+    if os.path.exists(out_dir):
+        will_delete_dir = True
 
     # If any deletions are going to happen, print the cleanup message first
     if will_delete_files or will_delete_dir:
         print("\nCleaning up unneeded artifacts\n")
 
         # Now proceed with the deletions
-        files_deleted = clean_files(profiles_dir)
-        dir_deleted = delete_directory(out_dir)
+        if will_delete_files:
+            files_deleted = clean_files(profiles_dir)
+        else:
+            files_deleted = False
+
+        if will_delete_dir:
+            dir_deleted = delete_directory(out_dir)
+        else:
+            dir_deleted = False
 
         # Print final message after deletions are done
         if files_deleted or dir_deleted:
