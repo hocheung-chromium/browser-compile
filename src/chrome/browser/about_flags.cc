@@ -3108,37 +3108,6 @@ constexpr FeatureEntry::FeatureVariation kIOSPromoBookmarkBubbleVariations[] = {
      std::size(kIOSPromoBookmarkBubbleAlwaysShow), nullptr}};
 #endif  // !BUILDFLAG(IS_ANDROID) && BUILDFLAG(GOOGLE_CHROME_BRANDING)
 
-#if BUILDFLAG(ENABLE_LENS_DESKTOP_GOOGLE_BRANDED_FEATURES)
-constexpr FeatureEntry::FeatureParam kCscStagingEnvVariation[] = {
-    {"companion-homepage-url",
-     "https://lens-staging.corp.google.com/companion"},
-    {"companion-image-upload-url",
-     "https://lens-staging.corp.google.com/v2/upload"}};
-constexpr FeatureEntry::FeatureParam kCscClobberVariation[] = {
-    {"open-links-in-current-tab", "true"},
-};
-constexpr FeatureEntry::FeatureParam kCscNewTabVariation[] = {
-    {"open-links-in-current-tab", "false"},
-};
-
-constexpr FeatureEntry::FeatureVariation kSidePanelCompanionVariations[] = {
-    {"with staging URL", kCscStagingEnvVariation,
-     std::size(kCscStagingEnvVariation), nullptr},
-    {"with clobber", kCscClobberVariation, std::size(kCscClobberVariation),
-     nullptr},
-    {"with new tab", kCscNewTabVariation, std::size(kCscNewTabVariation),
-     nullptr},
-};
-
-const FeatureEntry::Choice kForceCompanionPinnedStateChoices[] = {
-    {flags_ui::kGenericExperimentChoiceDefault, "", ""},
-    {"Forced Pinned", companion::switches::kForceCompanionPinnedState,
-     "pinned"},
-    {"Forced Unpinned", companion::switches::kForceCompanionPinnedState,
-     "unpinned"},
-};
-#endif  // BUILDFLAG(ENABLE_LENS_DESKTOP_GOOGLE_BRANDED_FEATURES)
-
 #if !BUILDFLAG(IS_ANDROID)
 const FeatureEntry::FeatureParam kLensOverlayNoOmniboxEntryPoint[] = {
     {"omnibox-entry-point", "false"},
@@ -5121,10 +5090,12 @@ const FeatureEntry kFeatureEntries[] = {
     {"enterprise-reporting-ui", flag_descriptions::kEnterpriseReportingUIName,
      flag_descriptions::kEnterpriseReportingUIDescription, kOsCrOS,
      FEATURE_VALUE_TYPE(ash::features::kEnterpriseReportingUI)},
-    {"chromebox-usb-passthrough-limit",
-     flag_descriptions::kChromeboxUsbPassthroughLimitName,
-     flag_descriptions::kChromeboxUsbPassthroughLimitDescription, kOsCrOS,
-     FEATURE_VALUE_TYPE(ash::features::kChromeboxUsbPassthroughLimit)},
+    {"chromebox-usb-passthrough-restrictions",
+     flag_descriptions::kChromeboxUsbPassthroughRestrictionsName,
+     flag_descriptions::kChromeboxUsbPassthroughRestrictionsDescription,
+     kOsCrOS,
+     PLATFORM_FEATURE_NAME_TYPE(
+         "CrOSLateBootChromeboxUsbPassthroughRestrictions")},
     {"disable-bruschetta-install-checks",
      flag_descriptions::kDisableBruschettaInstallChecksName,
      flag_descriptions::kDisableBruschettaInstallChecksDescription, kOsCrOS,
@@ -9232,30 +9203,6 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kEnableLensStandaloneName,
      flag_descriptions::kEnableLensStandaloneDescription, kOsDesktop,
      FEATURE_VALUE_TYPE(lens::features::kLensStandalone)},
-
-#if BUILDFLAG(ENABLE_LENS_DESKTOP_GOOGLE_BRANDED_FEATURES)
-    {"csc-companion-enable-page-content",
-     flag_descriptions::kCscCompanionEnablePageContentName,
-     flag_descriptions::kCscCompanionEnablePageContentDescription, kOsDesktop,
-     FEATURE_VALUE_TYPE(companion::features::kCompanionEnablePageContent)},
-
-    {"csc-force-companion-pinned-state",
-     flag_descriptions::kCscForceCompanionPinnedStateName,
-     flag_descriptions::kCscForceCompanionPinnedStateDescription, kOsDesktop,
-     MULTI_VALUE_TYPE(kForceCompanionPinnedStateChoices)},
-
-    {"csc-side-panel-companion", flag_descriptions::kCscSidePanelCompanionName,
-     flag_descriptions::kCscSidePanelCompanionDescription, kOsDesktop,
-     FEATURE_WITH_PARAMS_VALUE_TYPE(
-         companion::features::internal::kSidePanelCompanion,
-         kSidePanelCompanionVariations,
-         "CSC")},
-
-    {"enable-lens-region-search-static-page",
-     flag_descriptions::kLensRegionSearchStaticPageName,
-     flag_descriptions::kLensRegionSearchStaticPageDescription, kOsDesktop,
-     FEATURE_VALUE_TYPE(lens::features::kLensRegionSearchStaticPage)},
-#endif  // BUILDFLAG(ENABLE_LENS_DESKTOP_GOOGLE_BRANDED_FEATURES)
 
 #if !BUILDFLAG(IS_ANDROID)
     {"enable-lens-overlay", flag_descriptions::kLensOverlayName,
