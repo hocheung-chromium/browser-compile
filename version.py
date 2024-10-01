@@ -55,7 +55,6 @@ commands = [
     "git clean -ffd",
     "gclient sync --with_branch_heads --with_tags -f -R -D",
     "gclient runhooks",
-    "git fetch https://chromium.googlesource.com/chromium/src refs/changes/52/5896652/2 && git cherry-pick FETCH_HEAD",
 ]
 
 # Run each command with error handling.

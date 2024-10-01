@@ -1,5 +1,7 @@
 ## Update Windows sdk to 26100
 
-<https://github.com/google/benchmark/pull/1859>
+<https://issues.chromium.org/issues/370065739>
 
-<https://chromium-review.googlesource.com/c/chromium/src/+/5895980>
+<https://issues.chromium.org/issues/362650376>
+
+<https://github.com/google/benchmark/pull/1859>
