@@ -88,7 +88,6 @@ def main():
         "git rebase-update",
         "git fetch --tags",
         "gclient sync --with_branch_heads --with_tags -f -R -D",
-        "git clean -ffd",
         "gclient runhooks"
     ]
 
