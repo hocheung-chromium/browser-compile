@@ -22,10 +22,6 @@ BASE_FEATURE(kTFLiteLanguageDetectionEnabled,
              "TFLiteLanguageDetectionEnabled",
              base::FEATURE_DISABLED_BY_DEFAULT);
 
-BASE_FEATURE(kTFLiteLanguageDetectionIgnoreEnabled,
-             "TFLiteLanguageDetectionIgnoreEnabled",
-             base::FEATURE_DISABLED_BY_DEFAULT);
-
 GURL GetTranslateSecurityOrigin() {
   std::string security_origin(kSecurityOrigin);
   base::CommandLine* command_line = base::CommandLine::ForCurrentProcess();
@@ -38,10 +34,6 @@ GURL GetTranslateSecurityOrigin() {
 
 bool IsTFLiteLanguageDetectionEnabled() {
   return base::FeatureList::IsEnabled(kTFLiteLanguageDetectionEnabled);
-}
-
-bool IsTFLiteLanguageDetectionIgnoreEnabled() {
-  return base::FeatureList::IsEnabled(kTFLiteLanguageDetectionIgnoreEnabled);
 }
 
 float GetTFLiteLanguageDetectionThreshold() {

@@ -35,10 +35,6 @@ BASE_FEATURE(kApiOdfsConfigPrivate,
              "ApiOdfsConfigPrivate",
              base::FEATURE_ENABLED_BY_DEFAULT);
 
-BASE_FEATURE(kRestrictFileURLNavigation,
-             "RestrictFileURLNavigation",
-             base::FEATURE_ENABLED_BY_DEFAULT);
-
 BASE_FEATURE(kApiEnterpriseReportingPrivateReportDataMaskingEvent,
              "ApiEnterpriseReportingPrivateReportDataMaskingEvent",
              base::FEATURE_ENABLED_BY_DEFAULT);
@@ -150,10 +146,6 @@ BASE_FEATURE(kReportKeepaliveUkm,
              "ReportKeepaliveUkm",
              base::FEATURE_ENABLED_BY_DEFAULT);
 
-BASE_FEATURE(kRestrictDeveloperModeAPIs,
-             "RestrictDeveloperModeAPIs",
-             base::FEATURE_ENABLED_BY_DEFAULT);
-
 BASE_FEATURE(kSafeBrowsingCrxAllowlistAutoDisable,
              "SafeBrowsingCrxAllowlistAutoDisable",
              base::FEATURE_DISABLED_BY_DEFAULT);
@@ -196,6 +188,10 @@ BASE_FEATURE(kUseNewServiceWorkerTaskQueue,
 
 BASE_FEATURE(kDeclarativeNetRequestHeaderSubstitution,
              "DeclarativeNetRequestHeaderSubstitution",
+             base::FEATURE_DISABLED_BY_DEFAULT);
+
+BASE_FEATURE(kSilentDebuggerExtensionAPI,
+             "SilentDebuggerExtensionAPI",
              base::FEATURE_DISABLED_BY_DEFAULT);
 
 }  // namespace extensions_features

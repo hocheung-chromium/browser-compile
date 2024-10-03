@@ -39,7 +39,7 @@ if '--help' in sys.argv:
 cr_src_dir = os.getenv('CR_DIR', r'C:\src\chromium\src')
 
 # Set bc_commit_id.
-bc_commit_id = "68cad7a38228ce5bcc353e96bcd7292948470426"
+bc_commit_id = "0c2e574ad8dad30bcd10c7169ff7cb801de24fdb"
 
 
 print(f"\nCurrent Chromium version is: {bc_commit_id}\n")
