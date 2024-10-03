@@ -40,4 +40,4 @@ jobs = sys.argv[1] if len(sys.argv) > 1 else str(os.cpu_count())
 
 try_run(f'autoninja -C out/chromium chrome setup mini_installer -j{jobs}')
 
-print(f"Build Completed.'")
+print(f"Build Completed.")
