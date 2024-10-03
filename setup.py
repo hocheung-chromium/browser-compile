@@ -1,4 +1,4 @@
-# Copyright (c) 2024 yfqhhk.
+# Copyright (c) 2024 hocheung-chromium.
 #
 # This file is used to copy modified files.
 

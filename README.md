@@ -21,12 +21,12 @@
 <https://github.com/Muril-o/electron-chromium-codecs/blob/main/v29.1.4/look_ffmpeg_hevc_ac3.patch>
 
 ## Show all built-in extensions
-<https://gitlab.com/yfqhhk/browser-compile/-/commit/3518ba11f099322f376d290329ba69332c81fa38>
+<https://github.com/hocheung-chromium/browser-compile/commit/c5fa734909d024e44d7a1579c8469d5623fc8686>
 
 ## Fallback to old translation recognition model by default
-<https://gitlab.com/yfqhhk/browser-compile/-/commit/ccae65288ddcc060ebe55f3791754de96376f756>
+<https://github.com/hocheung-chromium/browser-compile/commit/454d4b666ac56fa790beae7e2737b35f4cef1d04>
 
 ## Disable MV2 extension deprecation warning
-<https://gitlab.com/yfqhhk/browser-compile/-/commit/ff1e99cf1529a8823c2c4a6b661e0f8a8a230925>
+<https://github.com/hocheung-chromium/browser-compile/commit/702abaf68f6da25e06684b61ebbbef46cfe33184>
 
 # The changes made in this repo are listed above, with many thanks to the owners and contributors of the above repos, who own the copyrights to the changes listed above.
