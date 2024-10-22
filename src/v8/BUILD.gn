@@ -537,23 +537,24 @@ if (v8_enable_zone_compression == "") {
 }
 if (v8_enable_short_builtin_calls == "") {
   v8_enable_short_builtin_calls =
-      v8_current_cpu == "x64" || v8_current_cpu == "arm64"
+      v8_current_cpu == "x64" || v8_current_cpu == "arm64" ||
+      v8_current_cpu == "loong64"
 }
 if (v8_enable_external_code_space == "") {
   v8_enable_external_code_space =
       v8_enable_pointer_compression &&
       v8_enable_pointer_compression_shared_cage &&
-      (v8_current_cpu == "x64" || v8_current_cpu == "arm64")
+      (v8_current_cpu == "x64" || v8_current_cpu == "arm64" ||
+       v8_current_cpu == "loong64")
 }
 if (v8_enable_sparkplug == "") {
   v8_enable_sparkplug = !v8_jitless
 }
 if (v8_enable_maglev == "") {
-  v8_enable_maglev =
-      v8_enable_turbofan &&
-      (v8_current_cpu == "arm" || v8_current_cpu == "x64" ||
-       v8_current_cpu == "arm64" || v8_current_cpu == "s390x" ||
-       (v8_current_cpu == "riscv64" && !v8_enable_pointer_compression))
+  v8_enable_maglev = v8_enable_turbofan &&
+                     (v8_current_cpu == "arm" || v8_current_cpu == "x64" ||
+                      v8_current_cpu == "arm64" || v8_current_cpu == "s390x" ||
+                      v8_current_cpu == "riscv64")
 }
 assert(v8_enable_turbofan || !v8_enable_maglev,
        "Maglev is not available when Turbofan is disabled.")
@@ -620,14 +621,12 @@ if (v8_enable_static_roots == "") {
   # location relative to the cage base.
   v8_enable_static_roots =
       v8_enable_pointer_compression && v8_enable_shared_ro_heap &&
-      v8_enable_pointer_compression_shared_cage &&
       v8_enable_external_code_space && v8_enable_webassembly &&
       v8_enable_i18n_support
 }
 
 assert(!v8_enable_static_roots ||
            (v8_enable_pointer_compression && v8_enable_shared_ro_heap &&
-                v8_enable_pointer_compression_shared_cage &&
                 v8_enable_external_code_space && v8_enable_webassembly &&
                 v8_enable_i18n_support),
        "Trying to enable static roots in a configuration that is not supported")
@@ -1025,16 +1024,20 @@ config("v8_header_features") {
 # List of defines that can appear in externally visible cppgc header files and
 # that are controlled by args.gn.
 external_cppgc_defines = [
-  "CPPGC_SUPPORTS_OBJECT_NAMES",
   "CPPGC_CAGED_HEAP",
-  "CPPGC_SLIM_WRITE_BARRIER",
-  "CPPGC_YOUNG_GENERATION",
-  "CPPGC_POINTER_COMPRESSION",
+  "CPPGC_ENABLE_API_CHECKS",
   "CPPGC_ENABLE_LARGER_CAGE",
+  "CPPGC_POINTER_COMPRESSION",
+  "CPPGC_SLIM_WRITE_BARRIER",
+  "CPPGC_SUPPORTS_OBJECT_NAMES",
+  "CPPGC_YOUNG_GENERATION",
 ]
 
 enabled_external_cppgc_defines = []
 
+if (cppgc_enable_api_checks) {
+  enabled_external_cppgc_defines += [ "CPPGC_ENABLE_API_CHECKS" ]
+}
 if (cppgc_enable_object_names) {
   enabled_external_cppgc_defines += [ "CPPGC_SUPPORTS_OBJECT_NAMES" ]
 }
@@ -3438,6 +3441,7 @@ v8_header_set("v8_internal_headers") {
     "src/common/segmented-table-inl.h",
     "src/common/segmented-table.h",
     "src/common/simd128.h",
+    "src/common/thread-local-storage.h",
     "src/compiler-dispatcher/lazy-compile-dispatcher.h",
     "src/compiler-dispatcher/optimizing-compile-dispatcher.h",
     "src/compiler/access-builder.h",
@@ -4154,7 +4158,7 @@ v8_header_set("v8_internal_headers") {
     "src/objects/waiter-queue-node.h",
     "src/parsing/expression-scope.h",
     "src/parsing/func-name-inferrer.h",
-    "src/parsing/import-assertions.h",
+    "src/parsing/import-attributes.h",
     "src/parsing/keywords-gen.h",
     "src/parsing/literal-buffer.h",
     "src/parsing/parse-info.h",
@@ -4478,7 +4482,6 @@ v8_header_set("v8_internal_headers") {
       "src/wasm/names-provider.h",
       "src/wasm/object-access.h",
       "src/wasm/pgo.h",
-      "src/wasm/serialized-signature-inl.h",
       "src/wasm/signature-hashing.h",
       "src/wasm/simd-shuffle.h",
       "src/wasm/stacks.h",
@@ -5687,7 +5690,7 @@ v8_source_set("v8_base_without_compiler") {
     "src/objects/visitors.cc",
     "src/objects/waiter-queue-node.cc",
     "src/parsing/func-name-inferrer.cc",
-    "src/parsing/import-assertions.cc",
+    "src/parsing/import-attributes.cc",
     "src/parsing/literal-buffer.cc",
     "src/parsing/parse-info.cc",
     "src/parsing/parser.cc",
@@ -6072,15 +6075,14 @@ v8_source_set("v8_base_without_compiler") {
       "src/regexp/arm64/regexp-macro-assembler-arm64.cc",
     ]
     if (v8_enable_webassembly) {
-      # Trap handling is enabled on arm64 Mac and Linux and in simulators on
-      # x64 on Linux, Mac, and Windows.
+      # Trap handling is enabled on arm64 and x64, on Linux, Mac and Windows.
       if ((current_cpu == "arm64" && (is_linux || is_chromeos || is_apple)) ||
           (current_cpu == "x64" && (is_linux || is_chromeos || is_mac))) {
         sources += [
           "src/trap-handler/handler-inside-posix.cc",
           "src/trap-handler/handler-outside-posix.cc",
         ]
-      } else if (current_cpu == "x64" && is_win) {
+      } else if ((current_cpu == "arm64" || current_cpu == "x64") && is_win) {
         sources += [
           "src/trap-handler/handler-inside-win.cc",
           "src/trap-handler/handler-outside-win.cc",
@@ -6240,6 +6242,10 @@ v8_source_set("v8_base_without_compiler") {
   if (is_win) {
     if (v8_enable_etw_stack_walking) {
       sources += [
+        "src/diagnostics/etw-debug-win.cc",
+        "src/diagnostics/etw-debug-win.h",
+        "src/diagnostics/etw-isolate-capture-state-monitor-win.cc",
+        "src/diagnostics/etw-isolate-capture-state-monitor-win.h",
         "src/diagnostics/etw-jit-win.cc",
         "src/diagnostics/etw-jit-win.h",
       ]

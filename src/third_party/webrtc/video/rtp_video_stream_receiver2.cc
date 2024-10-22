@@ -382,8 +382,8 @@ std::optional<Syncable::Info> RtpVideoStreamReceiver2::GetSyncInfo() const {
   if (!last_sr.has_value()) {
     return std::nullopt;
   }
-  info.capture_time_ntp_secs = last_sr->last_remote_timestamp.seconds();
-  info.capture_time_ntp_frac = last_sr->last_remote_timestamp.fractions();
+  info.capture_time_ntp_secs = last_sr->last_remote_ntp_timestamp.seconds();
+  info.capture_time_ntp_frac = last_sr->last_remote_ntp_timestamp.fractions();
   info.capture_time_source_clock = last_sr->last_remote_rtp_timestamp;
 
   if (!last_received_rtp_timestamp_ || !last_received_rtp_system_time_) {
@@ -617,9 +617,9 @@ bool RtpVideoStreamReceiver2::OnReceivedPayloadData(
     CorruptionDetectionMessage message;
     rtp_packet.GetExtension<CorruptionDetectionExtension>(&message);
     if (message.sample_values().empty()) {
-      // TODO: bugs.webrtc.org/358039777 - Convert message to sync data and
-      // use that for assignment instead of `std::nullptr`.
-      video_header.frame_instrumentation_data = std::nullopt;
+      video_header.frame_instrumentation_data =
+          ConvertCorruptionDetectionMessageToFrameInstrumentationSyncData(
+              message, last_corruption_detection_index_);
     } else {
       video_header.frame_instrumentation_data =
           ConvertCorruptionDetectionMessageToFrameInstrumentationData(
@@ -1210,10 +1210,10 @@ bool RtpVideoStreamReceiver2::DeliverRtcp(const uint8_t* rtcp_packet,
     return true;
   }
   int64_t time_since_received = env_.clock().CurrentNtpInMilliseconds() -
-                                last_sr->last_arrival_timestamp.ToMs();
+                                last_sr->last_arrival_ntp_timestamp.ToMs();
   // Don't use old SRs to estimate time.
   if (time_since_received <= 1) {
-    ntp_estimator_.UpdateRtcpTimestamp(*rtt, last_sr->last_remote_timestamp,
+    ntp_estimator_.UpdateRtcpTimestamp(*rtt, last_sr->last_remote_ntp_timestamp,
                                        last_sr->last_remote_rtp_timestamp);
     std::optional<int64_t> remote_to_local_clock_offset =
         ntp_estimator_.EstimateRemoteToLocalClockOffset();

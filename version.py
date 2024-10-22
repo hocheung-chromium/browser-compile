@@ -39,7 +39,7 @@ if '--help' in sys.argv:
 cr_src_dir = os.getenv('CR_DIR', r'C:\src\chromium\src')
 
 # Set bc_commit_id.
-bc_commit_id = "0c2e574ad8dad30bcd10c7169ff7cb801de24fdb"
+bc_commit_id = "799ad1aa40b187db4d3ecf265b179d1e107b190d"
 
 
 print(f"\nCurrent Chromium version is: {bc_commit_id}\n")
@@ -62,17 +62,5 @@ for cmd in commands:
     try_run(cmd)
 
 print(f"\nChromium tree is checked out at tag: {bc_commit_id}\n")
-
-print("\nDownloading PGO Profiles for Windows\n")
-try_run(
-    'python3 tools/update_pgo_profiles.py --target=win64 '
-    'update --gs-url-base=chromium-optimization-profiles/pgo_profiles'
-)
-
-print("\nDownloading PGO Profile for V8\n")
-try_run(
-    'python3 v8/tools/builtins-pgo/download_profiles.py '
-    '--depot-tools=third_party/depot_tools --force download'
-)
 
 print("\nDone! You can now run setup.py\n")

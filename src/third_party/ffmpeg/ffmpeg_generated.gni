@@ -25,7 +25,6 @@ if (current_cpu == "arm64" || current_cpu == "x64" ||
     "libavcodec/allcodecs.c",
     "libavcodec/autorename_libavcodec_flacdsp.c",
     "libavcodec/autorename_libavcodec_mpegaudiodsp.c",
-    "libavcodec/autorename_libavcodec_parser.c",
     "libavcodec/autorename_libavcodec_vorbisdsp.c",
     "libavcodec/avcodec.c",
     "libavcodec/avdct.c",
@@ -68,9 +67,10 @@ if (current_cpu == "arm64" || current_cpu == "x64" ||
     "libavcodec/mpegaudiodsp_float.c",
     "libavcodec/mpegaudiotabs.c",
     "libavcodec/options.c",
-    "libavcodec/opus/parse.c",
-    "libavcodec/opus/parser.c",
+    "libavcodec/opus_parse.c",
+    "libavcodec/opus_parser.c",
     "libavcodec/packet.c",
+    "libavcodec/parser.c",
     "libavcodec/parsers.c",
     "libavcodec/pcm.c",
     "libavcodec/profiles.c",
@@ -224,19 +224,18 @@ if ((current_cpu == "arm64" && ffmpeg_branding == "Chrome") ||
     "libavcodec/dovi_rpudec.c",
     "libavcodec/dovi_rpuenc.c",
     "libavcodec/dynamic_hdr_vivid.c",
-    "libavcodec/autorename_libavcodec_cabac.c",
-    "libavcodec/hevc/data.c",
-    "libavcodec/hevc/filter.c",
-    "libavcodec/hevc/mvs.c",
-    # "libavcodec/hevc/parse.c",
-    "libavcodec/autorename_libavcodec_parse.c",
-    # "libavcodec/autorename_libavcodec_parser.c",
-    "libavcodec/hevc/ps.c",
-    "libavcodec/hevc/refs.c",
-    "libavcodec/hevc/sei.c",
-    "libavcodec/hevc/hevcdec.c",
-    "libavcodec/hevc/dsp.c",
-    "libavcodec/hevc/pred.c",
+    "libavcodec/hevc_cabac.c",
+    "libavcodec/hevc_data.c",
+    "libavcodec/hevc_filter.c",
+    "libavcodec/hevc_mvs.c",
+    "libavcodec/hevc_parse.c",
+    "libavcodec/hevc_parser.c",
+    "libavcodec/hevc_ps.c",
+    "libavcodec/hevc_refs.c",
+    "libavcodec/hevc_sei.c",
+    "libavcodec/hevcdec.c",
+    "libavcodec/hevcdsp.c",
+    "libavcodec/hevcpred.c",
     "libavcodec/ac3dsp.c",
     "libavcodec/fmtconvert.c",
     "libavcodec/ac3tab.c",
@@ -247,26 +246,6 @@ if ((current_cpu == "arm64" && ffmpeg_branding == "Chrome") ||
     "libavcodec/eac3_data.c",
     "libavcodec/ac3dec_fixed.c",
     "libavformat/ac3dec.c",
-  ]
-  ffmpeg_c_sources += [
-    "libavcodec/x86/ac3dsp_init.c",
-    "libavcodec/x86/bswapdsp_init.c",
-    "libavcodec/x86/fmtconvert_init.c",
-    "libavcodec/x86/hevcdsp_init.c",
-    "libavcodec/x86/h26x/h2656dsp.c"
-  ]
-  ffmpeg_asm_sources += [
-    "libavcodec/x86/ac3dsp.asm",
-    "libavcodec/x86/ac3dsp_downmix.asm",
-    "libavcodec/x86/bswapdsp.asm",
-    "libavcodec/x86/fmtconvert.asm",
-    "libavcodec/x86/hevc_add_res.asm",
-    "libavcodec/x86/hevc_deblock.asm",
-    "libavcodec/x86/hevc_idct.asm",
-    "libavcodec/x86/hevc_mc.asm",
-    "libavcodec/x86/hevc_sao.asm",
-    "libavcodec/x86/hevc_sao_10bit.asm",
-    "libavcodec/x86/h26x/h2656_inter.asm"
   ]
   ffmpeg_c_sources += [
     "libavcodec/atsc_a53.c",
@@ -310,11 +289,8 @@ if ((current_cpu == "arm64" && ffmpeg_branding == "Chrome") ||
     (use_linux_config && ffmpeg_branding == "Chrome")) {
   ffmpeg_c_sources += [
     "libavcodec/aac/aacdec.c",
-    "libavcodec/aac/aacdec_ac.c",
     "libavcodec/aac/aacdec_float.c",
-    "libavcodec/aac/aacdec_lpd.c",
     "libavcodec/aac/aacdec_tab.c",
-    "libavcodec/aac/aacdec_usac.c",
     "libavcodec/aac_ac3_parser.c",
     "libavcodec/aac_parser.c",
     "libavcodec/aacps_common.c",
@@ -469,6 +445,26 @@ if ((current_cpu == "x64" && ffmpeg_branding == "Chrome") ||
     (is_android && current_cpu == "x86" && ffmpeg_branding == "Chrome") ||
     (is_win && current_cpu == "x86" && ffmpeg_branding == "Chrome") ||
     (use_linux_config && current_cpu == "x86" && ffmpeg_branding == "Chrome")) {
+  ffmpeg_c_sources += [
+    "libavcodec/x86/ac3dsp_init.c",
+    "libavcodec/x86/bswapdsp_init.c",
+    "libavcodec/x86/fmtconvert_init.c",
+    "libavcodec/x86/hevcdsp_init.c",
+    "libavcodec/x86/h26x/h2656dsp.c"
+  ]
+  ffmpeg_asm_sources += [
+    "libavcodec/x86/ac3dsp.asm",
+    "libavcodec/x86/ac3dsp_downmix.asm",
+    "libavcodec/x86/bswapdsp.asm",
+    "libavcodec/x86/fmtconvert.asm",
+    "libavcodec/x86/hevc_add_res.asm",
+    "libavcodec/x86/hevc_deblock.asm",
+    "libavcodec/x86/hevc_idct.asm",
+    "libavcodec/x86/hevc_mc.asm",
+    "libavcodec/x86/hevc_sao.asm",
+    "libavcodec/x86/hevc_sao_10bit.asm",
+    "libavcodec/x86/h26x/h2656_inter.asm"
+  ]
   ffmpeg_c_sources += [
     "libavcodec/x86/aacpsdsp_init.c",
     "libavcodec/x86/h264_intrapred_init.c",

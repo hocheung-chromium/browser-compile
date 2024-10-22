@@ -65,6 +65,10 @@ BASE_FEATURE(kEnableWebHidInWebView,
              "EnableWebHidInWebView",
              base::FEATURE_ENABLED_BY_DEFAULT);
 
+BASE_FEATURE(kExtensionDisableUnsupportedDeveloper,
+             "ExtensionDisableUnsupportedDeveloper",
+             base::FEATURE_DISABLED_BY_DEFAULT);
+
 BASE_FEATURE(kExtensionDynamicURLRedirection,
              "ExtensionDynamicURLRedirection",
              base::FEATURE_ENABLED_BY_DEFAULT);
@@ -129,13 +133,6 @@ BASE_FEATURE(kForceWebRequestProxyForTest,
 BASE_FEATURE(kLaunchWindowsNativeHostsDirectly,
              "LaunchWindowsNativeHostsDirectly",
              base::FEATURE_DISABLED_BY_DEFAULT);
-
-#if BUILDFLAG(IS_MAC)
-// TODO(crbug.com/357636604): Remove this feature flag in M132.
-BASE_FEATURE(kMacRejectFilePathsEndingWithSeparator,
-             "MacRejectFilePathsEndingWithSeparator",
-             base::FEATURE_ENABLED_BY_DEFAULT);
-#endif
 
 BASE_FEATURE(kNewExtensionFaviconHandling,
              "ExtensionsNewFaviconHandling",
